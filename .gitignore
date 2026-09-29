@@ -1,0 +1,22 @@
+# 비밀 설정 (API 키) — 견본은 올림
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+
+# Node / 빌드 결과
+node_modules/
+dist/
+npm-debug.log*
+*.log
+
+# 에디터 · OS
+.claude/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
