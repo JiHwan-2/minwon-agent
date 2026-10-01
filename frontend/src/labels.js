@@ -5,6 +5,9 @@ export const NODE_LABEL = {
   check: "정보 판단",
   ask: "추가 질문",
   act: "Tool 실행",
+  decide: "담당 기관 판단",
+  draft: "민원 초안 작성",
+  review: "초안 검증",
 };
 
 export const TOOL_SOURCE_LABEL = {

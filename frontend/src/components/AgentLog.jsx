@@ -132,10 +132,63 @@ function ActBody({ entry }) {
   );
 }
 
+function DecideBody({ decision }) {
+  return (
+    <div className="body">
+      <p>
+        <strong>{decision.agency.agency}</strong> {decision.agency.unit}
+      </p>
+      <p className="small">제출 창구: {decision.channel.name}</p>
+      <p className="small muted">{decision.reason}</p>
+      {decision.fixes?.length > 0 && <p className="small warn">판단 보정: {decision.fixes.join(", ")}</p>}
+    </div>
+  );
+}
+
+function DraftBody({ entry }) {
+  const pkg = entry.data.package;
+  return (
+    <div className="body">
+      <p className="strong">{pkg.title}</p>
+      <p className="small muted">
+        {pkg.version}번째 초안 · 본문 {pkg.body.length}자 · 증빙 {pkg.evidence.length}개
+      </p>
+      {entry.log?.title?.includes("다시") && <p className="small warn">{entry.log.detail.split(" → ")[0]}</p>}
+    </div>
+  );
+}
+
+function ReviewBody({ review }) {
+  return (
+    <div className="body">
+      <ul className="checks">
+        {review.checks.map((c) => (
+          <li key={c.name} className={c.ok ? "check-ok" : "check-fail"}>
+            <span className="check-icon">{c.ok ? "✓" : "✗"}</span>
+            <strong>{c.name}</strong>
+            <span className="small muted">{c.detail}</span>
+          </li>
+        ))}
+      </ul>
+      {review.passed ? (
+        <p className="small ok">→ 검증 통과. 사용자에게 전달합니다.</p>
+      ) : review.retry ? (
+        <p className="small warn">→ 문제 {review.issues.length}건을 고치도록 다시 작성합니다.</p>
+      ) : (
+        <p className="small alert">→ 최대 횟수에 도달해 남은 문제를 사용자에게 알립니다.</p>
+      )}
+    </div>
+  );
+}
+
 function Body({ entry }) {
   const d = entry.data ?? {};
   if (entry.node === "ask") return <AskBody entry={entry} />;
   if (entry.node === "act") return <ActBody entry={entry} />;
+  if (entry.status !== "done") return null;
+  if (entry.node === "decide") return <DecideBody decision={d.decision} />;
+  if (entry.node === "draft") return <DraftBody entry={entry} />;
+  if (entry.node === "review") return <ReviewBody review={d.review} />;
   if (entry.status !== "done") return null;
   if (entry.node === "guard") return <GuardBody safety={d.safety} />;
   if (entry.node === "understand") return <UnderstandBody u={d.understanding} />;
@@ -162,7 +215,8 @@ export default function AgentLog({ timeline, running }) {
             <li>처리 계획</li>
             <li>정보 판단 · 추가 질문</li>
             <li>Tool 실행: 위치 확인 · 관할 기관 검색 · 담당 부서 조회</li>
-            <li className="muted">민원 작성 · 검증 (개발 중)</li>
+            <li>담당 기관 판단</li>
+            <li>민원 초안 작성 ⇄ 초안 검증 (문제가 있으면 다시 작성)</li>
           </ol>
         </div>
       ) : (
@@ -172,7 +226,7 @@ export default function AgentLog({ timeline, running }) {
               <div className="entry-marker">{entry.status === "running" ? <span className="spinner" /> : i + 1}</div>
               <div className="entry-card">
                 <div className="entry-head">
-                  <strong>{NODE_LABEL[entry.node] ?? entry.node}</strong>
+                  <strong>{entry.node === "draft" && entry.log ? entry.log.title : (NODE_LABEL[entry.node] ?? entry.node)}</strong>
                   <div className="row">
                     <SourceBadge log={entry.log} />
                     <span className={`status status-${entry.status}`}>{STATUS_TEXT[entry.status]}</span>

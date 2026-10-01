@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { EXAMPLES } from "../labels.js";
+import PackageCard from "./PackageCard.jsx";
 
 function Bubble({ m }) {
   return (
-    <div className={`bubble bubble-${m.role}`}>
+    <div className={`bubble bubble-${m.role}${m.pkg ? " bubble-wide" : ""}`}>
       <p>{m.text}</p>
       {m.masked && (
         <p className="bubble-note">
@@ -32,24 +33,12 @@ function Bubble({ m }) {
           {m.unknown?.length > 0 && <li className="muted">확인 못 한 정보: {m.unknown.join(", ")}</li>}
         </ul>
       )}
-      {m.agencies && (
-        <div className="agencies">
-          {m.agencies.departments.map((d) => (
-            <div key={d.agency + d.unit} className="agency">
-              <strong>{d.agency}</strong>
-              <span>{d.unit}</span>
-              <small>
-                {d.duty}
-                {d.phone && ` · ☎ ${d.phone}`}
-              </small>
-            </div>
-          ))}
-          <p className="small">
-            제출 창구: {m.agencies.channels.map((c) => c.name + (c.phone ? `(${c.phone})` : "")).join(", ")}
-          </p>
-        </div>
+      {m.pkg && (
+        <>
+          <PackageCard pkg={m.pkg} decision={m.decision} review={m.review} />
+          <p className="bubble-note">안내 정보는 참고용이에요. 부서 이름은 지자체마다 조금 다를 수 있어요.</p>
+        </>
       )}
-      {m.nextStep && <p className="bubble-note">민원 초안 작성과 검증 단계는 개발 중이에요. 부서명은 지자체마다 조금 다를 수 있어요.</p>}
     </div>
   );
 }
@@ -62,18 +51,18 @@ export default function Chat({ messages, phase, onSend }) {
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, busy]);
+  }, [messages.length, busy]);
 
   const submit = (e) => {
     e?.preventDefault();
     const value = text.trim();
-    if (!value || busy || done) return;
+    if (!value || busy) return;
     setText("");
     onSend(value);
   };
 
   const placeholder = done
-    ? "'새 민원'을 눌러 다른 불편을 입력할 수 있어요."
+    ? "고칠 점을 말해 주세요. 예) 더 짧게 / 요청사항에 CCTV 설치도 넣어 줘 (다른 불편은 '새 민원')"
     : phase === "asking"
       ? "질문에 이어서 답해 주세요. 모르는 건 '모름'이라고 적어도 돼요."
       : "예) 학교 앞 횡단보도가 너무 위험해요.";
@@ -113,11 +102,11 @@ export default function Chat({ messages, phase, onSend }) {
           placeholder={placeholder}
           rows={2}
           maxLength={2000}
-          disabled={busy || done}
+          disabled={busy}
           aria-label="메시지 입력"
         />
-        <button className="btn btn-primary" type="submit" disabled={busy || done || !text.trim()}>
-          보내기
+        <button className="btn btn-primary" type="submit" disabled={busy || !text.trim()}>
+          {done ? "수정 요청" : "보내기"}
         </button>
       </form>
     </section>

@@ -166,6 +166,34 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .agency span { font-size: 14px; }
 .agency small { color: var(--muted); }
 
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.checks li { display: grid; grid-template-columns: 18px 64px 1fr; gap: 6px; align-items: baseline; font-size: 14px; }
+.check-icon { font-weight: 800; }
+.check-ok .check-icon { color: var(--ok); }
+.check-fail .check-icon { color: var(--danger); }
+
+.bubble-wide { max-width: 100%; align-self: stretch; }
+.package { display: grid; gap: 12px; margin-top: 4px; }
+.package-head { display: flex; gap: 6px; flex-wrap: wrap; }
+.pill-ok { background: var(--ok-soft); color: var(--ok); }
+.pill-warn { background: var(--warn-soft); color: var(--warn); }
+.pk-section { display: grid; gap: 6px; padding: 12px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); }
+.pk-section h3 { margin: 0; font-size: 15px; }
+.steps-list, .cautions, .tips { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 14px; }
+.cautions { color: var(--warn); }
+.tips { color: var(--muted); }
+.field {
+  width: 100%; border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px; background: var(--bg);
+  font: inherit; color: inherit; line-height: 1.6; resize: vertical;
+}
+.field:focus { outline: 2px solid var(--primary); outline-offset: -1px; }
+.btn-sm { padding: 7px 12px; font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; }
+.checklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.checklist label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; font-size: 14px; }
+.checklist input { margin-top: 4px; accent-color: var(--primary); }
+.checklist small { display: block; color: var(--muted); }
+.req { font-style: normal; font-size: 11px; color: var(--danger); background: var(--danger-soft); padding: 0 6px; border-radius: 4px; margin-left: 2px; }
+
 .strong { font-weight: 700; }
 .muted { color: var(--muted); }
 .small { font-size: 13px; }

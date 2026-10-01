@@ -22,6 +22,7 @@ export default function App() {
   const [timeline, setTimeline] = useState([]);
   const [phase, setPhase] = useState("idle"); // idle | running | asking | ready
   const sessionRef = useRef(null);
+  const revisingRef = useRef(false);
 
   useEffect(() => {
     getHealth().then(setHealth).catch(() => setHealth({ status: "down" }));
@@ -88,17 +89,22 @@ export default function App() {
         break;
       case "ready": {
         setPhase("ready");
+        const result = { pkg: ev.package, decision: ev.decision, review: ev.review };
+        if (revisingRef.current) {
+          addMessage("agent", `요청하신 내용을 반영해 다시 썼어요. (${ev.package.version}번째 초안)`, result);
+          break;
+        }
         const facts = ev.info.facts.map((f) => `${SLOT_LABEL[f.slot] ?? f.slot}: ${f.value}`);
         const unknown = ev.info.unknown.map((s) => SLOT_LABEL[s] ?? s);
         addMessage("agent", "필요한 정보를 정리했어요.", { facts, unknown });
         const where = ev.location?.address ? `${ev.location.address} 기준으로 ` : "";
-        addMessage("agent", `${where}담당 기관을 찾았어요.`, { agencies: ev.agencies, nextStep: true });
+        addMessage("agent", `${where}담당 기관을 찾고 민원 초안을 준비했어요. 내용을 확인한 뒤 직접 제출해 주세요.`, result);
+        addMessage("agent", "고칠 점이 있으면 말씀해 주세요. 예: '더 짧게', '요청사항에 CCTV 설치도 넣어 줘'");
         break;
       }
       case "error":
         addMessage("error", ev.message);
         setTimeline((t) => t.map((e) => (e.status === "running" ? { ...e, status: "error" } : e)));
-        if (ev.code === "session_done") setPhase("ready");
         break;
       default:
         break;
@@ -106,7 +112,8 @@ export default function App() {
   };
 
   const send = async (text) => {
-    const continuing = phase === "asking";
+    const continuing = phase === "asking" || phase === "ready";
+    revisingRef.current = phase === "ready";
     if (!continuing) setTimeline([]);
     addMessage("user", text);
     setPhase("running");
@@ -117,12 +124,13 @@ export default function App() {
       addMessage("error", `서버에 연결하지 못했어요. 백엔드가 켜져 있는지 확인해 주세요. (${e.message})`);
       setTimeline((t) => t.map((x) => (x.status === "running" ? { ...x, status: "error" } : x)));
     } finally {
-      setPhase((p) => (p === "running" ? "idle" : p));
+      setPhase((p) => (p === "running" ? (revisingRef.current ? "ready" : "idle") : p));
     }
   };
 
   const reset = () => {
     sessionRef.current = null;
+    revisingRef.current = false;
     setMessages([GREETING]);
     setTimeline([]);
     setPhase("idle");
