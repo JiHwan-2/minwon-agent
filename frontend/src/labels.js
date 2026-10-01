@@ -4,6 +4,16 @@ export const NODE_LABEL = {
   plan: "처리 계획",
   check: "정보 판단",
   ask: "추가 질문",
+  act: "Tool 실행",
+};
+
+export const TOOL_SOURCE_LABEL = {
+  kakao: "카카오 API",
+  text_fallback: "대체 경로",
+  kb: "지식베이스",
+  "kb+region": "지식베이스+지역",
+  skipped: "건너뜀",
+  error: "실패",
 };
 
 export const ACTION_LABEL = {
@@ -31,6 +41,7 @@ export const SOURCE_LABEL = {
   rule: "규칙 엔진",
   rule_fallback: "대체 경로",
   system: "시스템",
+  tool: "Tool",
 };
 
 export const EXAMPLES = [

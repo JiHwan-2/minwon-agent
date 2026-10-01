@@ -1,4 +1,4 @@
-import { ACTION_LABEL, NODE_LABEL, SLOT_LABEL, SOURCE_LABEL, URGENCY_LABEL } from "../labels.js";
+import { ACTION_LABEL, NODE_LABEL, SLOT_LABEL, SOURCE_LABEL, TOOL_SOURCE_LABEL, URGENCY_LABEL } from "../labels.js";
 
 function SourceBadge({ log }) {
   if (!log) return null;
@@ -98,9 +98,44 @@ function AskBody({ entry }) {
   );
 }
 
+function ToolCall({ call }) {
+  const r = call.result;
+  const state = call.status === "running" ? "running" : r.ok ? (r.source === "text_fallback" ? "fallback" : "ok") : "fail";
+  const icon = { running: null, ok: "✓", fallback: "↪", fail: "!" }[state];
+  return (
+    <li className={`tool tool-${state}`}>
+      <span className="tool-icon">{icon ?? <span className="spinner" />}</span>
+      <div className="tool-main">
+        <div className="row">
+          <strong>{call.title}</strong>
+          {r && <span className={`badge ${state === "ok" ? "" : "badge-warn"}`}>{TOOL_SOURCE_LABEL[r.source] ?? r.source}</span>}
+          {r?.retries > 0 && <span className="small warn">재시도 {r.retries}회</span>}
+        </div>
+        <p className="small muted">입력: {call.input || "-"}</p>
+        {r ? <p className="small">→ {r.summary}</p> : <p className="small muted">호출 중…</p>}
+        {r?.error && <p className="small warn">{r.error}</p>}
+      </div>
+    </li>
+  );
+}
+
+function ActBody({ entry }) {
+  const tools = entry.tools ?? (entry.data?.tool_calls ?? []).map((result, i) => ({ id: i, title: result.title, input: result.input, status: "done", result }));
+  return (
+    <div className="body">
+      <ol className="tools">
+        {tools.map((call) => (
+          <ToolCall key={call.id} call={call} />
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 function Body({ entry }) {
   const d = entry.data ?? {};
   if (entry.node === "ask") return <AskBody entry={entry} />;
+  if (entry.node === "act") return <ActBody entry={entry} />;
   if (entry.status !== "done") return null;
   if (entry.node === "guard") return <GuardBody safety={d.safety} />;
   if (entry.node === "understand") return <UnderstandBody u={d.understanding} />;
@@ -126,7 +161,7 @@ export default function AgentLog({ timeline, running }) {
             <li>문제 분석</li>
             <li>처리 계획</li>
             <li>정보 판단 · 추가 질문</li>
-            <li className="muted">위치·기관 검색 (개발 중)</li>
+            <li>Tool 실행: 위치 확인 · 관할 기관 검색 · 담당 부서 조회</li>
             <li className="muted">민원 작성 · 검증 (개발 중)</li>
           </ol>
         </div>

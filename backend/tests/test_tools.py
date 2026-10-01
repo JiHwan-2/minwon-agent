@@ -21,7 +21,7 @@ def test_geocode_with_kakao_returns_admin_region(fake):
     assert loc["sigungu"] == "창원시 마산회원구"
     assert loc["dong"] == "합성1동" and loc["legal_dong"] == "합성동"
     assert loc["address"] == "경남 창원시 마산회원구 합성동로 30"
-    assert r["attempts"] == 2
+    assert r["retries"] == 0
 
 
 def test_geocode_falls_back_to_text_when_kakao_fails(monkeypatch):
@@ -32,7 +32,7 @@ def test_geocode_falls_back_to_text_when_kakao_fails(monkeypatch):
     r = geocode("마산회원구 합성초등학교 앞", "창원 합성동 학교 앞이 위험해요")
     assert r["ok"] and r["source"] == "text_fallback"
     assert r["data"]["sigungu"] == "창원시 마산회원구"
-    assert r["attempts"] == 2 and "ConnectTimeout" in r["error"]
+    assert r["retries"] == 1 and "ConnectTimeout" in r["error"]
 
 
 def test_geocode_without_api_key_uses_text(monkeypatch):

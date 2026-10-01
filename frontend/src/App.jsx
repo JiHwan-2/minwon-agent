@@ -48,9 +48,29 @@ export default function App() {
       case "node_start":
         setTimeline((t) => [...t, { id: nextId(), node: ev.node, status: "running" }]);
         break;
+      case "tool_start":
+        setTimeline((t) =>
+          t.map((e) =>
+            e.node === "act" && e.status === "running"
+              ? { ...e, tools: [...(e.tools ?? []), { id: nextId(), tool: ev.tool, title: ev.title, input: ev.input, status: "running" }] }
+              : e,
+          ),
+        );
+        break;
+      case "tool_end":
+        setTimeline((t) =>
+          t.map((e) => {
+            if (e.node !== "act" || !e.tools) return e;
+            const idx = e.tools.findLastIndex((x) => x.tool === ev.result.tool && x.status === "running");
+            if (idx === -1) return e;
+            const tools = e.tools.map((x, i) => (i === idx ? { ...x, status: "done", result: ev.result } : x));
+            return { ...e, tools };
+          }),
+        );
+        break;
       case "node_end": {
         const { log = [], ...data } = ev.data;
-        finishEntry(ev.node, { data, log: log[0] });
+        finishEntry(ev.node, { data, log: log[0], logs: log });
         if (ev.node === "guard" && data.safety?.emergency) addMessage("alert", EMERGENCY_TEXT);
         if (ev.node === "understand") {
           const u = data.understanding;
@@ -70,7 +90,9 @@ export default function App() {
         setPhase("ready");
         const facts = ev.info.facts.map((f) => `${SLOT_LABEL[f.slot] ?? f.slot}: ${f.value}`);
         const unknown = ev.info.unknown.map((s) => SLOT_LABEL[s] ?? s);
-        addMessage("agent", "필요한 정보를 정리했어요.", { facts, unknown, nextStep: true });
+        addMessage("agent", "필요한 정보를 정리했어요.", { facts, unknown });
+        const where = ev.location?.address ? `${ev.location.address} 기준으로 ` : "";
+        addMessage("agent", `${where}담당 기관을 찾았어요.`, { agencies: ev.agencies, nextStep: true });
         break;
       }
       case "error":

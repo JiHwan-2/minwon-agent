@@ -188,8 +188,8 @@ def act(state: AgentState) -> dict:
     logs = []
     for c in calls:
         detail = c["summary"]
-        if c["attempts"] > 1:
-            detail += f" (재시도 {c['attempts'] - 1}회)"
+        if c["retries"]:
+            detail += f" (재시도 {c['retries']}회)"
         if c["error"]:
             detail += f" — {c['error']}"
         source = "rule_fallback" if c["source"] in ("text_fallback", "error") else "tool"

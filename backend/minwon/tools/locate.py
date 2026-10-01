@@ -11,14 +11,15 @@ def _empty_location(query: str) -> dict:
 
 
 def _from_kakao(query: str) -> tuple[dict | None, int]:
-    attempts = 0
+    """(위치, 재시도 횟수). 요청마다 시도 횟수 - 1 이 재시도 횟수다."""
+    retries = 0
     docs, n = kakao.keyword(query)
-    attempts += n
+    retries += n - 1
     if not docs:
         docs, n = kakao.address(query)
-        attempts += n
+        retries += n - 1
     if not docs:
-        return None, attempts
+        return None, retries
 
     doc = docs[0]
     road = doc.get("road_address") or {}
@@ -29,36 +30,36 @@ def _from_kakao(query: str) -> tuple[dict | None, int]:
         "y": doc["y"],
     }
     regs, n = kakao.region(doc["x"], doc["y"])
-    attempts += n
+    retries += n - 1
     admin = next((r for r in regs if r.get("region_type") == "H"), None)
     legal = next((r for r in regs if r.get("region_type") == "B"), None)
     if admin:
         loc |= {"sido": admin["region_1depth_name"], "sigungu": admin["region_2depth_name"], "dong": admin["region_3depth_name"]}
     if legal:
         loc["legal_dong"] = legal["region_3depth_name"]
-    return loc, attempts
+    return loc, retries
 
 
 def geocode(query: str, context_text: str = "") -> dict:
     """장소 표현 → 주소·좌표·행정구역. 카카오 실패 시 문장에서 지역명을 추출하는 대체 경로."""
-    attempts, reason = 0, ""
+    retries, reason = 0, ""
     if query.strip():
         try:
-            loc, attempts = _from_kakao(query)
+            loc, retries = _from_kakao(query)
             if loc:
                 where = " ".join(v for v in (loc["sigungu"], loc["dong"]) if v)
-                return tool_result("geocode", True, "kakao", f"{loc['address']} ({where})", loc, attempts)
+                return tool_result("geocode", True, "kakao", f"{loc['address']} ({where})", loc, retries)
             reason = "카카오 검색 결과 없음"
         except kakao.KakaoError as e:
-            attempts, reason = e.attempts, str(e)
+            retries, reason = max(e.attempts - 1, 0), str(e)
     else:
         reason = "위치 검색어 없음"
 
     region = regions.parse(f"{query} {context_text}")
     loc = _empty_location(query) | region | {"address": " ".join(v for v in region.values() if v)}
     if region["sigungu"]:
-        return tool_result("geocode", True, "text_fallback", f"문장에서 지역 추출: {loc['address']}", loc, attempts, reason)
-    return tool_result("geocode", False, "text_fallback", "위치를 특정하지 못함", loc, attempts, reason)
+        return tool_result("geocode", True, "text_fallback", f"문장에서 지역 추출: {loc['address']}", loc, retries, reason)
+    return tool_result("geocode", False, "text_fallback", "위치를 특정하지 못함", loc, retries, reason)
 
 
 def _places(docs: list[dict]) -> list[dict]:
@@ -84,21 +85,23 @@ def find_nearby(kind: str, location: dict) -> dict:
     near = {"x": location["x"], "y": location["y"], "sort": "distance"}
     try:
         if kind == "police":
-            docs, attempts = kakao.keyword("경찰서", size=10, radius=10000, **near)
+            docs, n = kakao.keyword("경찰서", size=10, radius=10000, **near)
+            retries = n - 1
             places = [p for p in _places(docs) if p["name"].endswith("경찰서")]
         else:
             dong = location.get("dong", "")
-            docs, attempts = kakao.keyword(f"{location.get('sigungu', '')} {dong} 행정복지센터".strip(), size=3, **near)
+            docs, n = kakao.keyword(f"{location.get('sigungu', '')} {dong} 행정복지센터".strip(), size=3, **near)
+            retries = n - 1
             places = [p for p in _places(docs) if dong and dong in p["name"]]
             if not places:
                 docs, n = kakao.keyword("행정복지센터", size=3, radius=3000, **near)
-                attempts += n
+                retries += n - 1
                 places = _places(docs)
     except kakao.KakaoError as e:
-        return tool_result(tool, False, "error", f"{label} 검색 실패 → 일반 안내로 대체", [], e.attempts, str(e))
+        return tool_result(tool, False, "error", f"{label} 검색 실패 → 일반 안내로 대체", [], max(e.attempts - 1, 0), str(e))
 
     if not places:
-        return tool_result(tool, False, "kakao", f"주변에서 {label}을 찾지 못함", [], attempts)
+        return tool_result(tool, False, "kakao", f"주변에서 {label}을 찾지 못함", [], retries)
     top = places[0]
     distance = f", {top['distance_m']}m" if top["distance_m"] is not None else ""
-    return tool_result(tool, True, "kakao", f"{top['name']}{distance}", places[:3], attempts)
+    return tool_result(tool, True, "kakao", f"{top['name']}{distance}", places[:3], retries)
