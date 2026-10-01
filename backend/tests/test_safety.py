@@ -25,8 +25,11 @@ def test_detects_emergency_and_injection():
 
 def test_rule_classification_and_location():
     assert classify("학교 앞 횡단보도가 너무 위험해요") == "traffic_safety"
+    assert classify("창원 초등학교 정문 앞 차들이 너무 빨라요") == "traffic_safety"
     assert classify("밤마다 윗집 쿵쿵 소리가 시끄러워요") == "noise"
     assert classify("오늘 날씨가 좋네요") == "other"
     assert find_location("창원시 마산회원구 합성동 합성초등학교 정문 앞") == "창원시 마산회원구 합성동 합성초등학교"
+    assert find_location("학교 앞이 위험해요 창원 초등학교 정문 앞이에요") == "창원 초등학교"
+    assert find_location("학교 앞인데 합성초등학교예요") == "합성초등학교"
     assert find_location("하수구 냄새가 나요") == ""
     assert find_location("놀이기구 그네가 부서졌어요") == ""

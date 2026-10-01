@@ -29,85 +29,234 @@
     "traffic_safety": {
       "label": "교통안전시설",
       "examples": "횡단보도·신호등·과속방지턱·어린이보호구역",
-      "keywords": ["횡단보도", "신호등", "신호", "과속", "방지턱", "스쿨존", "어린이보호구역", "건널목", "교차로", "차가 빨리", "쌩쌩", "사고 날"],
-      "required": ["location", "detail", "time"],
-      "nearby": ["police"]
+      "keywords": [
+        "횡단보도",
+        "신호등",
+        "신호",
+        "과속",
+        "방지턱",
+        "스쿨존",
+        "어린이보호구역",
+        "건널목",
+        "교차로",
+        "차가 빨리",
+        "쌩쌩",
+        "사고 날",
+        "빨라",
+        "빨리 달",
+        "속도",
+        "달려",
+        "보행자",
+        "건너기"
+      ],
+      "required": [
+        "location",
+        "detail",
+        "time"
+      ],
+      "nearby": [
+        "police"
+      ]
     },
     "illegal_parking": {
       "label": "불법 주정차",
       "examples": "인도·소화전·버스정류장·횡단보도 주차",
-      "keywords": ["주차", "주정차", "불법주차", "소화전", "막아", "세워"],
-      "required": ["location", "time", "target"],
+      "keywords": [
+        "주차",
+        "주정차",
+        "불법주차",
+        "소화전",
+        "막아",
+        "세워"
+      ],
+      "required": [
+        "location",
+        "time",
+        "target"
+      ],
       "nearby": []
     },
     "road_damage": {
       "label": "도로·보도 파손",
       "examples": "포트홀·보도블록·맨홀",
-      "keywords": ["포트홀", "구멍", "파손", "보도블록", "깨진", "움푹", "싱크홀", "맨홀", "울퉁불퉁"],
-      "required": ["location", "detail"],
+      "keywords": [
+        "포트홀",
+        "구멍",
+        "파손",
+        "보도블록",
+        "깨진",
+        "움푹",
+        "싱크홀",
+        "맨홀",
+        "울퉁불퉁"
+      ],
+      "required": [
+        "location",
+        "detail"
+      ],
       "nearby": []
     },
     "street_light": {
       "label": "가로등·보안등 고장",
       "examples": "꺼진 가로등·깜빡이는 보안등",
-      "keywords": ["가로등", "보안등", "불이 꺼", "어두", "깜빡", "조명"],
-      "required": ["location", "time"],
-      "nearby": ["community_center"]
+      "keywords": [
+        "가로등",
+        "보안등",
+        "불이 꺼",
+        "어두",
+        "깜빡",
+        "조명"
+      ],
+      "required": [
+        "location",
+        "time"
+      ],
+      "nearby": [
+        "community_center"
+      ]
     },
     "noise": {
       "label": "소음",
       "examples": "공사장·영업장·층간소음",
-      "keywords": ["소음", "시끄", "공사", "층간", "쿵쿵", "음악", "진동", "확성기"],
-      "required": ["location", "time", "frequency", "target"],
+      "keywords": [
+        "소음",
+        "시끄",
+        "공사",
+        "층간",
+        "쿵쿵",
+        "음악",
+        "진동",
+        "확성기"
+      ],
+      "required": [
+        "location",
+        "time",
+        "frequency",
+        "target"
+      ],
       "nearby": []
     },
     "garbage": {
       "label": "쓰레기 무단투기·수거",
       "examples": "무단투기·미수거·대형폐기물",
-      "keywords": ["쓰레기", "무단투기", "수거", "분리수거", "폐기물", "버려"],
-      "required": ["location", "frequency"],
-      "nearby": ["community_center"]
+      "keywords": [
+        "쓰레기",
+        "무단투기",
+        "수거",
+        "분리수거",
+        "폐기물",
+        "버려"
+      ],
+      "required": [
+        "location",
+        "frequency"
+      ],
+      "nearby": [
+        "community_center"
+      ]
     },
     "pollution": {
       "label": "환경오염",
       "examples": "악취·매연·비산먼지·하천오염",
-      "keywords": ["악취", "냄새", "매연", "연기", "폐수", "하천", "오염", "먼지"],
-      "required": ["location", "time", "frequency"],
+      "keywords": [
+        "악취",
+        "냄새",
+        "매연",
+        "연기",
+        "폐수",
+        "하천",
+        "오염",
+        "먼지"
+      ],
+      "required": [
+        "location",
+        "time",
+        "frequency"
+      ],
       "nearby": []
     },
     "park_facility": {
       "label": "공원·놀이터 시설",
       "examples": "놀이기구·벤치·운동기구 파손",
-      "keywords": ["공원", "놀이터", "놀이기구", "벤치", "운동기구", "그네", "미끄럼틀"],
-      "required": ["location", "detail"],
+      "keywords": [
+        "공원",
+        "놀이터",
+        "놀이기구",
+        "벤치",
+        "운동기구",
+        "그네",
+        "미끄럼틀"
+      ],
+      "required": [
+        "location",
+        "detail"
+      ],
       "nearby": []
     },
     "animal": {
       "label": "동물 관련",
       "examples": "유기동물·로드킬·들개",
-      "keywords": ["유기견", "유기묘", "들개", "로드킬", "동물 사체", "개가", "고양이"],
-      "required": ["location", "time", "detail"],
+      "keywords": [
+        "유기견",
+        "유기묘",
+        "들개",
+        "로드킬",
+        "동물 사체",
+        "개가",
+        "고양이"
+      ],
+      "required": [
+        "location",
+        "time",
+        "detail"
+      ],
       "nearby": []
     },
     "public_transport": {
       "label": "대중교통",
       "examples": "버스 배차·무정차·정류장 시설",
-      "keywords": ["버스", "정류장", "배차", "무정차", "기사님", "택시", "승차거부"],
-      "required": ["time", "target", "detail"],
+      "keywords": [
+        "버스",
+        "정류장",
+        "배차",
+        "무정차",
+        "기사님",
+        "택시",
+        "승차거부"
+      ],
+      "required": [
+        "time",
+        "target",
+        "detail"
+      ],
       "nearby": []
     },
     "water_sewer": {
       "label": "상·하수도",
       "examples": "누수·하수구 막힘·역류",
-      "keywords": ["누수", "수도", "물이 새", "하수구", "배수", "역류", "침수"],
-      "required": ["location", "detail"],
+      "keywords": [
+        "누수",
+        "수도",
+        "물이 새",
+        "하수구",
+        "배수",
+        "역류",
+        "침수"
+      ],
+      "required": [
+        "location",
+        "detail"
+      ],
       "nearby": []
     },
     "other": {
       "label": "기타 생활불편",
       "examples": "위 유형에 해당하지 않는 불편",
       "keywords": [],
-      "required": ["location", "detail"],
+      "required": [
+        "location",
+        "detail"
+      ],
       "nearby": []
     }
   }

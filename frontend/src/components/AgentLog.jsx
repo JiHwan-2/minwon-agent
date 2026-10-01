@@ -181,10 +181,27 @@ function ReviewBody({ review }) {
   );
 }
 
+function ConfirmBody({ entry }) {
+  if (entry.status === "waiting") {
+    return (
+      <div className="body">
+        <p className="muted">후보 {entry.data?.options?.length ?? 0}곳 중 사용자가 고르기를 기다리는 중</p>
+      </div>
+    );
+  }
+  return (
+    <div className="body">
+      <p className="small">{entry.log?.detail}</p>
+      {entry.tools?.length > 0 && <ActBody entry={entry} />}
+    </div>
+  );
+}
+
 function Body({ entry }) {
   const d = entry.data ?? {};
   if (entry.node === "ask") return <AskBody entry={entry} />;
-  if (entry.node === "act") return <ActBody entry={entry} />;
+  if (entry.node === "confirm_location") return <ConfirmBody entry={entry} />;
+  if (entry.node === "act" || entry.node === "locate") return <ActBody entry={entry} />;
   if (entry.status !== "done") return null;
   if (entry.node === "decide") return <DecideBody decision={d.decision} />;
   if (entry.node === "draft") return <DraftBody entry={entry} />;

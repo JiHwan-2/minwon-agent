@@ -7,48 +7,84 @@ NEARBY_LABEL = {"police": "관할 경찰서", "community_center": "행정복지�
 
 def _empty_location(query: str) -> dict:
     return {"query": query, "place_name": "", "address": "", "x": "", "y": "",
-            "sido": "", "sigungu": "", "dong": "", "legal_dong": ""}
+            "sido": "", "sigungu": "", "dong": "", "legal_dong": "", "ambiguous": False, "candidates": []}
 
 
-def _from_kakao(query: str) -> tuple[dict | None, int]:
-    """(위치, 재시도 횟수). 요청마다 시도 횟수 - 1 이 재시도 횟수다."""
-    retries = 0
-    docs, n = kakao.keyword(query)
-    retries += n - 1
-    if not docs:
-        docs, n = kakao.address(query)
-        retries += n - 1
-    if not docs:
-        return None, retries
-
-    doc = docs[0]
+def _candidate(doc: dict) -> dict:
     road = doc.get("road_address") or {}
-    loc = _empty_location(query) | {
-        "place_name": doc.get("place_name", ""),
+    return {
+        "name": doc.get("place_name") or "",
         "address": doc.get("road_address_name") or road.get("address_name") or doc.get("address_name", ""),
+        "lot_address": doc.get("address_name", ""),
         "x": doc["x"],
         "y": doc["y"],
     }
-    regs, n = kakao.region(doc["x"], doc["y"])
-    retries += n - 1
+
+
+def _with_region(candidate: dict, query: str) -> tuple[dict, int]:
+    """후보 하나를 좌표→행정구역으로 확정한다. (위치, 재시도 횟수)"""
+    loc = _empty_location(query) | {k: candidate[k] for k in ("x", "y", "address")} | {"place_name": candidate["name"]}
+    regs, n = kakao.region(candidate["x"], candidate["y"])
     admin = next((r for r in regs if r.get("region_type") == "H"), None)
     legal = next((r for r in regs if r.get("region_type") == "B"), None)
     if admin:
         loc |= {"sido": admin["region_1depth_name"], "sigungu": admin["region_2depth_name"], "dong": admin["region_3depth_name"]}
     if legal:
         loc["legal_dong"] = legal["region_3depth_name"]
-    return loc, retries
+    return loc, n - 1
+
+
+def _search(query: str, context_text: str) -> tuple[list[dict], int]:
+    """카카오 검색 후보 최대 5개. 사용자가 말한 시·군 안의 결과를 우선한다. (후보, 재시도 횟수)"""
+    docs, n = kakao.keyword(query, size=5)
+    retries = n - 1
+    if not docs:
+        docs, n = kakao.address(query)
+        retries += n - 1
+    candidates = [_candidate(d) for d in docs]
+    city = regions.city_name(regions.parse(f"{query} {context_text}")["sigungu"])
+    in_city = [c for c in candidates if city and city in f"{c['address']} {c['lot_address']}"]
+    return (in_city or candidates), retries
+
+
+def _is_ambiguous(query: str, candidates: list[dict]) -> bool:
+    if len(candidates) < 2:
+        return False
+    if not regions.is_specific_place(query):
+        return True
+    same_name = [c for c in candidates if c["name"] and c["name"] == candidates[0]["name"]]
+    return len(same_name) > 1
+
+
+def resolve_candidate(candidate: dict, query: str) -> dict:
+    """사용자가 고른 후보를 행정구역까지 확정한다."""
+    try:
+        loc, retries = _with_region(candidate, query)
+    except kakao.KakaoError as e:
+        loc = _empty_location(query) | {k: candidate[k] for k in ("x", "y", "address")} | {"place_name": candidate["name"]}
+        loc |= regions.parse(candidate["lot_address"] or candidate["address"])
+        return tool_result("geocode", True, "text_fallback", f"선택한 위치: {loc['address']}", loc, max(e.attempts - 1, 0), str(e))
+    where = " ".join(v for v in (loc["sigungu"], loc["dong"]) if v)
+    return tool_result("geocode", True, "kakao", f"선택한 위치: {loc['address']} ({where})", loc, retries)
 
 
 def geocode(query: str, context_text: str = "") -> dict:
-    """장소 표현 → 주소·좌표·행정구역. 카카오 실패 시 문장에서 지역명을 추출하는 대체 경로."""
+    """장소 표현 → 주소·좌표·행정구역. 후보가 여러 곳이면 ambiguous로 표시해 사용자 확인을 받게 한다.
+    카카오 실패 시 문장에서 지역명을 추출하는 대체 경로."""
     retries, reason = 0, ""
     if query.strip():
         try:
-            loc, retries = _from_kakao(query)
-            if loc:
+            candidates, retries = _search(query, context_text)
+            if candidates:
+                loc, more = _with_region(candidates[0], query)
+                retries += more
+                ambiguous = _is_ambiguous(query, candidates)
+                loc |= {"ambiguous": ambiguous, "candidates": candidates}
                 where = " ".join(v for v in (loc["sigungu"], loc["dong"]) if v)
-                return tool_result("geocode", True, "kakao", f"{loc['address']} ({where})", loc, retries)
+                summary = f"{loc['address']} ({where})"
+                if ambiguous:
+                    summary = f"후보 {len(candidates)}곳 — 사용자 확인 필요 (1순위: {candidates[0]['name'] or loc['address']})"
+                return tool_result("geocode", True, "kakao", summary, loc, retries)
             reason = "카카오 검색 결과 없음"
         except kakao.KakaoError as e:
             retries, reason = max(e.attempts - 1, 0), str(e)

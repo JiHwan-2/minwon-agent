@@ -25,9 +25,9 @@ sessions: set[str] = set()
 
 SNAPSHOT_KEYS = (
     "safety", "understanding", "plan", "info", "dialogue", "location", "nearby", "agencies",
-    "tool_calls", "decision", "package", "review", "log",
+    "tool_calls", "decision", "package", "review", "location_confirmed", "log",
 )
-RESULT_KEYS = ("info", "location", "agencies", "decision", "package", "review")
+RESULT_KEYS = ("info", "location", "location_confirmed", "agencies", "decision", "package", "review")
 
 
 class MessageIn(BaseModel):
@@ -44,10 +44,11 @@ def _config(session_id: str) -> dict:
     return {"configurable": {"thread_id": session_id}}
 
 
-def _pending_questions(snapshot) -> list[dict] | None:
+def _pending(snapshot) -> dict | None:
+    """멈춰 있는 질문 (questions, 위치 후보를 고를 때는 options 포함)."""
     for task in snapshot.tasks:
         if task.interrupts:
-            return task.interrupts[0].value["questions"]
+            return task.interrupts[0].value
     return None
 
 
@@ -72,9 +73,9 @@ def create_session():
 @app.get("/api/sessions/{session_id}")
 def get_session(session_id: str):
     snapshot = graph.get_state(_config(session_id))
-    questions = _pending_questions(snapshot)
-    status = "asking" if questions else ("ready" if snapshot.values else "new")
-    return {"status": status, "questions": questions, **{k: snapshot.values.get(k) for k in SNAPSHOT_KEYS}}
+    pending = _pending(snapshot)
+    status = "asking" if pending else ("ready" if snapshot.values else "new")
+    return {"status": status, "pending": pending, **{k: snapshot.values.get(k) for k in SNAPSHOT_KEYS}}
 
 
 def _run(session_id: str, text: str) -> Iterator[str]:
@@ -84,7 +85,7 @@ def _run(session_id: str, text: str) -> Iterator[str]:
         yield _event(type="masked", text=masked.text, findings=masked.findings)
 
     snapshot = graph.get_state(config)
-    if _pending_questions(snapshot):
+    if _pending(snapshot):
         graph_input = Command(resume={"text": masked.text, "pii": masked.findings})
     elif snapshot.values.get("package"):
         graph_input = revision_input(masked.text)
@@ -110,8 +111,8 @@ def _run(session_id: str, text: str) -> Iterator[str]:
         return
 
     snapshot = graph.get_state(config)
-    if questions := _pending_questions(snapshot):
-        yield _event(type="ask", questions=questions)
+    if pending := _pending(snapshot):
+        yield _event(type="ask", questions=pending["questions"], options=pending.get("options", []))
     else:
         yield _event(type="ready", **{k: snapshot.values.get(k) for k in RESULT_KEYS})
 

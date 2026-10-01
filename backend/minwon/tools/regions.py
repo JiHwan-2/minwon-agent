@@ -46,6 +46,48 @@ def parse(text: str) -> dict:
     return result
 
 
+LANDMARK_SUFFIXES = sorted([
+    "초등학교", "중학교", "고등학교", "대학교", "학교", "어린이집", "유치원", "아파트", "빌라", "오피스텔",
+    "공원", "놀이터", "시장", "사거리", "삼거리", "오거리", "교차로", "정류장", "터미널", "병원", "마트",
+    "도서관", "체육관", "주민센터", "행정복지센터", "우체국", "상가", "빌딩", "교회", "성당",
+], key=len, reverse=True)
+GENERIC_PREFIX = {"우리", "저희", "동네", "근처", "집", "옆", "앞", "그", "이", "저", "한"}
+TRAILING = ("에서는", "에서", "까지", "부터", "에는", "앞에", "옆에", "근처", "정문", "후문", "앞", "옆", "쪽",
+            "에", "의", "이", "가", "은", "는", "을", "를", "도")
+ROAD_ADDRESS = re.compile(r"[가-힣0-9]+(?:로|길)\s?\d+(?:-\d+)?")
+LOT_ADDRESS = re.compile(r"[가-힣]+\d?동\s?\d+(?:-\d+)?")
+NOT_DONG = {"이동", "운동", "행동", "활동", "자동", "공동", "작동", "출동", "감동", "노동", "충동", "변동",
+            "정면", "측면", "방면", "화면", "표면", "전면", "후면", "반면", "라면"}
+DONG_TOKEN = re.compile(r"^[가-힣]{1,6}\d?(?:동|읍|면)$")
+
+
+def _strip_token(token: str) -> str:
+    changed = True
+    while changed and token:
+        changed = False
+        for ending in TRAILING:
+            if token.endswith(ending) and len(token) > len(ending):
+                token, changed = token[: -len(ending)], True
+                break
+    return token
+
+
+def is_specific_place(text: str) -> bool:
+    """위치 표현이 한 곳을 가리킬 만큼 구체적인지. '창원 초등학교'·'우리 아파트'처럼 이름 없는 장소는 False."""
+    if ROAD_ADDRESS.search(text) or LOT_ADDRESS.search(text):
+        return True
+    for raw in text.split():
+        token = _strip_token(raw)
+        suffix = next((s for s in LANDMARK_SUFFIXES if token.endswith(s)), None)
+        if suffix:
+            prefix = token[: -len(suffix)]
+            if prefix and prefix not in GENERIC_PREFIX:
+                return True
+        elif DONG_TOKEN.match(token) and token not in NOT_DONG:
+            return True
+    return False
+
+
 def office_name(sigungu: str) -> str:
     """'창원시 마산회원구' → '창원시 마산회원구청', '함안군' → '함안군청'"""
     return f"{sigungu}청" if sigungu else "관할 시·군·구청"

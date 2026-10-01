@@ -3,6 +3,7 @@
 import re
 
 from minwon import knowledge
+from minwon.tools import regions
 from minwon.agent.schemas import (
     Critique,
     Decision,
@@ -26,7 +27,7 @@ REGIONS = [
 DISTRICT = re.compile(r"[가-힣]{2,5}(?:시|군|구|동|읍)(?=\s|$|[,.에의])")
 NOT_DISTRICT = {"하수구", "배수구", "출입구", "비상구", "환기구", "통풍구", "놀이기구", "운동기구", "공동", "자동"}
 LANDMARK = re.compile(
-    r"[가-힣A-Za-z0-9]+(?:초등학교|중학교|고등학교|대학교|학교|아파트|빌라|역|공원|시장|사거리|삼거리|"
+    r"[가-힣A-Za-z0-9]*(?:초등학교|중학교|고등학교|대학교|학교|아파트|빌라|공원|놀이터|시장|사거리|삼거리|"
     r"오거리|교차로|정류장|병원|마트|주민센터|행정복지센터|도서관|체육관|상가|빌딩)"
 )
 ROAD_ADDRESS = re.compile(r"[가-힣0-9]+(?:로|길)\s?\d+(?:-\d+)?")
@@ -53,8 +54,11 @@ def classify(text: str) -> str:
 def find_location(text: str) -> str:
     parts = [r for r in REGIONS if r in text][:1]
     parts += [d for d in DISTRICT.findall(text) if d not in NOT_DISTRICT][:3]
-    if m := (LANDMARK.search(text) or ROAD_ADDRESS.search(text)):
-        parts.append(m.group(0))
+    landmarks = [m.group(0) for m in LANDMARK.finditer(text)]
+    named = [lm for lm in landmarks if regions.is_specific_place(lm)]
+    generic = max(landmarks, key=len) if landmarks else None  # '학교'보다 '초등학교'
+    if place := (named[0] if named else None) or next(iter(ROAD_ADDRESS.findall(text)), None) or generic:
+        parts.append(place)
     return " ".join(dict.fromkeys(p for p in parts if not any(p != q and p in q for q in parts)))
 
 
@@ -116,8 +120,13 @@ class RuleBrain:
         for i, turn in enumerate(dialogue):
             if turn["role"] == "agent" and i + 1 < len(dialogue):
                 answer = dialogue[i + 1]["text"]
-                for slot in turn.get("slots", []):
-                    if slot not in facts and (len(answer) >= 2 or UNKNOWN.match(answer)):
+                slots = turn.get("slots", [])
+                for slot in slots:
+                    if slot in facts:
+                        continue
+                    # '모름'은 확인된 답으로 본다. 질문이 하나뿐이면 답 전체가 그 항목의 답이다.
+                    # 여러 개를 물었는데 그 항목 표현이 없으면 지어내지 않고 미확인으로 남긴다.
+                    if UNKNOWN.match(answer) or (len(slots) == 1 and len(answer) >= 2):
                         facts[slot] = answer
         questions = []
         if ctx["can_ask"]:

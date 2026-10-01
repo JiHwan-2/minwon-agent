@@ -50,18 +50,16 @@ export default function App() {
         setTimeline((t) => [...t, { id: nextId(), node: ev.node, status: "running" }]);
         break;
       case "tool_start":
-        setTimeline((t) =>
-          t.map((e) =>
-            e.node === "act" && e.status === "running"
-              ? { ...e, tools: [...(e.tools ?? []), { id: nextId(), tool: ev.tool, title: ev.title, input: ev.input, status: "running" }] }
-              : e,
-          ),
-        );
+        setTimeline((t) => {
+          const idx = t.findLastIndex((e) => e.node === ev.node && e.status !== "done");
+          const call = { id: nextId(), tool: ev.tool, title: ev.title, input: ev.input, status: "running" };
+          return t.map((e, i) => (i === idx ? { ...e, tools: [...(e.tools ?? []), call] } : e));
+        });
         break;
       case "tool_end":
         setTimeline((t) =>
           t.map((e) => {
-            if (e.node !== "act" || !e.tools) return e;
+            if (e.node !== ev.node || !e.tools) return e;
             const idx = e.tools.findLastIndex((x) => x.tool === ev.result.tool && x.status === "running");
             if (idx === -1) return e;
             const tools = e.tools.map((x, i) => (i === idx ? { ...x, status: "done", result: ev.result } : x));
@@ -82,19 +80,33 @@ export default function App() {
         }
         break;
       }
-      case "ask":
+      case "ask": {
         setPhase("asking");
-        setTimeline((t) => [...t, { id: nextId(), node: "ask", status: "waiting", data: { questions: ev.questions } }]);
-        addMessage("agent", "정확히 안내하려면 몇 가지가 더 필요해요. 한 번에 이어서 답해 주세요.", { questions: ev.questions });
+        const choosing = ev.options.length > 0;
+        const node = choosing ? "confirm_location" : "ask";
+        setTimeline((t) => [...t, { id: nextId(), node, status: "waiting", data: { questions: ev.questions, options: ev.options } }]);
+        addMessage(
+          "agent",
+          choosing ? "위치를 정확히 하려고 해요." : "정확히 안내하려면 몇 가지가 더 필요해요. 한 번에 이어서 답해 주세요.",
+          { questions: ev.questions, options: ev.options },
+        );
         break;
+      }
       case "ready": {
         setPhase("ready");
-        const result = { pkg: ev.package, decision: ev.decision, review: ev.review };
+        const result = { pkg: ev.package, decision: ev.decision, review: ev.review, locationConfirmed: ev.location_confirmed !== false };
         if (revisingRef.current) {
           addMessage("agent", `요청하신 내용을 반영해 다시 썼어요. (${ev.package.version}번째 초안)`, result);
           break;
         }
-        const facts = ev.info.facts.map((f) => `${SLOT_LABEL[f.slot] ?? f.slot}: ${f.value}`);
+        const loc = ev.location ?? {};
+        const confirmedPlace = loc.address ? `${loc.place_name ? `${loc.place_name} · ` : ""}${loc.address}` : "";
+        const facts = ev.info.facts.map((f) =>
+          f.slot === "location" && confirmedPlace
+            ? `${SLOT_LABEL.location}: ${confirmedPlace}`
+            : `${SLOT_LABEL[f.slot] ?? f.slot}: ${f.value}`,
+        );
+        if (confirmedPlace && !ev.info.facts.some((f) => f.slot === "location")) facts.unshift(`${SLOT_LABEL.location}: ${confirmedPlace}`);
         const unknown = ev.info.unknown.map((s) => SLOT_LABEL[s] ?? s);
         addMessage("agent", "필요한 정보를 정리했어요.", { facts, unknown });
         const where = ev.location?.address ? `${ev.location.address} 기준으로 ` : "";
@@ -159,7 +171,7 @@ export default function App() {
       </header>
 
       <main className="layout">
-        <Chat messages={messages} phase={phase} onSend={send} />
+        <Chat messages={messages} phase={phase} onSend={send} latestId={messages[messages.length - 1]?.id} />
         <AgentLog timeline={timeline} running={phase === "running"} />
       </main>
     </div>

@@ -8,8 +8,11 @@ from minwon import knowledge, safety
 from minwon.agent.brain import get_brain
 from minwon.agent.state import AgentState
 from minwon.settings import settings
+from minwon.tools import regions
 from minwon.tools.kb import kb_lookup
-from minwon.tools.locate import NEARBY_LABEL, find_nearby, geocode
+from minwon.tools.locate import NEARBY_LABEL, find_nearby, geocode, resolve_candidate
+
+MAX_CONFIRM_ROUNDS = 2
 
 TOOL_TITLE = {"geocode": "위치 확인", "kb_lookup": "담당 부서·절차 조회"}
 SOURCE_DETAIL = {
@@ -140,6 +143,16 @@ def check(state: AgentState) -> dict:
         result["questions"] = []
     result["questions"] = [q for q in result["questions"] if q["slot"] not in ctx["asked"]][:3]
 
+    # 이름 없는 장소('창원 초등학교', '우리 아파트')는 위치가 확인된 것으로 보지 않고 한 번 더 묻는다
+    location_text = next((f["value"] for f in result["facts"] if f["slot"] == "location"), "") or result["location_query"]
+    vague = bool(location_text) and not regions.is_specific_place(location_text)
+    if vague and ctx["can_ask"] and "location" not in ctx["asked"] and "location" in ctx["required_info"]:
+        question = {"slot": "location", "text": f"말씀하신 '{location_text}'만으로는 정확한 곳을 찾기 어려워요. "
+                    "장소 이름(예: ○○초등학교), 동 이름, 또는 도로명 주소를 알려 주세요."}
+        result["questions"] = [question, *[q for q in result["questions"] if q["slot"] != "location"]][:3]
+        result["facts"] = [f for f in result["facts"] if f["slot"] != "location"]
+    result["location_vague"] = vague
+
     known = {f["slot"] for f in result["facts"]}
     result["unknown"] = [s for s in ctx["required_info"] if s not in known]
     if result["questions"]:
@@ -152,40 +165,23 @@ def check(state: AgentState) -> dict:
 
 
 def route_after_check(state: AgentState) -> str:
-    return "ask" if state["info"]["questions"] else "act"
+    if state["info"]["questions"]:
+        return "ask"
+    actions = {s["action"] for s in state["plan"]["steps"]}
+    return "locate" if "geocode" in actions else "act"
 
 
-def act(state: AgentState) -> dict:
-    """Tool Use: 계획에 적힌 Tool을 순서대로 실행한다. 실패하면 재시도·대체 경로로 이어 간다."""
-    _started("act")
+def _run_tool(node: str, calls: list[dict], tool: str, input_text: str, fn, *args) -> dict:
+    """Tool 하나를 실행하고 시작·결과를 화면으로 실시간 전송한다."""
     writer = get_stream_writer()
-    plan = state["plan"]
-    actions = [s["action"] for s in plan["steps"]]
-    facts = {f["slot"]: f["value"] for f in state["info"]["facts"]}
-    query = state["info"]["location_query"] or facts.get("location", "")
-    context_text = " ".join(d["text"] for d in state["dialogue"] if d["role"] == "user")
+    writer({"node": node, "status": "tool_start", "tool": tool, "title": _tool_title(tool), "input": input_text})
+    result = fn(*args) | {"title": _tool_title(tool), "input": input_text}
+    writer({"node": node, "status": "tool_end", "result": result})
+    calls.append(result)
+    return result
 
-    calls: list[dict] = []
-    location: dict = {}
-    nearby: dict[str, list[dict]] = {}
 
-    def run(tool: str, input_text: str, fn, *args) -> dict:
-        writer({"node": "act", "status": "tool_start", "tool": tool, "title": _tool_title(tool), "input": input_text})
-        result = fn(*args) | {"title": _tool_title(tool), "input": input_text}
-        writer({"node": "act", "status": "tool_end", "result": result})
-        calls.append(result)
-        return result
-
-    if "geocode" in actions:
-        location = run("geocode", query or "(위치 표현 없음)", geocode, query, context_text)["data"]
-
-    if "find_nearby" in actions:
-        for kind in plan["nearby_kinds"]:
-            nearby[kind] = run(f"find_nearby:{kind}", location.get("address", ""), find_nearby, kind, location)["data"]
-
-    agencies = run("kb_lookup", state["understanding"]["category_label"], kb_lookup,
-                   state["understanding"]["category"], location, nearby)["data"]
-
+def _tool_logs(node: str, calls: list[dict]) -> list[dict]:
     logs = []
     for c in calls:
         detail = c["summary"]
@@ -194,9 +190,86 @@ def act(state: AgentState) -> dict:
         if c["error"]:
             detail += f" — {c['error']}"
         source = "rule_fallback" if c["source"] in ("text_fallback", "error") else "tool"
-        logs.append(_log("act", f"Tool: {c['title']}", detail, source, tool=c["tool"], via=SOURCE_DETAIL.get(c["source"], c["source"])))
+        logs.append(_log(node, f"Tool: {c['title']}", detail, source, tool=c["tool"], via=SOURCE_DETAIL.get(c["source"], c["source"])))
+    return logs
 
-    return {"location": location, "nearby": nearby, "agencies": agencies, "tool_calls": calls, "log": logs}
+
+def _user_text(state: AgentState) -> str:
+    return " ".join(d["text"] for d in state["dialogue"] if d["role"] == "user")
+
+
+def locate(state: AgentState) -> dict:
+    """Tool Use: 위치 확인. 후보가 여러 곳이면 사용자에게 고르게 하도록 표시한다."""
+    _started("locate")
+    facts = {f["slot"]: f["value"] for f in state["info"]["facts"]}
+    query = state.get("location_query") or state["info"]["location_query"] or facts.get("location", "")
+    calls: list[dict] = []
+    location = _run_tool("locate", calls, "geocode", query or "(위치 표현 없음)", geocode, query, _user_text(state))["data"]
+    return {"location": location, "location_query": query, "location_confirmed": not location.get("ambiguous"),
+            "tool_calls": calls, "log": _tool_logs("locate", calls)}
+
+
+def route_after_locate(state: AgentState) -> str:
+    if state["location"].get("ambiguous") and state.get("confirm_rounds", 0) < MAX_CONFIRM_ROUNDS:
+        return "confirm_location"
+    return "act"
+
+
+def confirm_location(state: AgentState) -> dict:
+    """Memory·Feedback: 위치 후보를 보여 주고 사용자가 고른 곳으로 확정한다 (모르면 새 장소 표현으로 다시 검색)."""
+    candidates = state["location"]["candidates"]
+    query = state.get("location_query", "")
+    options = [{"value": str(i + 1), "label": f"{c['name'] or c['address']} · {c['address']}"} for i, c in enumerate(candidates)]
+    question = {"slot": "location", "text": f"'{query}'에 해당하는 곳이 {len(candidates)}곳 있어요. 어느 곳인가요? "
+                "번호를 고르거나, 더 정확한 장소 이름·주소를 알려 주세요."}
+    reply = interrupt({"questions": [question], "options": options})
+    text = reply["text"].strip()
+    rounds = state.get("confirm_rounds", 0) + 1
+    dialogue = [{"role": "agent", "text": question["text"], "slots": ["location"]}, {"role": "user", "text": text}]
+
+    picked = None
+    if m := re.match(r"^\s*(\d+)\s*(번)?\s*$", text):
+        index = int(m.group(1)) - 1
+        picked = candidates[index] if 0 <= index < len(candidates) else None
+    else:
+        picked = next((c for c in candidates if c["name"] and (c["name"] == text or c["name"] in text.split())), None)
+
+    if picked:
+        calls: list[dict] = []
+        location = _run_tool("confirm_location", calls, "geocode", picked["name"] or picked["address"], resolve_candidate, picked, query)["data"]
+        return {"location": location, "location_confirmed": True, "confirm_rounds": rounds, "dialogue": dialogue,
+                "tool_calls": calls, "log": [_log("confirm_location", "위치 후보 확인", f"사용자가 고른 곳: {picked['name'] or picked['address']}"),
+                                             *_tool_logs("confirm_location", calls)]}
+    return {"location_query": text, "confirm_rounds": rounds, "dialogue": dialogue,
+            "log": [_log("confirm_location", "위치 후보 확인", f"새 장소 표현으로 다시 검색: {text}")]}
+
+
+def route_after_confirm(state: AgentState) -> str:
+    return "act" if state.get("location_confirmed") else "locate"
+
+
+def act(state: AgentState) -> dict:
+    """Tool Use: 확인된 위치로 관할 기관을 찾고 담당 부서·절차를 조회한다. 실패하면 대체 경로로 이어 간다."""
+    _started("act")
+    plan = state["plan"]
+    actions = [s["action"] for s in plan["steps"]]
+    location = state.get("location") or {}
+    calls: list[dict] = []
+    nearby: dict[str, list[dict]] = {}
+
+    def run(tool: str, input_text: str, fn, *args) -> dict:
+        return _run_tool("act", calls, tool, input_text, fn, *args)
+
+    if "find_nearby" in actions:
+        for kind in plan["nearby_kinds"]:
+            nearby[kind] = run(f"find_nearby:{kind}", location.get("address", ""), find_nearby, kind, location)["data"]
+
+    agencies = run("kb_lookup", state["understanding"]["category_label"], kb_lookup,
+                   state["understanding"]["category"], location, nearby)["data"]
+    logs = _tool_logs("act", calls)
+    if location.get("ambiguous") and not state.get("location_confirmed"):
+        logs.insert(0, _log("act", "위치 미확정", "후보가 여러 곳이라 1순위 후보로 진행 — 제출 전 사용자 확인 필요", "rule_fallback"))
+    return {"nearby": nearby, "agencies": agencies, "tool_calls": calls, "log": logs}
 
 
 def _facts(state: AgentState) -> list[dict]:

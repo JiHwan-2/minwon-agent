@@ -4,6 +4,8 @@ export const NODE_LABEL = {
   plan: "처리 계획",
   check: "정보 판단",
   ask: "추가 질문",
+  locate: "위치 확인",
+  confirm_location: "위치 후보 확인",
   act: "Tool 실행",
   decide: "담당 기관 판단",
   draft: "민원 초안 작성",

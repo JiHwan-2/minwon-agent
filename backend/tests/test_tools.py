@@ -3,9 +3,9 @@ import pytest
 
 from minwon.agent.nodes import _normalize_plan
 from minwon import knowledge
-from minwon.tools import kakao
+from minwon.tools import kakao, regions
 from minwon.tools.kb import kb_lookup
-from minwon.tools.locate import find_nearby, geocode
+from minwon.tools.locate import find_nearby, geocode, resolve_candidate
 from tests import fake_kakao
 
 
@@ -22,6 +22,43 @@ def test_geocode_with_kakao_returns_admin_region(fake):
     assert loc["dong"] == "합성1동" and loc["legal_dong"] == "합성동"
     assert loc["address"] == "경남 창원시 마산회원구 합성동로 30"
     assert r["retries"] == 0
+
+
+@pytest.mark.parametrize(
+    ("text", "specific"),
+    [
+        ("창원 초등학교 정문 앞", False),
+        ("우리 아파트 앞", False),
+        ("학교 앞", False),
+        ("창원", False),
+        ("합성초등학교 앞", True),
+        ("창원초등학교에서", True),
+        ("마산회원구 합성동 골목", True),
+        ("합성북16길 75", True),
+        ("어린이보호구역 근처", False),
+    ],
+)
+def test_place_specificity(text, specific):
+    assert regions.is_specific_place(text) is specific
+
+
+def test_vague_place_returns_candidates_inside_named_city(fake):
+    r = geocode("창원 초등학교")
+    loc = r["data"]
+    assert loc["ambiguous"]
+    assert [c["name"] for c in loc["candidates"]] == ["창원초등학교", "합성초등학교", "상남초등학교"]
+    assert "사용자 확인 필요" in r["summary"]
+
+
+def test_specific_place_is_not_ambiguous(fake):
+    loc = geocode("창원 합성초등학교")["data"]
+    assert not loc["ambiguous"] and loc["place_name"] == "합성초등학교"
+
+
+def test_resolve_candidate_uses_its_own_region(fake):
+    picked = geocode("창원 초등학교")["data"]["candidates"][2]
+    loc = resolve_candidate(picked, "창원 초등학교")["data"]
+    assert loc["place_name"] == "상남초등학교" and loc["sigungu"] == "창원시 성산구"
 
 
 def test_geocode_falls_back_to_text_when_kakao_fails(monkeypatch):

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { EXAMPLES } from "../labels.js";
 import PackageCard from "./PackageCard.jsx";
 
-function Bubble({ m }) {
+function Bubble({ m, canChoose, onSend }) {
   return (
     <div className={`bubble bubble-${m.role}${m.pkg ? " bubble-wide" : ""}`}>
       <p>{m.text}</p>
@@ -25,6 +25,16 @@ function Bubble({ m }) {
           ))}
         </ol>
       )}
+      {m.options?.length > 0 && (
+        <div className="options">
+          {m.options.map((o) => (
+            <button key={o.value} className="option-btn" disabled={!canChoose} onClick={() => onSend(o.value)}>
+              <span className="option-no">{o.value}</span>
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
       {m.facts && (
         <ul className="facts-mini">
           {m.facts.map((f) => (
@@ -35,7 +45,7 @@ function Bubble({ m }) {
       )}
       {m.pkg && (
         <>
-          <PackageCard pkg={m.pkg} decision={m.decision} review={m.review} />
+          <PackageCard pkg={m.pkg} decision={m.decision} review={m.review} locationConfirmed={m.locationConfirmed} />
           <p className="bubble-note">안내 정보는 참고용이에요. 부서 이름은 지자체마다 조금 다를 수 있어요.</p>
         </>
       )}
@@ -43,7 +53,7 @@ function Bubble({ m }) {
   );
 }
 
-export default function Chat({ messages, phase, onSend }) {
+export default function Chat({ messages, phase, onSend, latestId }) {
   const [text, setText] = useState("");
   const endRef = useRef(null);
   const busy = phase === "running";
@@ -71,7 +81,7 @@ export default function Chat({ messages, phase, onSend }) {
     <section className="panel chat" aria-label="대화">
       <div className="chat-log" aria-live="polite">
         {messages.map((m) => (
-          <Bubble key={m.id} m={m} />
+          <Bubble key={m.id} m={m} onSend={onSend} canChoose={phase === "asking" && m.id === latestId} />
         ))}
         {busy && (
           <div className="bubble bubble-agent bubble-busy">

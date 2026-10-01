@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-export default function PackageCard({ pkg, decision, review }) {
+export default function PackageCard({ pkg, decision, review, locationConfirmed = true }) {
   const [title, setTitle] = useState(pkg.title);
   const [body, setBody] = useState(pkg.body);
   const [checked, setChecked] = useState({});
@@ -32,6 +32,9 @@ export default function PackageCard({ pkg, decision, review }) {
         )}
       </div>
 
+      {!locationConfirmed && (
+        <p className="alert small">⚠ 위치 후보가 여러 곳이어서 1순위 후보로 안내했어요. 제출 전에 위치와 담당 기관이 맞는지 꼭 확인해 주세요.</p>
+      )}
       <section className="pk-section">
         <h3>제출할 곳</h3>
         <div className="agency">

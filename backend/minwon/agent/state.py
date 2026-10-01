@@ -12,7 +12,10 @@ class AgentState(TypedDict, total=False):
     info: dict                                        # 확인된 정보·질문·위치 검색어
     asked: list[str]                                  # 이미 질문한 항목
     rounds: int                                       # 추가 질문 횟수
-    location: dict                                    # geocode 결과
+    location: dict                                    # geocode 결과 (candidates·ambiguous 포함)
+    location_query: str                               # 위치 확인에 쓸 검색어 (후보 확인 단계에서 바뀔 수 있음)
+    location_confirmed: bool                          # 사용자가 후보를 고르거나 구체적인 위치로 확정했는지
+    confirm_rounds: int                               # 위치 후보 확인 질문 횟수
     nearby: dict                                      # 종류별 주변 기관
     agencies: dict                                    # 담당 부서·창구·절차·증빙
     tool_calls: Annotated[list[dict], operator.add]   # Tool 호출 기록

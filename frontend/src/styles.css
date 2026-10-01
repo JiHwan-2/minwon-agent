@@ -194,6 +194,17 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .checklist small { display: block; color: var(--muted); }
 .req { font-style: normal; font-size: 11px; color: var(--danger); background: var(--danger-soft); padding: 0 6px; border-radius: 4px; margin-left: 2px; }
 
+.options { display: grid; gap: 6px; }
+.option-btn {
+  display: flex; align-items: center; gap: 8px; text-align: left; padding: 8px 10px; border-radius: 10px;
+  border: 1px solid var(--border); background: var(--surface); cursor: pointer; font-size: 14px;
+}
+.option-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+.option-no {
+  flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--primary-soft); color: var(--primary); font-weight: 700; font-size: 12px;
+}
+
 .strong { font-weight: 700; }
 .muted { color: var(--muted); }
 .small { font-size: 13px; }

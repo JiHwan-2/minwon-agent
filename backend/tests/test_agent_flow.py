@@ -54,7 +54,7 @@ def test_normal_flow_plans_asks_searches_and_becomes_ready(monkeypatch: pytest.M
     assert {q["slot"] for q in ask["questions"]} == {"location", "time"}
 
     events = send(sid, "창원시 마산회원구 합성동 합성초등학교 정문 앞이고 평일 등하교 시간에 그래요")
-    assert ended_nodes(events) == ["ask", "check", "act", "decide", "draft", "review"]
+    assert ended_nodes(events) == ["ask", "check", "locate", "act", "decide", "draft", "review"]
     tools = [e["tool"] for e in events if e["type"] == "tool_start"]
     assert tools == ["geocode", "find_nearby:police", "kb_lookup"]
     assert all(e["result"]["ok"] for e in events if e["type"] == "tool_end")
@@ -73,10 +73,47 @@ def test_normal_flow_plans_asks_searches_and_becomes_ready(monkeypatch: pytest.M
     state = client.get(f"/api/sessions/{sid}").json()
     assert state["status"] == "ready"
     assert [entry["node"] for entry in state["log"]] == [
-        "guard", "understand", "plan", "check", "ask", "check", "act", "act", "act", "decide", "draft", "review",
+        "guard", "understand", "plan", "check", "ask", "check", "locate", "act", "act", "decide", "draft", "review",
     ]
-    assert [entry["via"] for entry in state["log"] if entry["node"] == "act"] == ["카카오 로컬 API", "카카오 로컬 API", "지식베이스 + 지역 정보"]
+    tool_logs = [entry["via"] for entry in state["log"] if entry["node"] in ("locate", "act")]
+    assert tool_logs == ["카카오 로컬 API", "카카오 로컬 API", "지식베이스 + 지역 정보"]
+    assert state["location_confirmed"]
     assert "재시도" not in " ".join(entry["detail"] for entry in state["log"])
+
+
+def test_vague_location_is_asked_again_then_user_picks_a_candidate(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(kakao, "request", fake_kakao.request)
+    sid = new_session()
+    events = send(sid, "창원 초등학교 정문 앞에서 평일 아침마다 차들이 너무 빨라요")
+    ask = events[-1]
+    assert ask["type"] == "ask" and [q["slot"] for q in ask["questions"]] == ["location"]
+    assert "정확한 곳을 찾기 어려워요" in ask["questions"][0]["text"]
+
+    events = send(sid, "그냥 창원에 있는 초등학교예요")
+    assert ended_nodes(events)[-1] == "locate"
+    choose = events[-1]
+    assert choose["type"] == "ask"
+    assert [o["value"] for o in choose["options"]] == ["1", "2", "3"]
+    assert "김해" not in " ".join(o["label"] for o in choose["options"])
+
+    events = send(sid, "2")
+    assert ended_nodes(events)[:2] == ["confirm_location", "act"]
+    final = events[-1]
+    assert final["type"] == "ready" and final["location_confirmed"]
+    assert final["location"]["place_name"] == "합성초등학교"
+    assert final["decision"]["agency"]["agency"] == "창원시 마산회원구청"
+
+
+def test_user_can_answer_candidate_question_with_a_new_place(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(kakao, "request", fake_kakao.request)
+    sid = new_session()
+    send(sid, "창원 초등학교 정문 앞에서 평일 아침마다 차들이 너무 빨라요")
+    send(sid, "그냥 창원에 있는 초등학교예요")
+    events = send(sid, "상남동에 있는 상남초등학교예요")
+    assert ended_nodes(events)[:3] == ["confirm_location", "locate", "act"]
+    final = events[-1]
+    assert final["location"]["sigungu"] == "창원시 성산구"
+    assert final["decision"]["agency"]["agency"] == "창원시 성산구청"
 
 
 def test_tools_fall_back_when_kakao_is_down(monkeypatch: pytest.MonkeyPatch):
@@ -87,7 +124,8 @@ def test_tools_fall_back_when_kakao_is_down(monkeypatch: pytest.MonkeyPatch):
     sid = new_session()
     send(sid, "창원시 마산회원구 합성초등학교 앞 횡단보도가 평일 아침마다 위험해요")
     state = client.get(f"/api/sessions/{sid}").json()
-    acts = [e for e in state["log"] if e["node"] == "act"]
+    acts = [e for e in state["log"] if e["node"] in ("locate", "act")]
+    assert acts[0]["node"] == "locate"
     assert acts[0]["source"] == "rule_fallback" and "재시도 1회" in acts[0]["detail"]
     assert "건너뜀" in acts[1]["detail"]
     assert [d["agency"] for d in state["agencies"]["departments"]] == ["창원시 마산회원구청", "관할 경찰서"]
