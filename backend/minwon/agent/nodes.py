@@ -7,12 +7,28 @@ from minwon import knowledge, safety
 from minwon.agent.brain import get_brain
 from minwon.agent.state import AgentState
 from minwon.settings import settings
+from minwon.tools.kb import kb_lookup
+from minwon.tools.locate import NEARBY_LABEL, find_nearby, geocode
 
-ALWAYS_ACTIONS = ("kb_lookup", "write", "review")
+TOOL_TITLE = {"geocode": "위치 확인", "kb_lookup": "담당 부서·절차 조회"}
+SOURCE_DETAIL = {
+    "kakao": "카카오 로컬 API",
+    "text_fallback": "대체 경로: 문장에서 지역 추출",
+    "kb": "지식베이스",
+    "kb+region": "지식베이스 + 지역 정보",
+    "skipped": "건너뜀",
+    "error": "실패",
+}
 
 
 def _started(node: str) -> None:
     get_stream_writer()({"node": node, "status": "start"})
+
+
+def _tool_title(tool: str) -> str:
+    if tool.startswith("find_nearby:"):
+        return f"주변 기관 검색 ({NEARBY_LABEL.get(tool.split(':', 1)[1], '')})"
+    return TOOL_TITLE.get(tool, tool)
 
 
 def _log(node: str, title: str, detail: str = "", source: str = "system", **extra) -> dict:
@@ -66,12 +82,17 @@ def _normalize_plan(plan: dict, cat: dict) -> tuple[dict, list[str]]:
     steps = [s for s in plan["steps"] if s["action"] != "review"]
     present = {s["action"] for s in steps}
     defaults = {
-        "kb_lookup": ("담당 부서·절차 조회", "처리 부서와 제출 창구를 확인합니다."),
-        "write": ("민원 초안 작성", "모은 정보로 민원과 증빙 목록을 만듭니다."),
+        "geocode": ("위치 확인", "관할 시·군·구를 정하려면 정확한 주소가 필요합니다.", "location" in required),
+        "find_nearby": ("주변 기관 검색", "현장을 관할하는 기관을 찾습니다.", bool(nearby)),
+        "kb_lookup": ("담당 부서·절차 조회", "처리 부서와 제출 창구를 확인합니다.", True),
+        "write": ("민원 초안 작성", "모은 정보로 민원과 증빙 목록을 만듭니다.", True),
     }
-    for action, (title, reason) in defaults.items():
-        if action not in present:
-            steps.append({"action": action, "title": title, "reason": reason})
+    must_precede = {"geocode": ("kb_lookup", "write"), "find_nearby": ("kb_lookup", "write"), "kb_lookup": ("write",), "write": ()}
+    for action, (title, reason, needed) in defaults.items():
+        if needed and action not in present:
+            index = next((i for i, s in enumerate(steps) if s["action"] in must_precede[action]), len(steps))
+            steps.insert(index, {"action": action, "title": title, "reason": reason})
+            present.add(action)
             fixes.append(f"'{title}' 단계 추가")
     review = next((s for s in plan["steps"] if s["action"] == "review"), None)
     if review is None:
@@ -130,7 +151,51 @@ def check(state: AgentState) -> dict:
 
 
 def route_after_check(state: AgentState) -> str:
-    return "ask" if state["info"]["questions"] else "done"
+    return "ask" if state["info"]["questions"] else "act"
+
+
+def act(state: AgentState) -> dict:
+    """Tool Use: 계획에 적힌 Tool을 순서대로 실행한다. 실패하면 재시도·대체 경로로 이어 간다."""
+    _started("act")
+    writer = get_stream_writer()
+    plan = state["plan"]
+    actions = [s["action"] for s in plan["steps"]]
+    facts = {f["slot"]: f["value"] for f in state["info"]["facts"]}
+    query = state["info"]["location_query"] or facts.get("location", "")
+    context_text = " ".join(d["text"] for d in state["dialogue"] if d["role"] == "user")
+
+    calls: list[dict] = []
+    location: dict = {}
+    nearby: dict[str, list[dict]] = {}
+
+    def run(tool: str, input_text: str, fn, *args) -> dict:
+        writer({"node": "act", "status": "tool_start", "tool": tool, "title": _tool_title(tool), "input": input_text})
+        result = fn(*args) | {"title": _tool_title(tool), "input": input_text}
+        writer({"node": "act", "status": "tool_end", "result": result})
+        calls.append(result)
+        return result
+
+    if "geocode" in actions:
+        location = run("geocode", query or "(위치 표현 없음)", geocode, query, context_text)["data"]
+
+    if "find_nearby" in actions:
+        for kind in plan["nearby_kinds"]:
+            nearby[kind] = run(f"find_nearby:{kind}", location.get("address", ""), find_nearby, kind, location)["data"]
+
+    agencies = run("kb_lookup", state["understanding"]["category_label"], kb_lookup,
+                   state["understanding"]["category"], location, nearby)["data"]
+
+    logs = []
+    for c in calls:
+        detail = c["summary"]
+        if c["attempts"] > 1:
+            detail += f" (재시도 {c['attempts'] - 1}회)"
+        if c["error"]:
+            detail += f" — {c['error']}"
+        source = "rule_fallback" if c["source"] in ("text_fallback", "error") else "tool"
+        logs.append(_log("act", f"Tool: {c['title']}", detail, source, tool=c["tool"], via=SOURCE_DETAIL.get(c["source"], c["source"])))
+
+    return {"location": location, "nearby": nearby, "agencies": agencies, "tool_calls": calls, "log": logs}
 
 
 def ask(state: AgentState) -> dict:

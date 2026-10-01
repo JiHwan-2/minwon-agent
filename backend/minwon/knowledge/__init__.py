@@ -10,6 +10,21 @@ def _load() -> dict:
     return json.loads((_DIR / "categories.json").read_text(encoding="utf-8"))
 
 
+@cache
+def _agencies() -> dict:
+    return json.loads((_DIR / "agencies.json").read_text(encoding="utf-8"))
+
+
+def agency_rules(code: str) -> dict:
+    cats = _agencies()["categories"]
+    return cats.get(code, cats["other"])
+
+
+def channels(ids: list[str]) -> list[dict]:
+    all_channels = _agencies()["channels"]
+    return [{"id": cid, **all_channels[cid]} for cid in ids]
+
+
 def slots() -> dict[str, dict]:
     return _load()["slots"]
 

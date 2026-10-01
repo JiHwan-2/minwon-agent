@@ -23,7 +23,8 @@ app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_me
 graph = build_graph()
 sessions: set[str] = set()
 
-SNAPSHOT_KEYS = ("safety", "understanding", "plan", "info", "dialogue", "log")
+SNAPSHOT_KEYS = ("safety", "understanding", "plan", "info", "dialogue", "location", "nearby", "agencies", "tool_calls", "log")
+RESULT_KEYS = ("info", "location", "agencies")
 
 
 class MessageIn(BaseModel):
@@ -91,7 +92,9 @@ def _run(session_id: str, text: str) -> Iterator[str]:
     try:
         for mode, chunk in graph.stream(graph_input, config, stream_mode=["custom", "updates"]):
             if mode == "custom":
-                yield _event(type="node_start", node=chunk["node"])
+                status = chunk.pop("status")
+                kind = {"start": "node_start", "tool_start": "tool_start", "tool_end": "tool_end"}[status]
+                yield _event(type=kind, **chunk)
                 continue
             for node, update in chunk.items():
                 if node != "__interrupt__":
@@ -105,7 +108,7 @@ def _run(session_id: str, text: str) -> Iterator[str]:
     if questions := _pending_questions(snapshot):
         yield _event(type="ask", questions=questions)
     else:
-        yield _event(type="ready", info=snapshot.values.get("info"))
+        yield _event(type="ready", **{k: snapshot.values.get(k) for k in RESULT_KEYS})
 
 
 @app.post("/api/sessions/{session_id}/messages")

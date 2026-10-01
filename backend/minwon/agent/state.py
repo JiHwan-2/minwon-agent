@@ -12,4 +12,8 @@ class AgentState(TypedDict, total=False):
     info: dict                                        # 확인된 정보·질문·위치 검색어
     asked: list[str]                                  # 이미 질문한 항목
     rounds: int                                       # 추가 질문 횟수
+    location: dict                                    # geocode 결과
+    nearby: dict                                      # 종류별 주변 기관
+    agencies: dict                                    # 담당 부서·창구·절차·증빙
+    tool_calls: Annotated[list[dict], operator.add]   # Tool 호출 기록
     log: Annotated[list[dict], operator.add]          # 실행 로그
