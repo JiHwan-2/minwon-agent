@@ -68,6 +68,42 @@ cd backend
 .venv\Scripts\python -m pytest -q
 ```
 
+## 새 PC·팀원 개발환경 맞추기
+
+**1. 설치할 것:** Git, Python 3.11 이상, Node.js 20 이상, (선택) Claude Code
+
+**2. 코드 받기**
+
+```bash
+git clone https://github.com/JiHwan-2/minwon-agent.git
+```
+
+받은 뒤 위 "실행 방법"의 1·2번을 그대로 따라 합니다. 패키지 버전은 `requirements.txt`와 `package-lock.json`에 고정되어 있어 어느 PC에서나 같은 버전이 설치됩니다.
+
+**3. API 키 (`backend\.env`)** — 저장소에 없으니 PC마다 직접 넣습니다. 채팅·메일로 키를 주고받지 않습니다.
+
+| 구분 | 받는 방법 | 비고 |
+|---|---|---|
+| 카카오 REST API 키 | 팀장이 카카오 디벨로퍼스 앱의 **멤버** 메뉴에서 팀원을 초대 → 팀원이 자기 계정으로 콘솔의 **앱 → 플랫폼 키**에서 확인 | 같은 앱의 키라 결과가 같음 |
+| Anthropic API 키 | 팀장이 Anthropic 콘솔 조직에 팀원을 초대 → 각자 **자기 키를 따로 발급** | 키를 나눠 쓰지 않으면 노출 시 그 키만 폐기하면 됨. 콘솔에서 사용 한도 설정 |
+| 키가 없을 때 | `LLM_PROVIDER=rule`, `KAKAO_REST_API_KEY` 비워 두기 | 규칙 엔진·문장 기반 지역 추출로 동작 |
+
+**4. 확인:** `pytest`가 모두 통과하고 화면에서 예시 문장이 끝까지 진행되면 준비 완료입니다.
+
+**5. Claude Code를 쓴다면:** 저장소의 `CLAUDE.md`(작업 지침)와 `.claude/skills/gn-contest`(대회 규정)를 자동으로 읽어 같은 규칙으로 작업합니다.
+
+## 협업 규칙
+
+| 구분 | 규칙 |
+|---|---|
+| 역할 | 김지환: `backend/` (AI·Agent) · 서준호: `frontend/` (화면). 상대 폴더를 크게 고칠 땐 먼저 상의 |
+| 시작 전 | `git pull`로 최신 코드 받기 |
+| 작업 | 기능마다 브랜치 만들기: `git switch -c feat/기능이름` |
+| 커밋 | 테스트 통과 후 한국어 메시지로 커밋, 바로 `git push` |
+| 합치기 | GitHub에서 Pull Request → 상대가 확인 → `main`에 병합 |
+| 기록 | 기능을 마치면 `docs/sources.md` 신규개발분 표에 한 줄 추가 |
+| 금지 | API 키 커밋, 다른 프로젝트 코드 복사, 상의 없는 강제 푸시 |
+
 ## 구조
 
 ```

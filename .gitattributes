@@ -1,0 +1,5 @@
+# 윈도우·맥이 섞여도 저장소에는 LF로 저장
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.pdf binary

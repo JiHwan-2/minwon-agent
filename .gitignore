@@ -14,8 +14,10 @@ dist/
 npm-debug.log*
 *.log
 
+# Claude Code: 스킬·미리보기 설정은 팀이 공유, 개인 권한 설정만 제외
+.claude/settings.local.json
+
 # 에디터 · OS
-.claude/
 .vscode/
 .idea/
 .DS_Store
