@@ -15,7 +15,12 @@
 ## 오픈소스
 | 이름 | 용도 | 라이선스 |
 |---|---|---|
-| (개발 진행하며 추가) | | |
+| LangGraph | Agent 상태 그래프, 추가 질문 일시정지(interrupt), 세션 상태 저장 | MIT |
+| LangChain (langchain-core, langchain-anthropic, langchain-openai) | Claude/GPT 호출, 구조화 출력 | MIT |
+| FastAPI / Uvicorn | API 서버 | MIT / BSD-3-Clause |
+| Pydantic | 입출력 스키마 검증 | MIT |
+| python-dotenv, httpx | 설정 로드, HTTP 호출 | BSD-3-Clause |
+| pytest | 자동 테스트 | MIT |
 
 ## 외부 API · 데이터
 | 이름 | 용도 | 이용 조건 |
@@ -26,4 +31,5 @@
 ## 신규개발분 (날짜별)
 | 날짜 | 내용 | 커밋 |
 |---|---|---|
-| 2026-09-29 | 문제정의·Workflow 설계서, 대회 규정 정리, 저장소 초기화 | |
+| 2026-09-29 | 문제정의·Workflow 설계서, 대회 규정 정리, 저장소 초기화 | 64b4211 |
+| 2026-10-01 | Agent 골격: 입력 안전 점검(개인정보 가림·긴급상황·지시 주입 감지), 문제 분석, 처리 계획(보정 포함), 정보 판단·추가 질문 루프, LLM 실패 시 규칙 엔진 대체, 스트리밍 API, 테스트 11건 | |
