@@ -396,6 +396,20 @@ def _rule_checks(state: AgentState, package: dict) -> tuple[dict, list[dict]]:
         checks.append({"name": "위치", "ok": False, "detail": "본문에 위치가 없음",
                        "issue": f"본문에 민원 위치({terms[0]})를 넣어 주세요."})
 
+    # 공식 요건이 아닌데 '필수'라고 쓴 증빙은 '권장'으로 낮춘다 (근거 없는 안내 방지)
+    kb_required = [e for e in knowledge.agency_rules(state["understanding"]["category"])["evidence"] if e["level"] == "required"]
+    evidence, unsupported = [], 0
+    for e in package["evidence"]:
+        if e["level"] == "required" and sum(x["level"] == "required" for x in evidence) >= len(kb_required):
+            e = e | {"level": "recommended", "basis": ""}
+            unsupported += 1
+        elif e["level"] == "required" and not e["basis"]:
+            e = e | {"basis": kb_required[0]["basis"]}
+        evidence.append(e)
+    package = package | {"evidence": evidence}
+    checks.append({"name": "증빙 근거", "ok": True,
+                   "detail": f"근거 없는 '필수' {unsupported}건을 '권장'으로 조정" if unsupported else "필수 표시는 공식 요건만"})
+
     length = len(package["body"])
     if length < 80:
         checks.append({"name": "분량", "ok": False, "detail": f"{length}자", "issue": "본문이 너무 짧아 상황이 전달되지 않아요. 현황을 더 써 주세요."})

@@ -1,5 +1,11 @@
 import { useState } from "react";
 
+const EVIDENCE_GROUPS = [
+  { level: "required", label: "필수", desc: "지키지 않으면 처리되지 않는 공식 요건이에요.", tone: "danger" },
+  { level: "recommended", label: "권장", desc: "있으면 처리에 도움이 돼요. 대부분의 민원은 증빙 없이도 접수할 수 있어요.", tone: "primary" },
+  { level: "separate", label: "별도 절차", desc: "민원과 따로 신청할 때 필요해요 (예: 피해 보상).", tone: "warn" },
+];
+
 export default function PackageCard({ pkg, decision, review, locationConfirmed = true }) {
   const [title, setTitle] = useState(pkg.title);
   const [body, setBody] = useState(pkg.body);
@@ -7,8 +13,8 @@ export default function PackageCard({ pkg, decision, review, locationConfirmed =
   const [copied, setCopied] = useState(false);
 
   const blanks = (body.match(/\[[^\]]+\]/g) || []).length;
-  const required = pkg.evidence.filter((e) => e.required);
-  const ready = required.filter((e) => checked[e.item]).length;
+  const checkable = pkg.evidence.filter((e) => e.level !== "separate");
+  const ready = checkable.filter((e) => checked[e.item]).length;
   const { agency, channel } = decision;
 
   const copy = async () => {
@@ -100,25 +106,45 @@ export default function PackageCard({ pkg, decision, review, locationConfirmed =
 
       <section className="pk-section">
         <h3>
-          증빙자료 체크리스트 <span className="small muted">필수 {ready}/{required.length}</span>
+          증빙자료 <span className="small muted">준비 {ready}/{checkable.length}</span>
         </h3>
-        <ul className="checklist">
-          {pkg.evidence.map((e) => (
-            <li key={e.item}>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={!!checked[e.item]}
-                  onChange={() => setChecked((c) => ({ ...c, [e.item]: !c[e.item] }))}
-                />
-                <span>
-                  {e.item} {e.required && <em className="req">필수</em>}
-                  <small>{e.why}</small>
-                </span>
-              </label>
-            </li>
-          ))}
-        </ul>
+        {EVIDENCE_GROUPS.map((group) => {
+          const items = pkg.evidence.filter((e) => e.level === group.level);
+          if (items.length === 0) return null;
+          return (
+            <div key={group.level} className={`ev-group ev-${group.tone}`}>
+              <p className="ev-head">
+                <em className="ev-tag">{group.label}</em>
+                <span className="small muted">{group.desc}</span>
+              </p>
+              <ul className="checklist">
+                {items.map((e) => (
+                  <li key={e.item}>
+                    {group.level === "separate" ? (
+                      <span className="ev-info">
+                        {e.item}
+                        <small>{e.why}</small>
+                      </span>
+                    ) : (
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={!!checked[e.item]}
+                          onChange={() => setChecked((c) => ({ ...c, [e.item]: !c[e.item] }))}
+                        />
+                        <span>
+                          {e.item}
+                          <small>{e.why}</small>
+                          {e.basis && <small className="ev-basis">근거: {e.basis}</small>}
+                        </span>
+                      </label>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
         {pkg.tips.length > 0 && (
           <ul className="tips">
             {pkg.tips.map((t) => (

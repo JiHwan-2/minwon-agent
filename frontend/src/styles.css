@@ -192,7 +192,18 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .checklist label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; font-size: 14px; }
 .checklist input { margin-top: 4px; accent-color: var(--primary); }
 .checklist small { display: block; color: var(--muted); }
-.req { font-style: normal; font-size: 11px; color: var(--danger); background: var(--danger-soft); padding: 0 6px; border-radius: 4px; margin-left: 2px; }
+.ev-group { display: grid; gap: 6px; padding-left: 10px; border-left: 3px solid var(--border); }
+.ev-danger { border-left-color: var(--danger); }
+.ev-primary { border-left-color: var(--primary); }
+.ev-warn { border-left-color: var(--warn); }
+.ev-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.ev-tag { font-style: normal; font-size: 12px; font-weight: 700; padding: 1px 8px; border-radius: 6px; white-space: nowrap; }
+.ev-danger .ev-tag { color: var(--danger); background: var(--danger-soft); }
+.ev-primary .ev-tag { color: var(--primary); background: var(--primary-soft); }
+.ev-warn .ev-tag { color: var(--warn); background: var(--warn-soft); }
+.ev-info { display: block; font-size: 14px; padding-left: 4px; }
+.ev-info small, .ev-basis { display: block; color: var(--muted); }
+.ev-basis { font-style: italic; }
 
 .options { display: grid; gap: 6px; }
 .option-btn {

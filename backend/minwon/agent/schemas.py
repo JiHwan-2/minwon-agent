@@ -59,10 +59,17 @@ class Decision(BaseModel):
     cautions: list[str] = Field(description="제출 전에 알아 둘 점 0~2개 (예: 신호등은 경찰서 심의 필요)")
 
 
+EvidenceLevel = Literal["required", "recommended", "separate"]
+
+
 class EvidenceItem(BaseModel):
     item: str = Field(description="준비할 증빙자료")
+    level: EvidenceLevel = Field(
+        description="required=지키지 않으면 처리되지 않는 공식 요건(지식베이스에 required로 있는 것만), "
+        "recommended=있으면 처리에 도움, separate=피해 보상 등 민원과 별도 절차에 필요"
+    )
     why: str = Field(description="필요한 이유 한 문장")
-    required: bool
+    basis: str = Field(description="required일 때 근거 제도. 그 외에는 빈 문자열")
 
 
 class Draft(BaseModel):

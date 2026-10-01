@@ -187,8 +187,14 @@ class RuleBrain:
                 lines.append(f"추가로, {revision.rstrip('.')}.")
             lines += ["", "현장 사진 등 증빙자료를 함께 첨부합니다. 검토해 주셔서 감사합니다."]
 
-        evidence = [EvidenceItem(item=e, why="담당 부서가 현장을 빨리 파악할 수 있습니다.", required=i < 2)
-                    for i, e in enumerate(ctx["kb"]["evidence"])]
+        evidence = [EvidenceItem(**e) for e in ctx["kb"]["evidence"]]
+        if "harm" in facts and not any(e.level == "separate" for e in evidence):
+            evidence.append(EvidenceItem(
+                item="피해 사진·진료 기록·수리 영수증",
+                level="separate",
+                why="피해 보상은 개선 민원과 별도 절차(배상 청구)로 신청해요. 담당 부서에 절차를 문의하세요.",
+                basis="",
+            ))
         return Draft(
             title=f"[{area}] {place or label} {label} 개선 요청"[:40],
             body="\n".join(lines),

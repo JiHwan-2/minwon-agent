@@ -258,6 +258,45 @@ def test_invalid_decision_from_llm_is_corrected(monkeypatch: pytest.MonkeyPatch)
     assert len(final["decision"]["fixes"]) == 2
 
 
+def _levels(package: dict) -> list[str]:
+    return [e["level"] for e in package["evidence"]]
+
+
+def test_evidence_marks_required_only_for_official_requirements(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(kakao, "request", fake_kakao.request)
+    traffic = send(new_session(), "창원 합성초등학교 앞 횡단보도가 평일 아침마다 위험해요")[-1]["package"]
+    assert set(_levels(traffic)) == {"recommended"}
+
+    parking = send(new_session(), "창원 합성초등학교 앞 인도에 12가 3456 차량이 매일 아침 주차해요")[-1]["package"]
+    required = [e for e in parking["evidence"] if e["level"] == "required"]
+    assert len(required) == 1 and "1분 이상" in required[0]["item"]
+    assert "주민신고제" in required[0]["basis"]
+
+
+def test_harm_adds_a_separate_procedure_item_not_a_requirement(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(kakao, "request", fake_kakao.request)
+    pkg = send(new_session(), "창원 합성초등학교 앞 횡단보도에서 평일 아침에 차가 빨라서 아이가 다쳤어요")[-1]["package"]
+    separate = [e for e in pkg["evidence"] if e["level"] == "separate"]
+    assert len(separate) == 1 and "배상" in separate[0]["why"]
+    assert "required" not in _levels(pkg)
+
+
+class _OverclaimingLLM(_ScriptedLLM):
+    def write(self, ctx):
+        draft = self.rule.write(ctx)
+        evidence = [e.model_copy(update={"level": "required", "basis": "추측"}) for e in draft.evidence]
+        return draft.model_copy(update={"evidence": evidence})
+
+
+def test_unsupported_required_evidence_is_downgraded(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(kakao, "request", fake_kakao.request)
+    _use_llm(monkeypatch, _OverclaimingLLM(bad_drafts=0))
+    final = send(new_session(), "창원 합성초등학교 앞 횡단보도가 평일 아침마다 위험해요")[-1]
+    assert set(_levels(final["package"])) == {"recommended"}
+    check = next(c for c in final["review"]["checks"] if c["name"] == "증빙 근거")
+    assert "4건" in check["detail"]
+
+
 class _BrokenLLM:
     def __getattr__(self, name):
         def fail(*_args, **_kwargs):
