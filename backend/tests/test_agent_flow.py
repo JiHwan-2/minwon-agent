@@ -4,6 +4,8 @@ import pytest
 from fastapi.testclient import TestClient
 
 from minwon.agent import brain as brain_module
+from minwon.agent.rules import RuleBrain
+from minwon.agent.schemas import Critique
 from minwon.api import app
 from minwon.tools import kakao
 from tests import fake_kakao
@@ -52,7 +54,7 @@ def test_normal_flow_plans_asks_searches_and_becomes_ready(monkeypatch: pytest.M
     assert {q["slot"] for q in ask["questions"]} == {"location", "time"}
 
     events = send(sid, "창원시 마산회원구 합성동 합성초등학교 정문 앞이고 평일 등하교 시간에 그래요")
-    assert ended_nodes(events) == ["ask", "check", "act"]
+    assert ended_nodes(events) == ["ask", "check", "act", "decide", "draft", "review"]
     tools = [e["tool"] for e in events if e["type"] == "tool_start"]
     assert tools == ["geocode", "find_nearby:police", "kb_lookup"]
     assert all(e["result"]["ok"] for e in events if e["type"] == "tool_end")
@@ -63,11 +65,18 @@ def test_normal_flow_plans_asks_searches_and_becomes_ready(monkeypatch: pytest.M
     assert "합성초등학교" in facts["location"] and "등하교" in facts["time"]
     assert ready["location"]["sigungu"] == "창원시 마산회원구"
     assert [d["agency"] for d in ready["agencies"]["departments"]] == ["창원시 마산회원구청", "마산동부경찰서"]
+    assert ready["decision"]["agency"]["agency"] == "창원시 마산회원구청"
+    assert ready["decision"]["channel"]["name"] == "안전신문고"
+    assert "합성초등학교" in ready["package"]["body"] and ready["package"]["evidence"]
+    assert ready["review"]["passed"] and ready["review"]["round"] == 1
 
     state = client.get(f"/api/sessions/{sid}").json()
     assert state["status"] == "ready"
-    assert [entry["node"] for entry in state["log"]] == ["guard", "understand", "plan", "check", "ask", "check", "act", "act", "act"]
+    assert [entry["node"] for entry in state["log"]] == [
+        "guard", "understand", "plan", "check", "ask", "check", "act", "act", "act", "decide", "draft", "review",
+    ]
     assert [entry["via"] for entry in state["log"] if entry["node"] == "act"] == ["카카오 로컬 API", "카카오 로컬 API", "지식베이스 + 지역 정보"]
+    assert "재시도" not in " ".join(entry["detail"] for entry in state["log"])
 
 
 def test_tools_fall_back_when_kakao_is_down(monkeypatch: pytest.MonkeyPatch):
@@ -119,13 +128,96 @@ def test_emergency_and_injection_are_flagged():
     assert understanding["urgency"] == "high"
 
 
-def test_finished_session_rejects_new_message_and_unknown_session_404():
+def test_messages_after_completion_revise_the_draft():
     sid = new_session()
     send(sid, "창원시 성산구 상남동 상가 공사 소음이 매일 아침 7시부터 심해요")
-    assert send(sid, "모름")[-1]["type"] == "ready"
-    events = send(sid, "다른 민원")
-    assert events[-1]["type"] == "error" and events[-1]["code"] == "session_done"
+    first = send(sid, "모름")[-1]
+    assert first["type"] == "ready" and first["package"]["version"] == 1
+
+    events = send(sid, "더 짧게 써 주세요")
+    assert ended_nodes(events) == ["draft", "review"]
+    shorter = events[-1]["package"]
+    assert shorter["version"] == 2 and len(shorter["body"]) < len(first["package"]["body"])
+
+    events = send(sid, "요청사항에 공사 시간 단축 협의도 넣어 주세요")
+    assert "공사 시간 단축 협의" in events[-1]["package"]["body"] and events[-1]["package"]["version"] == 3
+    log = client.get(f"/api/sessions/{sid}").json()["log"]
+    assert sum("사용자 수정 요청" in e["title"] for e in log) == 2
+
+
+def test_unknown_session_is_404():
     assert client.post("/api/sessions/nope/messages", json={"text": "hi"}).status_code == 404
+
+
+class _ScriptedLLM:
+    """규칙 엔진에 위임하되, 초안 작성·판단 결과를 시나리오대로 바꿔치기하는 가짜 LLM."""
+
+    def __init__(self, bad_drafts: int, decision_override: dict | None = None):
+        self.rule = RuleBrain()
+        self.bad_drafts = bad_drafts
+        self.decision_override = decision_override or {}
+
+    def __getattr__(self, name):
+        return getattr(self.rule, name)
+
+    def decide(self, ctx):
+        return self.rule.decide(ctx).model_copy(update=self.decision_override)
+
+    def write(self, ctx):
+        good = self.rule.write(ctx)
+        if self.bad_drafts > 0:
+            self.bad_drafts -= 1
+            return good.model_copy(update={"body": "안녕하십니까. 길이 위험합니다. 담당자 055-999-9999로 연락 주세요. 제 번호 010-1234-5678. 꼭 고쳐 주세요. 감사합니다. 빠른 조치 부탁드립니다. 주민 일동."})
+        return good
+
+    def critique(self, ctx):
+        return Critique(passed=True, issues=[])
+
+
+def _use_llm(monkeypatch, llm):
+    brain = brain_module.Brain(llm)
+    monkeypatch.setattr("minwon.agent.nodes.get_brain", lambda: brain)
+
+
+def test_review_catches_problems_and_draft_is_rewritten(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(kakao, "request", fake_kakao.request)
+    _use_llm(monkeypatch, _ScriptedLLM(bad_drafts=1))
+    sid = new_session()
+    events = send(sid, "창원 합성초등학교 앞 횡단보도가 평일 아침마다 위험해요")
+    assert "ask" not in ended_nodes(events)
+    assert ended_nodes(events)[-4:] == ["draft", "review", "draft", "review"]
+
+    first_review = [e for e in events if e["type"] == "node_end" and e["node"] == "review"][0]["data"]["review"]
+    assert not first_review["passed"] and first_review["retry"]
+    assert any("전화번호 2개" in issue for issue in first_review["issues"])
+    assert any("위치" in issue for issue in first_review["issues"])
+    assert "010-1234-5678" not in json.dumps(first_review, ensure_ascii=False)
+    pii = next(c for c in first_review["checks"] if c["name"] == "개인정보")
+    assert "자동으로 가림" in pii["detail"]
+
+    final = events[-1]
+    assert final["review"]["passed"] and final["package"]["version"] == 2
+    assert "055-999-9999" not in final["package"]["body"]
+
+
+def test_review_stops_after_max_rounds_and_reports_remaining_issues(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(kakao, "request", fake_kakao.request)
+    _use_llm(monkeypatch, _ScriptedLLM(bad_drafts=99))
+    sid = new_session()
+    final = send(sid, "창원 합성초등학교 앞 횡단보도가 평일 아침마다 위험해요")[-1]
+    assert final["type"] == "ready"
+    assert not final["review"]["passed"] and not final["review"]["retry"] and final["review"]["round"] == 2
+    assert "010-1234-5678" not in final["package"]["body"]
+
+
+def test_invalid_decision_from_llm_is_corrected(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(kakao, "request", fake_kakao.request)
+    _use_llm(monkeypatch, _ScriptedLLM(bad_drafts=0, decision_override={"primary": 7, "channel_id": "floor_noise"}))
+    sid = new_session()
+    final = send(sid, "창원 합성초등학교 앞 횡단보도가 평일 아침마다 위험해요")[-1]
+    assert final["decision"]["primary"] == 0
+    assert final["decision"]["channel"]["id"] in {"safety_report", "epeople", "police_call"}
+    assert len(final["decision"]["fixes"]) == 2
 
 
 class _BrokenLLM:

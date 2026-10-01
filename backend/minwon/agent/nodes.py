@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 
 from langgraph.config import get_stream_writer
@@ -196,6 +197,190 @@ def act(state: AgentState) -> dict:
         logs.append(_log("act", f"Tool: {c['title']}", detail, source, tool=c["tool"], via=SOURCE_DETAIL.get(c["source"], c["source"])))
 
     return {"location": location, "nearby": nearby, "agencies": agencies, "tool_calls": calls, "log": logs}
+
+
+def _facts(state: AgentState) -> list[dict]:
+    return state["info"]["facts"]
+
+
+def decide(state: AgentState) -> dict:
+    """Reasoning: Tool 결과를 근거로 주 담당 기관·제출 창구·시민이 할 일을 정한다."""
+    _started("decide")
+    ag = state["agencies"]
+    departments, channels = ag["departments"], ag["channels"]
+    ctx = {
+        "understanding": state["understanding"],
+        "facts": _facts(state),
+        "location": state.get("location", {}),
+        "departments": departments,
+        "channels": channels,
+        "procedure": ag["procedure"],
+        "period": ag["period"],
+    }
+    out = get_brain().call("decide", ctx)
+    d = out.value.model_dump()
+
+    fixes = []
+    if not 0 <= d["primary"] < len(departments):
+        d["primary"] = 0
+        fixes.append("담당 기관 번호 보정")
+    channel = next((c for c in channels if c["id"] == d["channel_id"]), None)
+    if channel is None:
+        channel = channels[0]
+        fixes.append("제출 창구를 목록 안에서 다시 선택")
+    primary = departments[d["primary"]]
+    decision = {
+        **d,
+        "agency": primary,
+        "channel": channel,
+        "others": [x for i, x in enumerate(departments) if i != d["primary"]],
+        "period": ag["period"],
+        "fixes": fixes,
+    }
+    detail = f"{primary['agency']} {primary['unit']} · 제출 창구 {channel['name']}"
+    if fixes:
+        detail += f" (보정: {', '.join(fixes)})"
+    return {"decision": decision, "log": [_log("decide", "담당 기관 판단", detail, out.source, error=out.error)]}
+
+
+def draft(state: AgentState) -> dict:
+    """민원 초안·증빙 체크리스트 작성. 검증 의견이나 사용자 수정 요청이 있으면 반영해 다시 쓴다."""
+    _started("draft")
+    previous = state.get("package")
+    review = state.get("review") or {}
+    revision = state.get("revision_request", "")
+    review_issues = review.get("issues", []) if previous and not review.get("passed", True) and not revision else []
+    rules = knowledge.agency_rules(state["understanding"]["category"])
+    decision = state["decision"]
+    ctx = {
+        "understanding": state["understanding"],
+        "facts": _facts(state),
+        "required_info": state["plan"]["required_info"],
+        "dialogue": state["dialogue"],
+        "location": state.get("location", {}),
+        "decision": {k: decision[k] for k in ("agency", "channel", "reason", "steps")},
+        "kb": {"request": rules["request"], "evidence": rules["evidence"]},
+        "review_issues": review_issues,
+        "revision_request": revision,
+        "previous_draft": {"title": previous["title"], "body": previous["body"]} if previous and (revision or review_issues) else None,
+    }
+    out = get_brain().call("write", ctx)
+    package = out.value.model_dump() | {"version": (previous or {}).get("version", 0) + 1}
+
+    if revision:
+        title, detail = "초안 다시 작성 (사용자 수정 요청)", f"요청: {revision}"
+    elif review_issues:
+        title, detail = "초안 다시 작성 (검증 의견 반영)", " / ".join(review_issues)
+    else:
+        title, detail = "민원 초안 작성", package["title"]
+    return {
+        "package": package,
+        "revision_request": "",
+        "log": [_log("draft", title, f"{detail} → {len(package['body'])}자, 증빙 {len(package['evidence'])}개", out.source, error=out.error)],
+    }
+
+
+PHONE = re.compile(r"(?<!\d)(?:0\d{1,2}[-\s]?\d{3,4}[-\s]?\d{4}|1\d{3}-\d{4})(?!\d)")
+URL = re.compile(r"(?:https?://|www\.)[^\s)\]]+")
+PLACEHOLDER = re.compile(r"\[[^\]]+\]")
+
+
+def _digits(text: str) -> str:
+    return re.sub(r"\D", "", text)
+
+
+def _rule_checks(state: AgentState, package: dict) -> tuple[dict, list[dict]]:
+    checks = []
+
+    # 개인정보 가림보다 먼저: 가려진 뒤에는 지어낸 연락처를 찾을 수 없다
+    ag = state["agencies"]
+    allowed_phones = {_digits(c["phone"]) for c in ag["channels"] if c["phone"]} | {_digits(d["phone"]) for d in ag["departments"] if d["phone"]}
+    allowed_urls = {c["url"] for c in ag["channels"] if c["url"]}
+    phones = [p for p in PHONE.findall(package["body"]) if _digits(p) not in allowed_phones]
+    urls = [u for u in URL.findall(package["body"]) if not any(u.startswith(a) or a.endswith(u) for a in allowed_urls)]
+    if phones or urls:
+        what = ", ".join(x for x in (f"전화번호 {len(phones)}개" if phones else "", f"인터넷 주소 {len(urls)}개" if urls else "") if x)
+        checks.append({"name": "연락처", "ok": False, "detail": f"확인되지 않은 {what}",
+                       "issue": f"본문에 확인되지 않은 {what}가 있어요. 담당 기관 정보에 없는 연락처는 빼 주세요."})
+    else:
+        checks.append({"name": "연락처", "ok": True, "detail": "확인되지 않은 연락처 없음"})
+
+    title, body = safety.mask_pii(package["title"]), safety.mask_pii(package["body"])
+    found = title.findings + body.findings
+    if found:
+        package = package | {"title": title.text, "body": body.text}
+        checks.append({"name": "개인정보", "ok": True, "detail": f"개인정보 {sum(f['count'] for f in found)}건을 자동으로 가림"})
+    else:
+        checks.append({"name": "개인정보", "ok": True, "detail": "개인정보 없음"})
+
+    loc = state.get("location", {})
+    fact_loc = next((f["value"] for f in _facts(state) if f["slot"] == "location"), "")
+    terms = [loc.get("place_name"), loc.get("dong"), loc.get("legal_dong"), *(loc.get("sigungu", "").split()[-1:]), *fact_loc.split()[:2]]
+    terms = [t for t in terms if t]
+    if not terms or any(t in package["body"] for t in terms):
+        checks.append({"name": "위치", "ok": True, "detail": "본문에 위치가 들어 있음" if terms else "확인된 위치 없음 (빈칸 안내)"})
+    else:
+        checks.append({"name": "위치", "ok": False, "detail": "본문에 위치가 없음",
+                       "issue": f"본문에 민원 위치({terms[0]})를 넣어 주세요."})
+
+    length = len(package["body"])
+    if length < 80:
+        checks.append({"name": "분량", "ok": False, "detail": f"{length}자", "issue": "본문이 너무 짧아 상황이 전달되지 않아요. 현황을 더 써 주세요."})
+    elif length > 1500:
+        checks.append({"name": "분량", "ok": False, "detail": f"{length}자", "issue": "본문이 너무 길어요. 1,500자 안으로 줄여 주세요."})
+    else:
+        checks.append({"name": "분량", "ok": True, "detail": f"{length}자"})
+    return package, checks
+
+
+def review(state: AgentState) -> dict:
+    """Feedback: 초안을 규칙 검사와 AI 검토로 확인하고, 문제가 있으면 다시 쓰게 한다."""
+    _started("review")
+    package, checks = _rule_checks(state, state["package"])
+    issues = [c["issue"] for c in checks if not c["ok"]]
+
+    source = "rule"
+    error = ""
+    brain = get_brain()
+    if brain.mode == "llm":
+        ctx = {"dialogue": state["dialogue"], "facts": _facts(state), "decision": {k: state["decision"][k] for k in ("agency", "reason")},
+               "draft": {"title": package["title"], "body": package["body"]}}
+        out = brain.call("critique", ctx)
+        source, error = out.source, out.error
+        if out.source == "llm":
+            ai_issues = out.value.issues if not out.value.passed else []
+            issues += ai_issues
+            checks.append({"name": "AI 검토", "ok": not ai_issues, "detail": " / ".join(ai_issues) or "고칠 점 없음"})
+        else:
+            checks.append({"name": "AI 검토", "ok": True, "detail": "AI 검토 실패 → 규칙 검사만 적용"})
+
+    rounds = state.get("review_rounds", 0) + 1
+    passed = not issues
+    retry = not passed and rounds < settings.max_review_rounds
+    result = {
+        "passed": passed,
+        "issues": issues,
+        "checks": checks,
+        "placeholders": PLACEHOLDER.findall(package["body"]),
+        "round": rounds,
+        "retry": retry,
+    }
+    if passed:
+        detail = f"통과 ({rounds}회차)"
+    elif retry:
+        detail = f"문제 {len(issues)}건 → 다시 작성"
+    else:
+        detail = f"문제 {len(issues)}건 남음 → 최대 횟수 도달, 사용자 확인 필요"
+    return {"package": package, "review": result, "review_rounds": rounds,
+            "log": [_log("review", "초안 검증", detail, source, error=error)]}
+
+
+def route_after_review(state: AgentState) -> str:
+    return "draft" if state["review"]["retry"] else "done"
+
+
+def route_entry(state: AgentState) -> str:
+    return "draft" if state.get("revision_request") and state.get("package") else "guard"
 
 
 def ask(state: AgentState) -> dict:

@@ -3,7 +3,18 @@
 import re
 
 from minwon import knowledge
-from minwon.agent.schemas import Fact, InfoCheck, Plan, PlanStep, Question, Understanding
+from minwon.agent.schemas import (
+    Critique,
+    Decision,
+    Draft,
+    EvidenceItem,
+    Fact,
+    InfoCheck,
+    Plan,
+    PlanStep,
+    Question,
+    Understanding,
+)
 
 DANGER = re.compile(r"(위험|사고|다칠|다쳤|넘어|아이들|어린이|노인|싱크홀|무너)")
 
@@ -27,6 +38,7 @@ FREQUENCY = re.compile(r"(매일|날마다|자주|항상|계속|반복|[가-힣]
 HARM = re.compile(r"(다쳤|부상|사고가 났|넘어졌|피해를|아파|병원에)")
 TARGET = re.compile(r"(\d{2,3}[가-힣]\s?\d{4}|\d+번\s?버스|[가-힣A-Za-z0-9]+(?:건설|산업|업체|식당|노래방|술집|공장))")
 UNKNOWN = re.compile(r"^(모름|몰라요|모르겠어요|잘 모르겠|없음|없어요)")
+SHORTER = re.compile(r"(짧|간단|줄여|요약)")
 
 
 def classify(text: str) -> str:
@@ -120,3 +132,60 @@ class RuleBrain:
             questions=questions,
             location_query=facts.get("location", ""),
         )
+
+    def decide(self, ctx: dict) -> Decision:
+        channels = ctx["channels"]
+        channel = next((c for c in channels if c["url"]), channels[0])
+        primary = ctx["departments"][0]
+        cautions = []
+        if len(ctx["departments"]) > 1:
+            other = ctx["departments"][1]
+            cautions.append(f"{other['agency']}({other['unit']})도 관련 업무를 맡고 있어, 필요하면 함께 이송될 수 있습니다.")
+        return Decision(
+            primary=0,
+            channel_id=channel["id"],
+            reason=f"{primary['unit']}가 '{primary['duty']}' 업무를 맡고 있어 {primary['agency']}에 제출합니다.",
+            steps=ctx["procedure"],
+            cautions=cautions,
+        )
+
+    def write(self, ctx: dict) -> Draft:
+        facts = {f["slot"]: f["value"] for f in ctx["facts"]}
+        loc = ctx["location"]
+        place = loc.get("place_name") or facts.get("location", "")
+        address = loc.get("address") or facts.get("location", "[위치]")
+        where = f"{address} ({place})" if place and place not in address else address
+        label = ctx["understanding"]["category_label"]
+        area = loc.get("sigungu") or "우리 동네"
+
+        greeting = f"안녕하십니까. {where} 인근의 {label} 관련 불편을 알려드리고 개선을 요청드립니다."
+        revision = ctx.get("revision_request", "")
+        wants_short = bool(revision and SHORTER.search(revision))
+
+        if wants_short:
+            lines = [greeting, f"위치는 {where}이며, {ctx['understanding']['summary']}", ctx["kb"]["request"], "검토 부탁드립니다."]
+        else:
+            lines = [greeting, "", "1. 현황", f"- 위치: {where}", f"- 발생 시기: {facts.get('time', '[언제 주로 발생하는지]')}"]
+            if "frequency" in facts or "frequency" in ctx["required_info"]:
+                lines.append(f"- 반복 여부: {facts.get('frequency', '[얼마나 자주 반복되는지]')}")
+            lines.append(f"- 상황: {ctx['understanding']['summary']}")
+            if "target" in facts:
+                lines.append(f"- 원인 대상: {facts['target']}")
+            if "harm" in facts:
+                lines.append(f"- 위험·피해: {facts['harm']}")
+            lines += ["", "2. 요청 사항", ctx["kb"]["request"]]
+            if revision:
+                lines.append(f"추가로, {revision.rstrip('.')}.")
+            lines += ["", "현장 사진 등 증빙자료를 함께 첨부합니다. 검토해 주셔서 감사합니다."]
+
+        evidence = [EvidenceItem(item=e, why="담당 부서가 현장을 빨리 파악할 수 있습니다.", required=i < 2)
+                    for i, e in enumerate(ctx["kb"]["evidence"])]
+        return Draft(
+            title=f"[{area}] {place or label} {label} 개선 요청"[:40],
+            body="\n".join(lines),
+            evidence=evidence,
+            tips=["사진에는 위치를 알 수 있는 간판·건물이 함께 나오게 찍어 주세요.", "접수번호를 메모해 두면 처리 상황을 조회할 수 있습니다."],
+        )
+
+    def critique(self, ctx: dict) -> Critique:
+        return Critique(passed=True, issues=[])

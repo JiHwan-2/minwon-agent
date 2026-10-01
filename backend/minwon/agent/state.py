@@ -16,4 +16,9 @@ class AgentState(TypedDict, total=False):
     nearby: dict                                      # 종류별 주변 기관
     agencies: dict                                    # 담당 부서·창구·절차·증빙
     tool_calls: Annotated[list[dict], operator.add]   # Tool 호출 기록
+    decision: dict                                    # 주 담당 기관·제출 창구·할 일
+    package: dict                                     # 민원 초안·증빙 체크리스트 (최신본)
+    review: dict                                      # 최근 검증 결과
+    review_rounds: int                                # 이번 작성 주기의 검증 횟수
+    revision_request: str                             # 완성 후 사용자의 수정 요청
     log: Annotated[list[dict], operator.add]          # 실행 로그

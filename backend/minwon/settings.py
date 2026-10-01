@@ -20,6 +20,7 @@ class Settings:
     openai_model: str = os.getenv("OPENAI_MODEL", "gpt-4.1")
     kakao_rest_api_key: str = os.getenv("KAKAO_REST_API_KEY", "")
     max_question_rounds: int = int(os.getenv("MAX_QUESTION_ROUNDS", "2"))
+    max_review_rounds: int = int(os.getenv("MAX_REVIEW_ROUNDS", "2"))
     cors_origins: list[str] = field(default_factory=lambda: _csv("CORS_ORIGINS", "http://localhost:5173"))
 
     @property

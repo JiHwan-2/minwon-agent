@@ -11,7 +11,7 @@ from pydantic import BaseModel
 
 from minwon.agent import prompts
 from minwon.agent.rules import RuleBrain
-from minwon.agent.schemas import InfoCheck, Plan, Understanding
+from minwon.agent.schemas import Critique, Decision, Draft, InfoCheck, Plan, Understanding
 from minwon.settings import settings
 
 log = logging.getLogger(__name__)
@@ -55,6 +55,15 @@ class LLMBrain:
 
     def check(self, ctx: dict) -> InfoCheck:
         return self._ask(self.fast, InfoCheck, prompts.CHECK, ctx)
+
+    def decide(self, ctx: dict) -> Decision:
+        return self._ask(self.deep, Decision, prompts.DECIDE, ctx)
+
+    def write(self, ctx: dict) -> Draft:
+        return self._ask(self.deep, Draft, prompts.WRITE, ctx)
+
+    def critique(self, ctx: dict) -> Critique:
+        return self._ask(self.fast, Critique, prompts.CRITIQUE, ctx)
 
 
 @dataclass

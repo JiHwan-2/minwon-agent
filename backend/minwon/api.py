@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 from minwon import safety
 from minwon.agent.brain import get_brain
-from minwon.agent.graph import build_graph, start_input
+from minwon.agent.graph import build_graph, revision_input, start_input
 from minwon.settings import settings
 
 logging.basicConfig(level=logging.INFO)
@@ -23,8 +23,11 @@ app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_me
 graph = build_graph()
 sessions: set[str] = set()
 
-SNAPSHOT_KEYS = ("safety", "understanding", "plan", "info", "dialogue", "location", "nearby", "agencies", "tool_calls", "log")
-RESULT_KEYS = ("info", "location", "agencies")
+SNAPSHOT_KEYS = (
+    "safety", "understanding", "plan", "info", "dialogue", "location", "nearby", "agencies",
+    "tool_calls", "decision", "package", "review", "log",
+)
+RESULT_KEYS = ("info", "location", "agencies", "decision", "package", "review")
 
 
 class MessageIn(BaseModel):
@@ -83,8 +86,10 @@ def _run(session_id: str, text: str) -> Iterator[str]:
     snapshot = graph.get_state(config)
     if _pending_questions(snapshot):
         graph_input = Command(resume={"text": masked.text, "pii": masked.findings})
+    elif snapshot.values.get("package"):
+        graph_input = revision_input(masked.text)
     elif snapshot.values:
-        yield _event(type="error", code="session_done", message="이 민원은 이미 처리가 끝났어요. '새 민원'으로 다시 시작해 주세요.")
+        yield _event(type="error", code="session_busy", message="이전 처리가 끝나지 않았어요. '새 민원'으로 다시 시작해 주세요.")
         return
     else:
         graph_input = start_input(masked.text, masked.findings)
