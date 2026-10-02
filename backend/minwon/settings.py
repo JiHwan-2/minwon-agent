@@ -15,7 +15,7 @@ def _csv(name: str, default: str) -> list[str]:
 class Settings:
     llm_provider: str = os.getenv("LLM_PROVIDER", "rule").lower()
     claude_cli: str = os.getenv("CLAUDE_CLI", "")  # 비우면 PATH에서 claude 실행 파일을 찾음
-    claude_model: str = os.getenv("CLAUDE_MODEL", "sonnet")
+    claude_model: str = os.getenv("CLAUDE_MODEL", "claude-opus-5-5")
     claude_effort: str = os.getenv("CLAUDE_EFFORT", "medium")
     claude_effort_fast: str = os.getenv("CLAUDE_EFFORT_FAST", "low")
     claude_timeout: int = int(os.getenv("CLAUDE_TIMEOUT", "120"))
@@ -27,7 +27,8 @@ class Settings:
     @property
     def model_label(self) -> str:
         if self.llm_provider == "claude_code":
-            return f"Claude {self.claude_model} (Claude Code)"
+            name = self.claude_model if self.claude_model.startswith("claude") else f"Claude {self.claude_model}"
+            return f"{name} (Claude Code)"
         return "규칙 기반"
 
 

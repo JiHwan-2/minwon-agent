@@ -42,7 +42,7 @@ copy .env.example .env
 .venv\Scripts\uvicorn minwon.api:app --app-dir . --reload --port 8000
 ```
 
-`.env`의 `LLM_PROVIDER=rule`이면 규칙 엔진으로 동작합니다. Claude로 판단하려면 `LLM_PROVIDER=claude_code`로 바꾸세요. 터미널에서 `claude auth status`가 `"loggedIn": true`이면 준비된 것입니다 (모델은 `CLAUDE_MODEL`, 기본 `sonnet`). 민원 1건에 Claude를 6~8번 부르고, 단계마다 5~35초 걸립니다. 사용량은 로그인한 Claude 요금제 한도에서 차감됩니다.
+`.env`의 `LLM_PROVIDER=rule`이면 규칙 엔진으로 동작합니다. Claude로 판단하려면 `LLM_PROVIDER=claude_code`로 바꾸세요. 터미널에서 `claude auth status`가 `"loggedIn": true`이면 준비된 것입니다 (모델은 `CLAUDE_MODEL`, 기본 `claude-opus-5-5` = Claude Opus 5.5). 민원 1건에 Claude를 6~8번 부르고, 단계마다 5~35초 걸립니다. 사용량은 로그인한 Claude 요금제 한도에서 차감됩니다.
 위치·기관 검색에는 `KAKAO_REST_API_KEY`(카카오 디벨로퍼스 REST API 키, 카카오맵 사용 설정 ON)가 필요하며, 없으면 문장에서 지역명을 추출해 일반 안내로 대체합니다.
 
 **2. 프론트엔드** (터미널 2)
