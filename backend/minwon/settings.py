@@ -14,10 +14,11 @@ def _csv(name: str, default: str) -> list[str]:
 @dataclass(frozen=True)
 class Settings:
     llm_provider: str = os.getenv("LLM_PROVIDER", "rule").lower()
-    anthropic_model: str = os.getenv("ANTHROPIC_MODEL", "claude-opus-5")
-    anthropic_effort: str = os.getenv("ANTHROPIC_EFFORT", "medium")
-    anthropic_effort_fast: str = os.getenv("ANTHROPIC_EFFORT_FAST", "low")
-    openai_model: str = os.getenv("OPENAI_MODEL", "gpt-4.1")
+    claude_cli: str = os.getenv("CLAUDE_CLI", "")  # 비우면 PATH에서 claude 실행 파일을 찾음
+    claude_model: str = os.getenv("CLAUDE_MODEL", "sonnet")
+    claude_effort: str = os.getenv("CLAUDE_EFFORT", "medium")
+    claude_effort_fast: str = os.getenv("CLAUDE_EFFORT_FAST", "low")
+    claude_timeout: int = int(os.getenv("CLAUDE_TIMEOUT", "120"))
     kakao_rest_api_key: str = os.getenv("KAKAO_REST_API_KEY", "")
     max_question_rounds: int = int(os.getenv("MAX_QUESTION_ROUNDS", "2"))
     max_review_rounds: int = int(os.getenv("MAX_REVIEW_ROUNDS", "2"))
@@ -25,10 +26,9 @@ class Settings:
 
     @property
     def model_label(self) -> str:
-        return {
-            "anthropic": self.anthropic_model,
-            "openai": self.openai_model,
-        }.get(self.llm_provider, "규칙 기반")
+        if self.llm_provider == "claude_code":
+            return f"Claude {self.claude_model} (Claude Code)"
+        return "규칙 기반"
 
 
 settings = Settings()

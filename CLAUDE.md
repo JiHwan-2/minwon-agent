@@ -28,7 +28,8 @@ cd backend
 cd frontend
 npm run dev
 ```
-- 키 없이 개발·테스트: `backend/.env`의 `LLM_PROVIDER=rule`. 자동 테스트는 항상 규칙 엔진과 `tests/fake_kakao.py` 가짜 응답을 써서 실제 API를 부르지 않는다.
+- 판단 엔진: `backend/.env`의 `LLM_PROVIDER=claude_code`면 로그인된 Claude Code(`claude -p`)로, `rule`이면 규칙 엔진으로 동작한다. LLM API 키는 쓰지 않는다.
+- 자동 테스트는 항상 규칙 엔진과 가짜 응답(`tests/fake_kakao.py`, `tests/test_claude_code_brain.py`의 FakeClaude)을 써서 실제 Claude·카카오를 부르지 않는다.
 - 첫 설치 방법은 README의 "새 PC·팀원 개발환경 맞추기".
 
 ## 구조 한눈에
@@ -36,7 +37,7 @@ npm run dev
 backend/minwon/
   api.py        세션·메시지(NDJSON 스트리밍) API
   safety.py     개인정보 가림, 긴급상황·지시 주입 감지
-  agent/        LangGraph 워크플로 (graph.py), 단계(nodes.py), 판단 엔진(brain.py: Claude/GPT → 실패 시 rules.py)
+  agent/        LangGraph 워크플로 (graph.py), 단계(nodes.py), 판단 엔진(brain.py: Claude Code `claude -p` → 실패 시 rules.py)
   tools/        카카오 로컬 API, 위치 확인·후보, 주변 기관, 지식베이스 조회
   knowledge/    생활불편 유형·필수 정보(categories.json), 담당 부서·창구·절차·증빙(agencies.json)
 frontend/src/

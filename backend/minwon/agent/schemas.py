@@ -1,4 +1,4 @@
-"""LLM이 각 단계에서 반환해야 하는 구조 (모든 필드 필수: OpenAI strict 모드 호환)."""
+"""LLM이 각 단계에서 반환해야 하는 구조 (모든 필드 필수: JSON Schema 구조화 출력으로 강제)."""
 
 from typing import Literal
 

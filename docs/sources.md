@@ -9,14 +9,13 @@
 | 도구 | 용도 | 비고 |
 |---|---|---|
 | Claude Code (Anthropic) | 코드 작성 보조, 설계 문서 초안 | 팀이 검토·수정 후 커밋 |
-| Claude API (Anthropic) | 서비스 내 LLM (분석·계획·판단·생성·검토) | |
-| OpenAI API (선택) | 서비스 내 LLM 대체 옵션 | |
+| Claude Code CLI (`claude -p`, Anthropic) | 서비스 내 LLM 판단 엔진 (분석·계획·판단·생성·검토). 단계마다 비대화형으로 실행, 도구 끔, JSON Schema 구조화 출력 | 실행 PC에 로그인된 Claude 계정 사용, LLM API 키 미사용 (2026-10-02부터. 이전에는 Claude/OpenAI API 연결) |
 
 ## 오픈소스
 | 이름 | 용도 | 라이선스 |
 |---|---|---|
 | LangGraph | Agent 상태 그래프, 추가 질문 일시정지(interrupt), 세션 상태 저장 | MIT |
-| LangChain (langchain-core, langchain-anthropic, langchain-openai) | Claude/GPT 호출, 구조화 출력 | MIT |
+| LangChain (langchain-core) | LangGraph 기반 라이브러리 (버전 고정용) | MIT |
 | FastAPI / Uvicorn | API 서버 | MIT / BSD-3-Clause |
 | Pydantic | 입출력 스키마 검증 | MIT |
 | python-dotenv, httpx | 설정 로드, HTTP 호출 | BSD-3-Clause |
@@ -43,3 +42,4 @@
 | 2026-10-01 | E2E 완성(화면): 민원 패키지 카드(담당 기관·제출 바로가기·할 일·수정 가능한 초안·복사·증빙 체크리스트), 판단·작성·검증 단계 기록, 수정 요청 입력. README 갱신 | 68247af |
 | 2026-10-01 | 모호한 위치 처리: 이름 없는 장소('창원 초등학교')는 다시 질문, 카카오 후보 최대 5곳 중 사용자가 말한 시·군 안의 결과 우선, 후보가 여러 곳이면 사용자가 선택(위치 후보 확인 단계), 미확정 시 경고. 규칙 엔진의 여러 질문 답변 처리·분류 키워드 보완, 테스트 40건 | 6e1237b |
 | 2026-10-01 | 증빙자료를 필수(공식 요건·근거 표시)/권장/별도 절차(피해 보상)로 구분, 근거 없는 '필수'를 검증 단계에서 자동으로 '권장'으로 조정, 화면에 구분별 묶음 표시, 테스트 43건 | |
+| 2026-10-02 | 판단 엔진을 LLM API 연결에서 Claude Code CLI(`claude -p`) 실행으로 교체: 단계별 지시문·출력 구조 강제, 일시 오류 1회 재시도, 미설치·시간 초과·오류 시 그 단계만 규칙 엔진 대체. API 연결 코드·라이브러리(langchain-anthropic·langchain-openai) 제거, 테스트 50건 | |

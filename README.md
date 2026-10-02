@@ -16,13 +16,13 @@
      → 민원 패키지 → (사용자 수정 요청 → 다시 작성)
 ```
 
-- 판단 엔진: Claude(기본) 또는 GPT. 키가 없거나 호출이 실패하면 **규칙 엔진으로 자동 대체**하고 작업 기록에 표시합니다.
+- 판단 엔진: Claude. 이 PC에 설치·로그인된 **Claude Code(`claude -p`)를 단계마다 실행**해 판단하므로 LLM API 키가 필요 없습니다. Claude Code가 없거나 호출이 실패하면 **규칙 엔진으로 자동 대체**하고 작업 기록에 표시합니다.
 - 화면 오른쪽 **Agent 작업 기록**에 단계별 판단·근거·Tool 호출·검증 결과가 실시간으로 남습니다.
 - 최종 민원은 사용자가 확인·수정한 뒤 **직접 제출**합니다 (자동 제출하지 않음).
 
 ## 실행 방법 (Windows PowerShell)
 
-필요: Python 3.11+, Node.js 20+
+필요: Python 3.11+, Node.js 20+, (AI 판단을 쓸 때) Claude Code 설치·로그인
 
 **1. 백엔드** (터미널 1)
 
@@ -42,7 +42,7 @@ copy .env.example .env
 .venv\Scripts\uvicorn minwon.api:app --app-dir . --reload --port 8000
 ```
 
-`.env`의 `LLM_PROVIDER=rule`이면 API 키 없이 동작합니다. Claude를 쓰려면 `LLM_PROVIDER=anthropic`과 `ANTHROPIC_API_KEY`를 입력하세요.
+`.env`의 `LLM_PROVIDER=rule`이면 규칙 엔진으로 동작합니다. Claude로 판단하려면 `LLM_PROVIDER=claude_code`로 바꾸세요. 터미널에서 `claude auth status`가 `"loggedIn": true`이면 준비된 것입니다 (모델은 `CLAUDE_MODEL`, 기본 `sonnet`). 민원 1건에 Claude를 6~8번 부르고, 단계마다 5~35초 걸립니다. 사용량은 로그인한 Claude 요금제 한도에서 차감됩니다.
 위치·기관 검색에는 `KAKAO_REST_API_KEY`(카카오 디벨로퍼스 REST API 키, 카카오맵 사용 설정 ON)가 필요하며, 없으면 문장에서 지역명을 추출해 일반 안내로 대체합니다.
 
 **2. 프론트엔드** (터미널 2)
@@ -70,7 +70,7 @@ cd backend
 
 ## 새 PC·팀원 개발환경 맞추기
 
-**1. 설치할 것:** Git, Python 3.11 이상, Node.js 20 이상, (선택) Claude Code
+**1. 설치할 것:** Git, Python 3.11 이상, Node.js 20 이상, Claude Code (AI 판단 엔진 겸 코딩 도구. 설치 후 터미널에서 `claude`를 한 번 실행해 로그인)
 
 **2. 코드 받기**
 
@@ -80,12 +80,12 @@ git clone https://github.com/JiHwan-2/minwon-agent.git
 
 받은 뒤 위 "실행 방법"의 1·2번을 그대로 따라 합니다. 패키지 버전은 `requirements.txt`와 `package-lock.json`에 고정되어 있어 어느 PC에서나 같은 버전이 설치됩니다.
 
-**3. API 키 (`backend\.env`)** — 저장소에 없으니 PC마다 직접 넣습니다. 채팅·메일로 키를 주고받지 않습니다.
+**3. 키·로그인 (`backend\.env`)** — 저장소에 없으니 PC마다 직접 넣습니다. 채팅·메일로 키를 주고받지 않습니다.
 
 | 구분 | 받는 방법 | 비고 |
 |---|---|---|
 | 카카오 REST API 키 | 팀장이 카카오 디벨로퍼스 앱의 **멤버** 메뉴에서 팀원을 초대 → 팀원이 자기 계정으로 콘솔의 **앱 → 플랫폼 키**에서 확인 | 같은 앱의 키라 결과가 같음 |
-| Anthropic API 키 | 팀장이 Anthropic 콘솔 조직에 팀원을 초대 → 각자 **자기 키를 따로 발급** | 키를 나눠 쓰지 않으면 노출 시 그 키만 폐기하면 됨. 콘솔에서 사용 한도 설정 |
+| Claude (판단 엔진) | 키 없음. 각자 PC에서 Claude Code에 **자기 계정으로 로그인** | `LLM_PROVIDER=claude_code`. 계정을 나눠 쓰지 않음 |
 | 키가 없을 때 | `LLM_PROVIDER=rule`, `KAKAO_REST_API_KEY` 비워 두기 | 규칙 엔진·문장 기반 지역 추출로 동작 |
 
 **4. 확인:** `pytest`가 모두 통과하고 화면에서 예시 문장이 끝까지 진행되면 준비 완료입니다.
@@ -116,7 +116,7 @@ backend/minwon/
   agent/
     graph.py          LangGraph 워크플로
     nodes.py          guard · understand · plan · check · ask · act · decide · draft · review
-    brain.py          Claude/GPT 판단 엔진 + 실패 시 규칙 엔진 대체
+    brain.py          Claude Code(claude -p) 판단 엔진 + 실패 시 규칙 엔진 대체
     rules.py          규칙 기반 판단 엔진
     schemas.py        단계별 출력 구조
     prompts.py        단계별 지시문
