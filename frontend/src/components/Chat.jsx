@@ -62,7 +62,7 @@ function Bubble({ m, canChoose, onSend }) {
   );
 }
 
-export default function Chat({ messages, phase, onSend, onStop, stopping, latestId }) {
+export default function Chat({ messages, phase, onSend, onStop, stopping, latestId, calm }) {
   const [text, setText] = useState("");
   const endRef = useRef(null);
   const busy = phase === "running";
@@ -85,7 +85,9 @@ export default function Chat({ messages, phase, onSend, onStop, stopping, latest
     : phase === "asking"
       ? "질문에 이어서 답해 주세요. 모르는 건 '모름'이라고 적어도 돼요."
       : phase === "clarify"
-        ? "불편했던 일을 말씀해 주세요. 예) 집 앞 가로등이 며칠째 꺼져 있어요"
+        ? calm
+          ? "생활 속 불편한 일이 있으면 언제든 말씀해 주세요."
+          : "불편했던 일을 말씀해 주세요. 예) 집 앞 가로등이 며칠째 꺼져 있어요"
         : "예) 학교 앞 횡단보도가 너무 위험해요.";
 
   return (
@@ -103,7 +105,7 @@ export default function Chat({ messages, phase, onSend, onStop, stopping, latest
         <div ref={endRef} />
       </div>
 
-      {((phase === "idle" && messages.length === 1) || phase === "clarify") && (
+      {((phase === "idle" && messages.length === 1) || (phase === "clarify" && !calm)) && (
         <div className="examples">
           {EXAMPLES.map((ex) => (
             <button key={ex} className="chip-btn" onClick={() => onSend(ex)}>

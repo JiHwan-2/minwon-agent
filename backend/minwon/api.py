@@ -115,6 +115,10 @@ def _run(session_id: str, text: str) -> Iterator[str]:
     masked = safety.mask_pii(text)
     if masked.findings:
         yield _event(type="masked", text=masked.text, findings=masked.findings)
+    # 위기 표현은 대화 어느 단계에서든 AI 판단보다 먼저, 정해진 문장으로 안내한다
+    crisis = safety.is_crisis(masked.text)
+    if crisis:
+        yield _event(type="crisis", message=safety.CRISIS_NOTICE)
 
     previous = dict(sessions[session_id])
     config = _config(session_id)
@@ -131,10 +135,13 @@ def _run(session_id: str, text: str) -> Iterator[str]:
             with cancel.scope(session_id):
                 turn = topic.detect(snapshot.values, pending, masked.text)
         if turn and turn["kind"] == "off_topic":
-            yield _event(type="off_topic", stage=stage, message=topic.OFF_TOPIC_REPLY[stage],
+            # 위기 표현이면 질문을 다시 들이밀지 않고, 하던 민원은 그대로 둔 채 쉬어 가게 한다
+            reask = pending and not crisis
+            yield _event(type="off_topic", stage=stage, crisis=crisis,
+                         message=safety.CRISIS_REPLY["paused"] if crisis else topic.OFF_TOPIC_REPLY[stage],
                          reason=turn["reason"], source=turn["source"], error=turn["error"],
-                         questions=pending["questions"] if pending else [],
-                         options=pending.get("options", []) if pending else [])
+                         questions=pending["questions"] if reask else [],
+                         options=pending.get("options", []) if reask else [])
             return
         if turn:
             sessions[session_id] = {"thread": uuid.uuid4().hex, "rollback": None}

@@ -51,12 +51,13 @@ def _log(node: str, title: str, detail: str = "", source: str = "system", **extr
 
 
 def guard(state: AgentState) -> dict:
-    """입력 안전 점검: 개인정보 가림 결과 기록, 긴급상황·지시 주입 감지."""
+    """입력 안전 점검: 개인정보 가림 결과 기록, 긴급상황·위기 표현·지시 주입 감지."""
     _started("guard")
     text = state["user_input"]
     result = {
         "pii": state.get("pii_findings", []),
         "emergency": safety.is_emergency(text),
+        "crisis": safety.is_crisis(text),
         "injection": safety.looks_like_injection(text),
     }
     notes = []
@@ -64,6 +65,8 @@ def guard(state: AgentState) -> dict:
         notes.append("개인정보 " + ", ".join(f"{f['label']} {f['count']}건" for f in result["pii"]) + " 가림")
     if result["emergency"]:
         notes.append("긴급상황 표현 감지 → 112·119 신고 안내")
+    if result["crisis"]:
+        notes.append("위기 표현 감지 → 자살예방 상담전화 109 안내")
     if result["injection"]:
         notes.append("AI 지시 변경 시도 감지 → 자료로만 처리")
     return {"safety": result, "log": [_log("guard", "입력 안전 점검", " / ".join(notes) or "이상 없음")]}
@@ -86,8 +89,13 @@ def understand(state: AgentState) -> dict:
         data |= {"intent": "complaint", "urgency": "high"}  # 긴급상황 표현은 민원 흐름으로 (112·119 안내는 guard가 함)
 
     if data["intent"] != "complaint":
-        data["reply"] = data["reply"].strip() or DEFAULT_REPLY[data["intent"]]
-        detail = f"{INTENT_LABEL[data['intent']]} → 민원 흐름을 시작하지 않고 안내"
+        if state["safety"].get("crisis"):
+            # 109 안내(api가 먼저 보냄)에 이어 생활불편 예시를 들지 않고 정해진 문장으로만 답한다
+            data["reply"] = safety.CRISIS_REPLY["new"]
+            detail = f"{INTENT_LABEL[data['intent']]} · 위기 표현 → 상담전화 안내 후 민원 흐름을 시작하지 않음"
+        else:
+            data["reply"] = data["reply"].strip() or DEFAULT_REPLY[data["intent"]]
+            detail = f"{INTENT_LABEL[data['intent']]} → 민원 흐름을 시작하지 않고 안내"
         return {"understanding": data, "log": [_log("understand", "입력 확인", detail, out.source, error=out.error)]}
 
     return {

@@ -23,6 +23,7 @@ export default function App() {
   const [timeline, setTimeline] = useState([]);
   const [phase, setPhase] = useState("idle"); // idle | running | asking | ready | clarify(민원이 아니거나 불분명해 다시 말해 주길 기다림)
   const [stopping, setStopping] = useState(false);
+  const [crisis, setCrisis] = useState(false); // 이번 메시지에 위기 표현이 있었으면 민원 예시 버튼을 내밀지 않는다
   const sessionRef = useRef(null);
   const revisingRef = useRef(false);
   const abortRef = useRef(null);
@@ -43,6 +44,11 @@ export default function App() {
 
   const onEvent = (ev) => {
     switch (ev.type) {
+      case "crisis":
+        // 위기 표현: AI 판단과 관계없이 서버가 정해 둔 문장(109 안내)을 그대로 보여 준다
+        addMessage("alert", ev.message);
+        setCrisis(true);
+        break;
       case "masked":
         setMessages((m) => {
           const last = m.findLastIndex((x) => x.role === "user");
@@ -139,7 +145,9 @@ export default function App() {
           status: "done",
           log: {
             title: "입력 확인",
-            detail: `${asking ? "질문에 대한 답이 아님 → 같은 질문을 다시 보여 줌" : "고칠 점·새 불편 없음 → 초안을 다시 쓰지 않음"} · ${ev.reason}`,
+            detail: ev.crisis
+              ? `위기 표현 → 상담전화 안내, 하던 민원은 그대로 둠 · ${ev.reason}`
+              : `${asking ? "질문에 대한 답이 아님 → 같은 질문을 다시 보여 줌" : "고칠 점·새 불편 없음 → 초안을 다시 쓰지 않음"} · ${ev.reason}`,
             source: ev.source,
             error: ev.error,
             at: now(),
@@ -150,7 +158,7 @@ export default function App() {
           const waiting = t.findLastIndex((e) => e.status === "waiting");
           return waiting === -1 ? [...t, entry] : [...t.slice(0, waiting), entry, ...t.slice(waiting)];
         });
-        addMessage("agent", ev.message, asking ? { questions: ev.questions, options: ev.options } : {});
+        addMessage("agent", ev.message, ev.questions.length > 0 ? { questions: ev.questions, options: ev.options } : {});
         setPhase(ev.stage);
         break;
       }
@@ -195,6 +203,7 @@ export default function App() {
     const continuing = phase === "asking" || phase === "ready" || phase === "clarify";
     revisingRef.current = phase === "ready";
     if (!continuing) setTimeline([]);
+    setCrisis(false);
     addMessage("user", text);
     setPhase("running");
     const controller = new AbortController();
@@ -239,6 +248,7 @@ export default function App() {
     revisingRef.current = false;
     setMessages([GREETING]);
     setTimeline([]);
+    setCrisis(false);
     setPhase("idle");
   };
 
@@ -271,6 +281,7 @@ export default function App() {
           onSend={send}
           onStop={stop}
           stopping={stopping}
+          calm={crisis}
           latestId={messages[messages.length - 1]?.id}
         />
         <AgentLog timeline={timeline} running={phase === "running"} />

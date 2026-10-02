@@ -19,6 +19,7 @@ function GuardBody({ safety }) {
         <p className="muted">개인정보 없음</p>
       )}
       {safety.emergency && <p className="alert">긴급상황 표현 감지 → 112·119 신고 안내</p>}
+      {safety.crisis && <p className="alert">위기 표현 감지 → 자살예방 상담전화 109 안내</p>}
       {safety.injection && <p className="alert">AI 지시 변경 시도 감지 → 자료로만 처리</p>}
     </div>
   );

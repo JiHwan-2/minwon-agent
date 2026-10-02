@@ -3,6 +3,7 @@
 
 import pytest
 
+from minwon import safety
 from minwon.agent import brain as brain_module
 from minwon.agent.rules import RuleBrain
 from minwon.agent.schemas import TopicCheck
@@ -187,3 +188,43 @@ def test_when_claude_fails_mid_conversation_the_message_is_an_answer(monkeypatch
     send(sid, "우리 골목 가로등이 일주일째 꺼져 있어요.")
     events = send(sid, "기모띠")
     assert events[-1]["type"] != "off_topic" and "check" in ended_nodes(events)
+
+
+# ---- 위기 표현 ----
+
+CRISIS = "요즘 너무 힘들어서 죽고 싶어요"
+
+
+def test_crisis_gets_fixed_109_notice_and_no_complaint_example(monkeypatch: pytest.MonkeyPatch):
+    _use(monkeypatch, JudgesIntent({"죽고": "not_complaint"}))
+    sid = new_session()
+    events = send(sid, CRISIS)
+    assert events[0] == {"type": "crisis", "message": safety.CRISIS_NOTICE}  # AI 판단보다 먼저
+    assert "109" in events[0]["message"]
+    assert events[-1]["type"] == "redirect" and events[-1]["message"] == safety.CRISIS_REPLY["new"]  # Claude 답 대신 정해진 문장
+    assert _state(sid)["safety"]["crisis"] is True
+    assert "위기 표현" in _state(sid)["log"][0]["detail"]
+
+
+def test_crisis_notice_does_not_depend_on_claude(monkeypatch: pytest.MonkeyPatch):
+    _use(monkeypatch, FailsToUnderstand())
+    events = send(new_session(), CRISIS)
+    assert events[0]["type"] == "crisis"
+
+
+def test_complaint_with_crisis_words_gets_notice_and_continues():
+    events = send(new_session(), "윗집 층간소음 때문에 매일 밤 잠을 못 자서 죽고 싶을 지경이에요")
+    assert events[0]["type"] == "crisis"
+    assert "plan" in ended_nodes(events)  # 민원 흐름은 그대로 진행
+
+
+def test_crisis_while_answering_pauses_without_reasking(monkeypatch: pytest.MonkeyPatch):
+    _use(monkeypatch, JudgesTurn(["죽고"]))
+    sid = new_session()
+    send(sid, "우리 골목 가로등이 일주일째 꺼져 있어요.")
+    before = _state(sid)
+    events = send(sid, CRISIS)
+    assert [e["type"] for e in events] == ["crisis", "off_topic"]
+    last = events[-1]
+    assert last["crisis"] and last["message"] == safety.CRISIS_REPLY["paused"] and last["questions"] == []
+    assert _state(sid)["pending"] == before["pending"]  # 하던 민원은 그대로
