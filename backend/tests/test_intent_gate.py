@@ -1,9 +1,11 @@
-"""민원이 아니거나 불분명한 입력은 민원 흐름을 시작하지 않고 안내한다."""
+"""민원이 아니거나 불분명한 입력은 민원 흐름을 시작하지 않고 안내한다.
+대화 도중(질문에 답하는 중·완성 후)의 관계없는 말은 진행하지 않고 그대로 둔다."""
 
 import pytest
 
 from minwon.agent import brain as brain_module
 from minwon.agent.rules import RuleBrain
+from minwon.agent.schemas import TopicCheck
 from minwon.tools import kakao
 from tests import fake_kakao
 from tests.test_agent_flow import client, ended_nodes, new_session, send
@@ -30,6 +32,26 @@ class JudgesIntent(RuleBrain):
         if intent == "complaint":
             return base
         return base.model_copy(update={"intent": intent, "reply": REPLY[intent], "category": "other"})
+
+
+class JudgesTurn(RuleBrain):
+    """대화 도중 말만 정해 둔 대로 판단하는 가짜 Claude: 정한 낱말이 있으면 관계없는 말 (나머지는 규칙 엔진)."""
+
+    def __init__(self, off_topic_words: list[str]):
+        super().__init__()
+        self.words = off_topic_words
+        self.checked: list[str] = []
+
+    def switch(self, ctx):
+        self.checked.append(ctx["message"])
+        if any(w in ctx["message"] for w in self.words):
+            return TopicCheck(kind="off_topic", category=ctx["current"]["category"], reason="지금 민원과 관계없는 말")
+        return super().switch(ctx)
+
+
+class FailsToJudgeTurn(RuleBrain):
+    def switch(self, ctx):
+        raise TimeoutError("Claude 응답 없음")
 
 
 class FailsToUnderstand(RuleBrain):
@@ -105,3 +127,63 @@ def test_when_claude_fails_the_input_is_treated_as_a_complaint(monkeypatch: pyte
     assert "plan" in ended_nodes(events)
     understand_log = next(e for e in _state(sid)["log"] if e["node"] == "understand")
     assert understand_log["source"] == "rule_fallback" and "TimeoutError" in understand_log["error"]
+
+
+# ---- 대화 도중의 관계없는 말 ----
+
+NOISE = "창원시 성산구 상남동 상가 공사 소음이 매일 아침 7시부터 심해요"
+
+
+def test_off_topic_answer_keeps_the_same_questions(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(kakao, "request", fake_kakao.request)
+    fake = _use(monkeypatch, JudgesTurn(["기모띠"]))
+    sid = new_session()
+    asked = send(sid, "우리 골목 가로등이 일주일째 꺼져 있어요.")[-1]
+    before = _state(sid)
+
+    events = send(sid, "기모띠")
+    assert ended_nodes(events) == []  # 답변으로 처리하지 않음
+    last = events[-1]
+    assert last["type"] == "off_topic" and last["stage"] == "asking" and last["questions"] == asked["questions"]
+    after = _state(sid)
+    assert after["status"] == "asking" and after["pending"] == before["pending"]
+    assert after["dialogue"] == before["dialogue"]  # 대화 기록·질문 횟수 그대로
+    assert fake.checked == ["기모띠"]
+
+    events = send(sid, "창원시 마산회원구 합성동 합성초등학교 정문 앞이고 밤마다 그래요")
+    assert events[-1]["type"] != "off_topic" and "check" in ended_nodes(events)
+
+
+def test_off_topic_after_package_keeps_the_draft(monkeypatch: pytest.MonkeyPatch):
+    _use(monkeypatch, JudgesTurn(["기모띠", "감사"]))
+    sid = new_session()
+    send(sid, NOISE)
+    first = send(sid, "모름")[-1]
+    assert first["type"] == "ready"
+
+    for text in ("기모띠", "감사합니다"):
+        events = send(sid, text)
+        assert ended_nodes(events) == []  # 초안을 다시 쓰지 않음
+        assert events[-1]["type"] == "off_topic" and events[-1]["stage"] == "ready" and events[-1]["questions"] == []
+    assert _state(sid)["package"] == first["package"]
+
+    events = send(sid, "더 짧게 써 주세요")
+    assert events[-1]["type"] == "ready" and events[-1]["package"]["version"] > first["package"]["version"]
+
+
+def test_short_answers_are_checked_only_after_the_package(monkeypatch: pytest.MonkeyPatch):
+    fake = _use(monkeypatch, JudgesTurn([]))
+    sid = new_session()
+    send(sid, NOISE)
+    send(sid, "모름")  # 질문에 대한 짧은 답은 판단 없이 바로 답변으로
+    assert fake.checked == []
+    send(sid, "네")  # 완성 후에는 짧은 말도 판단 (잘못 받으면 초안을 통째로 다시 씀)
+    assert fake.checked == ["네"]
+
+
+def test_when_claude_fails_mid_conversation_the_message_is_an_answer(monkeypatch: pytest.MonkeyPatch):
+    _use(monkeypatch, FailsToJudgeTurn())
+    sid = new_session()
+    send(sid, "우리 골목 가로등이 일주일째 꺼져 있어요.")
+    events = send(sid, "기모띠")
+    assert events[-1]["type"] != "off_topic" and "check" in ended_nodes(events)

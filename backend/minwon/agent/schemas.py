@@ -105,7 +105,10 @@ class InfoCheck(BaseModel):
     location_query: str = Field(description="지도 검색에 넣을 위치 문자열(시·구·동 + 장소명). 모르면 빈 문자열")
 
 
+TurnKind = Literal["continue", "new_complaint", "off_topic"]
+
+
 class TopicCheck(BaseModel):
-    new_complaint: bool = Field(description="새 메시지가 지금 민원과 다른 종류의 생활불편을 새로 말한 것이면 true. 지금 민원에 대한 답변·보충·수정 요청이면 false")
+    kind: TurnKind = Field(description="continue=지금 민원에 대한 답변·보충·'모름'·초안 수정 요청, new_complaint=지금 민원과 다른 종류의 생활불편을 새로 말함, off_topic=답변도 수정 요청도 새 불편도 아닌 말(의미 없는 말·유행어·인사·감사·맞장구·잡담·다른 주제 질문)")
     category: CategoryCode = Field(description="새 민원이면 그 유형 코드, 아니면 지금 민원의 유형 코드")
     reason: str = Field(description="판단 이유 한 문장")

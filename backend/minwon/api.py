@@ -123,15 +123,24 @@ def _run(session_id: str, text: str) -> Iterator[str]:
     cancel.begin(session_id)
     stopped = failed = False
     try:
-        # 질문에 답하는 중이거나 완성 후인데 다른 종류의 민원을 말하면 새 민원으로 바꿔 처음부터 응대
-        if (pending or snapshot.values.get("package")) and topic.worth_checking(masked.text):
+        # 질문에 답하는 중이거나 완성 후에 들어온 말 확인:
+        # 다른 종류의 민원이면 새 민원으로 바꿔 처음부터, 관계없는 말이면 진행하지 않고 안내만 한다
+        stage = "asking" if pending else "ready" if snapshot.values.get("package") else None
+        turn = None
+        if stage and topic.worth_checking(masked.text, stage):
             with cancel.scope(session_id):
-                switch = topic.detect(snapshot.values, pending, masked.text)
-            if switch:
-                sessions[session_id] = {"thread": uuid.uuid4().hex, "rollback": None}
-                config = _config(session_id)
-                snapshot, pending = graph.get_state(config), None
-                yield _event(type="topic_changed", **switch)
+                turn = topic.detect(snapshot.values, pending, masked.text)
+        if turn and turn["kind"] == "off_topic":
+            yield _event(type="off_topic", stage=stage, message=topic.OFF_TOPIC_REPLY[stage],
+                         reason=turn["reason"], source=turn["source"], error=turn["error"],
+                         questions=pending["questions"] if pending else [],
+                         options=pending.get("options", []) if pending else [])
+            return
+        if turn:
+            sessions[session_id] = {"thread": uuid.uuid4().hex, "rollback": None}
+            config = _config(session_id)
+            snapshot, pending = graph.get_state(config), None
+            yield _event(type="topic_changed", **{k: v for k, v in turn.items() if k != "kind"})
 
         intent = (snapshot.values.get("understanding") or {}).get("intent", "complaint")
         if pending:

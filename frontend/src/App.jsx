@@ -130,6 +130,30 @@ export default function App() {
         addMessage("agent", ev.message);
         setPhase("clarify");
         break;
+      case "off_topic": {
+        // 대화 도중 관계없는 말: 진행하지 않고 그대로 둔다 (질문 중이면 같은 질문을 다시 보여 줌)
+        const asking = ev.stage === "asking";
+        const entry = {
+          id: nextId(),
+          node: "off_topic",
+          status: "done",
+          log: {
+            title: "입력 확인",
+            detail: `${asking ? "질문에 대한 답이 아님 → 같은 질문을 다시 보여 줌" : "고칠 점·새 불편 없음 → 초안을 다시 쓰지 않음"} · ${ev.reason}`,
+            source: ev.source,
+            error: ev.error,
+            at: now(),
+          },
+        };
+        // 답을 기다리는 '추가 질문' 카드는 계속 맨 아래에 둔다
+        setTimeline((t) => {
+          const waiting = t.findLastIndex((e) => e.status === "waiting");
+          return waiting === -1 ? [...t, entry] : [...t.slice(0, waiting), entry, ...t.slice(waiting)];
+        });
+        addMessage("agent", ev.message, asking ? { questions: ev.questions, options: ev.options } : {});
+        setPhase(ev.stage);
+        break;
+      }
       case "topic_changed":
         // 대화 중 다른 종류의 민원 → 새 민원으로 처음부터 (작업 기록도 새로 시작)
         revisingRef.current = false;

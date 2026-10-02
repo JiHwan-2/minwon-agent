@@ -212,7 +212,7 @@ function ConfirmBody({ entry }) {
 
 function Body({ entry }) {
   const d = entry.data ?? {};
-  if (entry.node === "switch" || entry.node === "stop") {
+  if (entry.node === "switch" || entry.node === "stop" || entry.node === "off_topic") {
     return (
       <div className="body">
         <p className="small">{entry.log?.detail}</p>

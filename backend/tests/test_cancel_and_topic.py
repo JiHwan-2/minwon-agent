@@ -39,7 +39,7 @@ class SaysNewTopic(RuleBrain):
         self.category = category
 
     def switch(self, ctx):
-        return TopicCheck(new_complaint=True, category=self.category, reason="다른 불편을 새로 말함")
+        return TopicCheck(kind="new_complaint", category=self.category, reason="다른 불편을 새로 말함")
 
 
 def _use(monkeypatch, primary):

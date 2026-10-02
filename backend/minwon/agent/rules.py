@@ -222,4 +222,5 @@ class RuleBrain:
                and not any(kw in message for kw in current_keywords))
         reason = (f"화제를 바꾸는 말과 함께 '{knowledge.category(found)['label']}' 유형의 불편을 새로 말함" if new
                   else "지금 민원에 대한 답변이나 수정 요청으로 봄")
-        return TopicCheck(new_complaint=new, category=found if new else current, reason=reason)
+        # 관계없는 말(off_topic)은 규칙으로 판단하지 않는다. Claude가 실패하면 지금 민원에 이어지는 말로 받는다
+        return TopicCheck(kind="new_complaint" if new else "continue", category=found if new else current, reason=reason)

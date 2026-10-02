@@ -13,6 +13,7 @@ export const NODE_LABEL = {
   deliver: "결과물 만들기",
   switch: "민원 종류 변경",
   stop: "처리 중단",
+  off_topic: "입력 확인",
 };
 
 export const TOOL_SOURCE_LABEL = {
