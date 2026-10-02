@@ -85,6 +85,8 @@ class RuleBrain:
         cat = knowledge.category(code)
         keywords = [kw for kw in cat["keywords"] if kw in text][:5] or [cat["label"]]
         return Understanding(
+            intent="complaint",  # 민원 여부 판단은 Claude만 한다. 대체 경로에서는 기존처럼 민원으로 진행
+            reply="",
             category=code,
             title=f"{cat['label']} 불편 신고",
             summary=text.strip()[:200],

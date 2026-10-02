@@ -24,7 +24,20 @@ function GuardBody({ safety }) {
   );
 }
 
+const INTENT_TAG = { unclear: "불분명한 입력", not_complaint: "민원이 아닌 입력" };
+
 function UnderstandBody({ u }) {
+  if (u.intent && u.intent !== "complaint") {
+    return (
+      <div className="body">
+        <div className="row">
+          <span className="tag urgency-medium">{INTENT_TAG[u.intent]}</span>
+        </div>
+        <p className="small">민원 흐름을 시작하지 않고 안내했어요.</p>
+        <p className="muted small">안내: {u.reply}</p>
+      </div>
+    );
+  }
   return (
     <div className="body">
       <div className="row">
@@ -251,7 +264,7 @@ export default function AgentLog({ timeline, running }) {
               <div className="entry-marker">{entry.status === "running" ? <span className="spinner" /> : i + 1}</div>
               <div className="entry-card">
                 <div className="entry-head">
-                  <strong>{entry.node === "draft" && entry.log ? entry.log.title : (NODE_LABEL[entry.node] ?? entry.node)}</strong>
+                  <strong>{(entry.node === "draft" || entry.node === "understand") && entry.log ? entry.log.title : (NODE_LABEL[entry.node] ?? entry.node)}</strong>
                   <div className="row">
                     <SourceBadge log={entry.log} />
                     <span className={`status status-${entry.status}`}>{STATUS_TEXT[entry.status]}</span>

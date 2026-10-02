@@ -13,8 +13,18 @@ Action = Literal["ask_user", "geocode", "find_nearby", "kb_lookup", "case_search
 NearbyKind = Literal["police", "community_center"]
 
 
+Intent = Literal["complaint", "unclear", "not_complaint"]
+
+
 class Understanding(BaseModel):
-    category: CategoryCode = Field(description="생활불편 유형 코드")
+    intent: Intent = Field(
+        description="complaint=도와줄 생활불편이 하나라도 있음, unclear=불편이 있는 듯하지만 무엇이 불편한지 알 수 없음, "
+        "not_complaint=생활불편과 관계없는 말(인사·잡담·의미 없는 말·유행어·장난·다른 주제 질문)"
+    )
+    reply: str = Field(
+        description="intent가 complaint가 아니면 시민에게 보낼 안내 1~2문장(친절하게, 생활불편 예시 하나 포함). complaint면 빈 문자열"
+    )
+    category: CategoryCode = Field(description="생활불편 유형 코드 (민원이 아니면 other)")
     title: str = Field(description="불편을 한 줄로 요약한 제목, 25자 이내")
     summary: str = Field(description="무엇이 어디서 어떻게 불편한지 2문장 이내로 정리. 입력에 없는 사실은 쓰지 않는다")
     urgency: Literal["low", "medium", "high"] = Field(description="사람이 다칠 위험이 있으면 high")

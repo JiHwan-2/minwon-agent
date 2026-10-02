@@ -69,18 +69,35 @@ def guard(state: AgentState) -> dict:
     return {"safety": result, "log": [_log("guard", "입력 안전 점검", " / ".join(notes) or "이상 없음")]}
 
 
+INTENT_LABEL = {"unclear": "불분명한 입력", "not_complaint": "민원이 아닌 입력"}
+DEFAULT_REPLY = {
+    "unclear": "어떤 점이 불편하신지 조금만 더 알려 주세요. 예를 들어 '집 앞 가로등이 며칠째 꺼져 있어요'처럼 말씀해 주시면 돼요.",
+    "not_complaint": "저는 생활 속 불편을 민원으로 정리해 드리는 도우미예요. '학교 앞 횡단보도가 위험해요'처럼 불편했던 일을 말씀해 주세요.",
+}
+
+
 def understand(state: AgentState) -> dict:
-    """Goal: 생활불편 유형·핵심·긴급도 파악."""
+    """Goal: 먼저 도와줄 생활불편인지 판단하고, 맞으면 유형·핵심·긴급도를 파악한다."""
     _started("understand")
     out = get_brain().call("understand", state["user_input"])
     data = out.value.model_dump()
     data["category_label"] = knowledge.category(data["category"])["label"]
     if state["safety"]["emergency"]:
-        data["urgency"] = "high"
+        data |= {"intent": "complaint", "urgency": "high"}  # 긴급상황 표현은 민원 흐름으로 (112·119 안내는 guard가 함)
+
+    if data["intent"] != "complaint":
+        data["reply"] = data["reply"].strip() or DEFAULT_REPLY[data["intent"]]
+        detail = f"{INTENT_LABEL[data['intent']]} → 민원 흐름을 시작하지 않고 안내"
+        return {"understanding": data, "log": [_log("understand", "입력 확인", detail, out.source, error=out.error)]}
+
     return {
         "understanding": data,
         "log": [_log("understand", "문제 분석", f"{data['category_label']} · 긴급도 {data['urgency']}", out.source, error=out.error)],
     }
+
+
+def route_after_understand(state: AgentState) -> str:
+    return "plan" if state["understanding"]["intent"] == "complaint" else "end"
 
 
 def _normalize_plan(plan: dict, cat: dict) -> tuple[dict, list[str]]:

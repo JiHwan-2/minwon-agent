@@ -133,10 +133,17 @@ def _run(session_id: str, text: str) -> Iterator[str]:
                 snapshot, pending = graph.get_state(config), None
                 yield _event(type="topic_changed", **switch)
 
+        intent = (snapshot.values.get("understanding") or {}).get("intent", "complaint")
         if pending:
             graph_input = Command(resume={"text": masked.text, "pii": masked.findings})
         elif snapshot.values.get("package"):
             graph_input = revision_input(masked.text)
+        elif snapshot.values and intent != "complaint":
+            # 직전 입력이 민원이 아니었으면 새로 시작. 불분명했던 말은 이어서 말한 내용과 합쳐서 판단한다
+            text = f"{snapshot.values['user_input']}\n{masked.text}" if intent == "unclear" else masked.text
+            sessions[session_id] = {"thread": uuid.uuid4().hex, "rollback": None}  # 중단하면 previous·before로 되돌아감
+            config = _config(session_id)
+            graph_input = start_input(text, masked.findings)
         elif snapshot.values:
             yield _event(type="error", code="session_busy", message="이전 처리가 끝나지 않았어요. '새 민원'으로 다시 시작해 주세요.")
             return
@@ -173,8 +180,11 @@ def _run(session_id: str, text: str) -> Iterator[str]:
 
     sessions[session_id]["rollback"] = None
     snapshot = graph.get_state(_latest(session_id))
+    understanding = snapshot.values.get("understanding") or {}
     if pending := _pending(snapshot):
         yield _event(type="ask", questions=pending["questions"], options=pending.get("options", []))
+    elif understanding.get("intent", "complaint") != "complaint":
+        yield _event(type="redirect", intent=understanding["intent"], message=understanding["reply"])
     else:
         yield _event(type="ready", **{k: snapshot.values.get(k) for k in RESULT_KEYS})
 

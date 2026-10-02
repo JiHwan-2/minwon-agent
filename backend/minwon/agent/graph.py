@@ -14,7 +14,7 @@ def build_graph(checkpointer=None):
 
     g.add_conditional_edges(START, nodes.route_entry, {"guard": "guard", "draft": "draft"})
     g.add_edge("guard", "understand")
-    g.add_edge("understand", "plan")
+    g.add_conditional_edges("understand", nodes.route_after_understand, {"plan": "plan", "end": END})
     g.add_edge("plan", "check")
     g.add_conditional_edges("check", nodes.route_after_check, {"ask": "ask", "locate": "locate", "act": "act"})
     g.add_edge("ask", "check")

@@ -84,7 +84,9 @@ export default function Chat({ messages, phase, onSend, onStop, stopping, latest
     ? "고칠 점이나 다른 불편을 말해 주세요. 예) 더 짧게 / 요청사항에 CCTV 설치도 넣어 줘"
     : phase === "asking"
       ? "질문에 이어서 답해 주세요. 모르는 건 '모름'이라고 적어도 돼요."
-      : "예) 학교 앞 횡단보도가 너무 위험해요.";
+      : phase === "clarify"
+        ? "불편했던 일을 말씀해 주세요. 예) 집 앞 가로등이 며칠째 꺼져 있어요"
+        : "예) 학교 앞 횡단보도가 너무 위험해요.";
 
   return (
     <section className="panel chat" aria-label="대화">
@@ -101,7 +103,7 @@ export default function Chat({ messages, phase, onSend, onStop, stopping, latest
         <div ref={endRef} />
       </div>
 
-      {phase === "idle" && messages.length === 1 && (
+      {((phase === "idle" && messages.length === 1) || phase === "clarify") && (
         <div className="examples">
           {EXAMPLES.map((ex) => (
             <button key={ex} className="chip-btn" onClick={() => onSend(ex)}>

@@ -21,7 +21,7 @@ export default function App() {
   const [health, setHealth] = useState(null);
   const [messages, setMessages] = useState([GREETING]);
   const [timeline, setTimeline] = useState([]);
-  const [phase, setPhase] = useState("idle"); // idle | running | asking | ready
+  const [phase, setPhase] = useState("idle"); // idle | running | asking | ready | clarify(민원이 아니거나 불분명해 다시 말해 주길 기다림)
   const [stopping, setStopping] = useState(false);
   const sessionRef = useRef(null);
   const revisingRef = useRef(false);
@@ -74,7 +74,7 @@ export default function App() {
         const { log = [], ...data } = ev.data;
         finishEntry(ev.node, { data, log: log[0], logs: log });
         if (ev.node === "guard" && data.safety?.emergency) addMessage("alert", EMERGENCY_TEXT);
-        if (ev.node === "understand") {
+        if (ev.node === "understand" && data.understanding.intent === "complaint") {
           const u = data.understanding;
           addMessage("agent", `'${u.title}' 문제로 이해했어요. (${u.category_label})`);
         }
@@ -125,6 +125,11 @@ export default function App() {
         addMessage("agent", "고칠 점이 있으면 말씀해 주세요. 예: '더 짧게', '요청사항에 CCTV 설치도 넣어 줘'");
         break;
       }
+      case "redirect":
+        // 민원이 아니거나 불분명한 입력: 안내만 하고 같은 대화에서 이어서 말하길 기다린다
+        addMessage("agent", ev.message);
+        setPhase("clarify");
+        break;
       case "topic_changed":
         // 대화 중 다른 종류의 민원 → 새 민원으로 처음부터 (작업 기록도 새로 시작)
         revisingRef.current = false;
@@ -163,7 +168,7 @@ export default function App() {
   };
 
   const send = async (text) => {
-    const continuing = phase === "asking" || phase === "ready";
+    const continuing = phase === "asking" || phase === "ready" || phase === "clarify";
     revisingRef.current = phase === "ready";
     if (!continuing) setTimeline([]);
     addMessage("user", text);
