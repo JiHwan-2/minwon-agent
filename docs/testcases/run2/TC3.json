@@ -1,0 +1,266 @@
+{
+ "id": "TC3",
+ "type": "데이터 없음",
+ "session": "ee0c69182da249fda3914a34e1eb7e41",
+ "turns": [
+  {
+   "input": "동네 공터에 누가 몰래 컨테이너를 갖다 놓고 몇 달째 안 치워요.",
+   "seconds": 26.7,
+   "nodes": [
+    {
+     "node": "guard",
+     "title": "입력 안전 점검",
+     "source": "system",
+     "detail": "이상 없음",
+     "error": ""
+    },
+    {
+     "node": "understand",
+     "title": "문제 분석",
+     "source": "llm",
+     "detail": "기타 생활불편 · 긴급도 low",
+     "error": ""
+    },
+    {
+     "node": "plan",
+     "title": "처리 계획 수립",
+     "source": "llm",
+     "detail": "공터 위치·상황 확인 → 주소·관할 구역 확인 → 담당 부서·절차 조회 → 비슷한 민원 사례 찾기 → 민원 초안 작성 → 초안 검토 → 민원 파일 만들기",
+     "error": ""
+    },
+    {
+     "node": "check",
+     "title": "정보 충분성 판단",
+     "source": "llm",
+     "detail": "질문 3개 필요: 발생 위치, 구체적 상황, 발생 시간대",
+     "error": ""
+    }
+   ],
+   "tools": [],
+   "end": "ask",
+   "questions": [
+    "말씀하신 '동네 공터'만으로는 정확한 곳을 찾기 어려워요. 장소 이름(예: ○○초등학교), 동 이름, 또는 도로명 주소를 알려 주세요.",
+    "컨테이너가 어떤 모습인지 조금 더 알려주시겠어요? (예: 화물용 큰 컨테이너 1개, 사람이 사는 것 같은지, 안에 물건이 쌓여 있는지, 쓰레기나 냄새가 있는지)",
+    "컨테이너가 처음 생긴 때를 대략 기억하시나요? (예: 올해 봄쯤, 6월 초, 3~4개월 전)"
+   ],
+   "options": []
+  },
+  {
+   "input": "모름",
+   "seconds": 66.9,
+   "nodes": [
+    {
+     "node": "ask",
+     "title": "추가 질문·답변",
+     "source": "system",
+     "detail": "답변 받음 (2자)",
+     "error": ""
+    },
+    {
+     "node": "check",
+     "title": "정보 충분성 판단",
+     "source": "llm",
+     "detail": "필수 정보 충분",
+     "error": ""
+    },
+    {
+     "node": "locate",
+     "title": "Tool: 위치 확인",
+     "source": "rule_fallback",
+     "detail": "위치를 특정하지 못함 — 카카오 검색 결과 없음",
+     "error": ""
+    },
+    {
+     "node": "act",
+     "title": "Tool: 담당 부서·절차 조회",
+     "source": "tool",
+     "detail": "관할 시·군·구청 민원 총괄 부서(민원봉사과 등)",
+     "error": ""
+    },
+    {
+     "node": "decide",
+     "title": "담당 기관 판단",
+     "source": "llm",
+     "detail": "관할 시·군·구청 민원 총괄 부서(민원봉사과 등) · 제출 창구 국민신문고",
+     "error": ""
+    },
+    {
+     "node": "draft",
+     "title": "민원 초안 작성",
+     "source": "llm",
+     "detail": "[동 이름] 공터 무단 방치 컨테이너 확인·철거 요청 → 542자, 증빙 4개",
+     "error": ""
+    },
+    {
+     "node": "review",
+     "title": "초안 검증",
+     "source": "llm",
+     "detail": "통과 (1회차)",
+     "error": ""
+    },
+    {
+     "node": "deliver",
+     "title": "Tool: 처리 확인 일정 만들기",
+     "source": "tool",
+     "detail": "10월 16일(금) 처리 결과 확인 일정 · 처리 기간 '보통 7~14일 (이송되면 더 걸릴 수 있음)' 기준 14일 뒤",
+     "error": ""
+    }
+   ],
+   "tools": [
+    {
+     "tool": "geocode",
+     "ok": false,
+     "source": "text_fallback",
+     "summary": "위치를 특정하지 못함",
+     "retries": 0,
+     "error": "카카오 검색 결과 없음"
+    },
+    {
+     "tool": "kb_lookup",
+     "ok": true,
+     "source": "kb",
+     "summary": "관할 시·군·구청 민원 총괄 부서(민원봉사과 등)",
+     "retries": 0,
+     "error": ""
+    },
+    {
+     "tool": "case_search",
+     "ok": true,
+     "source": "data_go_kr",
+     "summary": "'컨테이너' 관련 사례 4건 중 3건 · 예: 컨테이너의 형식승인 대상 및 방법 (해양수산부)",
+     "retries": 0,
+     "error": ""
+    },
+    {
+     "tool": "schedule_followup",
+     "ok": true,
+     "source": "generated",
+     "summary": "10월 16일(금) 처리 결과 확인 일정 · 처리 기간 '보통 7~14일 (이송되면 더 걸릴 수 있음)' 기준 14일 뒤",
+     "retries": 0,
+     "error": ""
+    },
+    {
+     "tool": "export_pdf",
+     "ok": true,
+     "source": "generated",
+     "summary": "민원 패키지 PDF 3쪽 · 95KB",
+     "retries": 0,
+     "error": ""
+    }
+   ],
+   "end": "ready",
+   "result": {
+    "status": "ready",
+    "safety": {
+     "pii": [],
+     "emergency": false,
+     "injection": false
+    },
+    "category": "기타 생활불편",
+    "urgency": "low",
+    "plan": [
+     "공터 위치·상황 확인",
+     "주소·관할 구역 확인",
+     "담당 부서·절차 조회",
+     "비슷한 민원 사례 찾기",
+     "민원 초안 작성",
+     "초안 검토",
+     "민원 파일 만들기"
+    ],
+    "plan_fixes": [],
+    "facts": {
+     "location": "동네 공터 (구체적 위치는 모름)",
+     "detail": "누군가 허락 없이 컨테이너를 갖다 놓고 치우지 않음 (자세한 모습은 모름)",
+     "time": "몇 달째 방치됨 (처음 생긴 시점은 모름)"
+    },
+    "location": {
+     "address": "",
+     "place_name": "",
+     "dong": "",
+     "sigungu": ""
+    },
+    "location_confirmed": true,
+    "agency": "관할 시·군·구청 민원 총괄 부서(민원봉사과 등)",
+    "channel": "국민신문고",
+    "decision_reason": "공터가 정확히 어디인지 알 수 없어서 지식베이스에 따라 관할 시·군·구청의 민원 총괄 부서를 주 담당으로 골랐습니다. 이 부서가 담당 부서를 정해 넘겨 줍니다. 국민신문고는 위치가 불분명해도 접수를 받아 담당 기관으로 자동으로 넘겨 주므로 가장 알맞은 창구입니다. 비슷한 사례로 나온 것은 항만 컨테이너에 관한 해양수산부 자료라서 이 민원과는 맞지 않아 참고하지 않았습니다.",
+    "cases": [
+     "컨테이너의 형식승인 대상 및 방법 (해양수산부)",
+     "컨테이너 터미널 운영사 현황 (해양수산부)",
+     "Q. 농막, 컨테이너 또는 무허가건축물에도 도로명주소(건물번호)를 부여받을 수 있나요? (경상북도 구미시)"
+    ],
+    "review": {
+     "passed": true,
+     "round": 1,
+     "checks": [
+      "✓ 연락처: 확인되지 않은 연락처 없음",
+      "✓ 개인정보: 개인정보 없음",
+      "✓ 위치: 본문에 위치가 들어 있음",
+      "✓ 증빙 근거: 필수 표시는 공식 요건만",
+      "✓ 분량: 542자",
+      "✓ AI 검토: 고칠 점 없음"
+     ]
+    },
+    "package": {
+     "version": 1,
+     "title": "[동 이름] 공터 무단 방치 컨테이너 확인·철거 요청",
+     "body_chars": 542,
+     "body": "안녕하십니까.\n동네 공터에 몇 달째 치워지지 않은 컨테이너가 있어 확인과 조치를 부탁드리고자 민원을 올립니다.\n\n■ 위치\n- [동 이름 또는 도로명 주소] [가까운 건물·가게·버스정류장 이름] 근처 공터\n\n■ 상황\n- 위 공터에 누군가 허락 없이 놓아둔 것으로 보이는 컨테이너가 있습니다.\n- 몇 달째 치워지지 않고 그대로 놓여 있습니다.\n- 처음 놓인 시기: [대략적인 시기, 예: 올해 ○월쯤]\n- 컨테이너 모습: [크기와 개수, 겉에 적힌 글씨, 주변 상태 등]\n\n■ 불편한 점\n- 공터에 컨테이너가 오랫동안 방치되어 있어 동네 주민으로서 불편을 겪고 있습니다.\n- [구체적으로 불편한 점]\n\n■ 요청 사항\n1. 현장을 확인하시어 컨테이너 주인이 누구인지, 허가를 받고 놓은 것인지 확인해 주시기 바랍니다.\n2. 허가 없이 놓은 것이라면 주인에게 철거를 안내하는 등 담당 부서에서 필요한 조치를 해 주시기 바랍니다.\n3. 이 민원을 맡는 부서가 따로 있다면 그 부서로 넘겨 주시고, 처리 결과를 알려 주시면 감사하겠습니다.\n\n바쁘신 가운데 살펴 주셔서 감사합니다.",
+     "placeholders": [
+      "[동 이름 또는 도로명 주소]",
+      "[가까운 건물·가게·버스정류장 이름]",
+      "[대략적인 시기, 예: 올해 ○월쯤]",
+      "[크기와 개수, 겉에 적힌 글씨, 주변 상태 등]",
+      "[구체적으로 불편한 점]"
+     ],
+     "evidence": [
+      "[recommended] 정확한 위치(지도 앱에서 확인한 주소나 가까운 건물·가게·버스정류장 이름)",
+      "[recommended] 현장 사진(컨테이너와 주변이 함께 나온 사진)",
+      "[recommended] 컨테이너 겉면 사진(연락처, 회사 이름, 글씨 등이 보이는 부분)",
+      "[recommended] 처음 본 시기(대략이라도) 또는 예전에 찍은 사진"
+     ]
+    },
+    "pii_in_draft": false,
+    "files": {
+     "ics": {
+      "name": "민원처리확인_20261016.ics",
+      "date": "2026-10-16",
+      "weekday": "금",
+      "days": 14,
+      "shifted": false,
+      "period": "보통 7~14일 (이송되면 더 걸릴 수 있음)",
+      "summary": "민원 처리 결과 확인 · 관할 시·군·구청",
+      "uid": "4f0f51e99d5540a19fba059c644a88e7@minwon-agent",
+      "size": 1124
+     },
+     "pdf": {
+      "name": "AI민원길잡이_기타_생활불편_20261002.pdf",
+      "pages": 3,
+      "size": 97569
+     }
+    },
+    "downloads": {
+     "pdf": {
+      "status": 200,
+      "bytes": 97569,
+      "is_pdf": true
+     },
+     "ics": {
+      "status": 200,
+      "bytes": 1124,
+      "is_calendar": true
+     }
+    }
+   }
+  }
+ ],
+ "run_at": "2026-10-02T15:38:01",
+ "server": {
+  "status": "ok",
+  "llm_provider": "claude_code",
+  "model": "claude-opus-5-5 (Claude Code)",
+  "brain_mode": "llm",
+  "kakao_enabled": true,
+  "data_go_kr_enabled": true
+ },
+ "note": "1차 실행에서 찾은 문제(D1~D6) 수정 후 다시 실행"
+}

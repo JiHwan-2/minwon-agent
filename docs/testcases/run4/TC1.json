@@ -1,0 +1,404 @@
+{
+ "id": "TC1",
+ "type": "정상 입력",
+ "session": "02397556df2d4b808da729c4410e9b45",
+ "turns": [
+  {
+   "input": "창원시 마산회원구 합성동 합성초등학교 후문 골목 가로등이 일주일째 밤마다 꺼져 있어요.",
+   "seconds": 71.7,
+   "nodes": [
+    {
+     "node": "guard",
+     "title": "입력 안전 점검",
+     "source": "system",
+     "detail": "이상 없음",
+     "error": ""
+    },
+    {
+     "node": "understand",
+     "title": "문제 분석",
+     "source": "llm",
+     "detail": "가로등·보안등 고장 · 긴급도 medium",
+     "error": ""
+    },
+    {
+     "node": "plan",
+     "title": "처리 계획 수립",
+     "source": "llm",
+     "detail": "고장 위치 주소 확인 → 가까운 행정복지센터 찾기 → 담당 부서·절차 확인 → 비슷한 민원 사례 찾기 → 민원 초안 작성 → 초안 내용 점검 → 민원 서류·일정 만들기",
+     "error": ""
+    },
+    {
+     "node": "check",
+     "title": "정보 충분성 판단",
+     "source": "llm",
+     "detail": "필수 정보 충분",
+     "error": ""
+    },
+    {
+     "node": "locate",
+     "title": "Tool: 위치 확인",
+     "source": "tool",
+     "detail": "경남 창원시 마산회원구 합성북16길 75 (창원시 마산회원구 합성1동)",
+     "error": ""
+    },
+    {
+     "node": "act",
+     "title": "Tool: 주변 기관 검색 (행정복지센터)",
+     "source": "tool",
+     "detail": "합성1동행정복지센터, 201m",
+     "error": ""
+    },
+    {
+     "node": "decide",
+     "title": "담당 기관 판단",
+     "source": "llm",
+     "detail": "합성1동행정복지센터 보안등 담당 · 제출 창구 안전신문고",
+     "error": ""
+    },
+    {
+     "node": "draft",
+     "title": "민원 초안 작성",
+     "source": "llm",
+     "detail": "합성초등학교 후문 골목 가로등 고장 점검·수리 요청 → 404자, 증빙 4개",
+     "error": ""
+    },
+    {
+     "node": "review",
+     "title": "초안 검증",
+     "source": "llm",
+     "detail": "통과 (1회차)",
+     "error": ""
+    },
+    {
+     "node": "deliver",
+     "title": "Tool: 처리 확인 일정 만들기",
+     "source": "tool",
+     "detail": "10월 9일(금) 처리 결과 확인 일정 · 처리 기간 '보통 3~7일' 기준 7일 뒤",
+     "error": ""
+    }
+   ],
+   "tools": [
+    {
+     "tool": "geocode",
+     "ok": true,
+     "source": "kakao",
+     "summary": "경남 창원시 마산회원구 합성북16길 75 (창원시 마산회원구 합성1동)",
+     "retries": 0,
+     "error": ""
+    },
+    {
+     "tool": "find_nearby:community_center",
+     "ok": true,
+     "source": "kakao",
+     "summary": "합성1동행정복지센터, 201m",
+     "retries": 0,
+     "error": ""
+    },
+    {
+     "tool": "kb_lookup",
+     "ok": true,
+     "source": "kb+region",
+     "summary": "합성1동행정복지센터 보안등 담당 / 창원시 마산회원구청 도로 관리 부서(가로등 담당)",
+     "retries": 0,
+     "error": ""
+    },
+    {
+     "tool": "case_search",
+     "ok": true,
+     "source": "data_go_kr",
+     "summary": "'가로등' 관련 사례 14건 중 3건 (경상남도 사례 우선) · 예: 가로등,보안등 고장 신고는 어떻게 하나요 (경상남도 고성군)",
+     "retries": 0,
+     "error": ""
+    },
+    {
+     "tool": "schedule_followup",
+     "ok": true,
+     "source": "generated",
+     "summary": "10월 9일(금) 처리 결과 확인 일정 · 처리 기간 '보통 3~7일' 기준 7일 뒤",
+     "retries": 0,
+     "error": ""
+    },
+    {
+     "tool": "export_pdf",
+     "ok": true,
+     "source": "generated",
+     "summary": "민원 패키지 PDF 2쪽 · 88KB",
+     "retries": 0,
+     "error": ""
+    }
+   ],
+   "end": "ready",
+   "result": {
+    "status": "ready",
+    "safety": {
+     "pii": [],
+     "emergency": false,
+     "injection": false
+    },
+    "category": "가로등·보안등 고장",
+    "urgency": "medium",
+    "plan": [
+     "고장 위치 주소 확인",
+     "가까운 행정복지센터 찾기",
+     "담당 부서·절차 확인",
+     "비슷한 민원 사례 찾기",
+     "민원 초안 작성",
+     "초안 내용 점검",
+     "민원 서류·일정 만들기"
+    ],
+    "plan_fixes": [],
+    "facts": {
+     "location": "창원시 마산회원구 합성동 합성초등학교 후문 골목",
+     "time": "밤",
+     "frequency": "일주일째 밤마다 꺼져 있음",
+     "detail": "가로등이 꺼져 있음"
+    },
+    "location": {
+     "address": "경남 창원시 마산회원구 합성북16길 75",
+     "place_name": "합성초등학교",
+     "dong": "합성1동",
+     "sigungu": "창원시 마산회원구"
+    },
+    "location_confirmed": true,
+    "agency": "합성1동행정복지센터 보안등 담당",
+    "channel": "안전신문고",
+    "decision_reason": "고장 난 등은 합성초등학교(합성1동 관할) 후문 골목에 있습니다. 골목길 보안등 고장은 합성1동행정복지센터 보안등 담당이 접수합니다. 지식베이스 절차에 따라 밤에 꺼진 모습의 사진과 위치를 함께 올릴 수 있는 안전신문고를 제출 창구로 골랐습니다.",
+    "cases": [
+     "가로등,보안등 고장 신고는 어떻게 하나요 (경상남도 고성군)",
+     "가로등 및 보안등 보수 요청 (경기도 수원시)",
+     "가로등 미점등 (경기도 수원시)"
+    ],
+    "review": {
+     "passed": true,
+     "round": 1,
+     "checks": [
+      "✓ 연락처: 확인되지 않은 연락처 없음",
+      "✓ 개인정보: 개인정보 없음",
+      "✓ 위치: 본문에 위치가 들어 있음",
+      "✓ 증빙 근거: 필수 표시는 공식 요건만",
+      "✓ 분량: 404자",
+      "✓ AI 검토: 고칠 점 없음"
+     ]
+    },
+    "package": {
+     "version": 1,
+     "title": "합성초등학교 후문 골목 가로등 고장 점검·수리 요청",
+     "body_chars": 404,
+     "body": "안녕하십니까.\n창원시 마산회원구 합성동 합성초등학교 후문 골목의 가로등(보안등)이 고장 나 꺼져 있습니다. 점검과 수리를 요청드립니다.\n\n■ 위치\n- 합성초등학교(경남 창원시 마산회원구 합성북16길 75) 후문 골목\n- 가로등 기둥 관리번호: [ ]\n- 가까운 건물 주소나 눈에 띄는 표시: [ ]\n\n■ 발생 시기 및 상황\n- 일주일째 밤마다 가로등이 꺼져 있습니다.\n- 처음 꺼진 것을 본 날: [ ]\n- 꺼져 있는 등의 개수: [ ]개\n\n■ 문제점\n- 가로등이 켜지지 않아 밤에 골목이 어둡습니다. 어두운 골목을 지나는 주민들이 다니기 불편하고 안전도 걱정됩니다.\n\n■ 요청 사항\n- 꺼진 가로등을 점검하고 수리해 주시기 바랍니다.\n- 처리 결과를 알려 주시면 감사하겠습니다.\n\n바쁘신 가운데 검토해 주셔서 감사합니다.",
+     "placeholders": [
+      "[ ]",
+      "[ ]",
+      "[ ]",
+      "[ ]"
+     ],
+     "evidence": [
+      "[recommended] 가로등 기둥의 관리번호 표찰 사진(또는 번호 메모)",
+      "[recommended] 밤에 가로등이 꺼져 있는 모습을 찍은 사진",
+      "[recommended] 고장이 처음 시작된 대략적인 날짜",
+      "[recommended] 후문 골목 주변이 함께 보이는 위치 사진"
+     ]
+    },
+    "pii_in_draft": false,
+    "files": {
+     "ics": {
+      "name": "민원처리확인_20261009.ics",
+      "date": "2026-10-09",
+      "weekday": "금",
+      "days": 7,
+      "shifted": false,
+      "period": "보통 3~7일",
+      "summary": "민원 처리 결과 확인 · 합성1동행정복지센터",
+      "uid": "485f35be781b4cb8a9d42c6c65ec5322@minwon-agent",
+      "size": 1075
+     },
+     "pdf": {
+      "name": "AI민원길잡이_가로등·보안등_고장_20261002.pdf",
+      "pages": 2,
+      "size": 89778
+     }
+    },
+    "downloads": {
+     "pdf": {
+      "status": 200,
+      "bytes": 89778,
+      "is_pdf": true
+     },
+     "ics": {
+      "status": 200,
+      "bytes": 1075,
+      "is_calendar": true
+     }
+    }
+   }
+  },
+  {
+   "input": "더 짧게 써 주세요",
+   "seconds": 36.5,
+   "nodes": [
+    {
+     "node": "draft",
+     "title": "초안 다시 작성 (사용자 수정 요청)",
+     "source": "llm",
+     "detail": "요청: 더 짧게 써 주세요 → 214자, 증빙 3개",
+     "error": ""
+    },
+    {
+     "node": "review",
+     "title": "초안 검증",
+     "source": "llm",
+     "detail": "문제 1건 → 다시 작성",
+     "error": ""
+    },
+    {
+     "node": "draft",
+     "title": "초안 다시 작성 (검증 의견 반영)",
+     "source": "llm",
+     "detail": "시민이 '더 짧게 써 주세요'라고 요청했는데, 초안은 '일주일째 밤마다 꺼져 있습니다'를 첫 문단과 ■ 상황에 똑같이 두 번 씁니다. 수리 요청도 첫 문단과 ■ 요청 사항에 겹칩니다. 겹치는 문장을 빼서 더 짧게 줄여야 합니다(예: ■ 상황 항목 삭제, 첫 문단은 인사와 한 줄 요약만 남김). → 149자, 증빙 3개",
+     "error": ""
+    },
+    {
+     "node": "review",
+     "title": "초안 검증",
+     "source": "llm",
+     "detail": "통과 (2회차)",
+     "error": ""
+    },
+    {
+     "node": "deliver",
+     "title": "Tool: 처리 확인 일정 만들기",
+     "source": "tool",
+     "detail": "10월 9일(금) 처리 결과 확인 일정 · 처리 기간 '보통 3~7일' 기준 7일 뒤",
+     "error": ""
+    }
+   ],
+   "tools": [
+    {
+     "tool": "schedule_followup",
+     "ok": true,
+     "source": "generated",
+     "summary": "10월 9일(금) 처리 결과 확인 일정 · 처리 기간 '보통 3~7일' 기준 7일 뒤",
+     "retries": 0,
+     "error": ""
+    },
+    {
+     "tool": "export_pdf",
+     "ok": true,
+     "source": "generated",
+     "summary": "민원 패키지 PDF 2쪽 · 81KB",
+     "retries": 0,
+     "error": ""
+    }
+   ],
+   "end": "ready",
+   "result": {
+    "status": "ready",
+    "safety": {
+     "pii": [],
+     "emergency": false,
+     "injection": false
+    },
+    "category": "가로등·보안등 고장",
+    "urgency": "medium",
+    "plan": [
+     "고장 위치 주소 확인",
+     "가까운 행정복지센터 찾기",
+     "담당 부서·절차 확인",
+     "비슷한 민원 사례 찾기",
+     "민원 초안 작성",
+     "초안 내용 점검",
+     "민원 서류·일정 만들기"
+    ],
+    "plan_fixes": [],
+    "facts": {
+     "location": "창원시 마산회원구 합성동 합성초등학교 후문 골목",
+     "time": "밤",
+     "frequency": "일주일째 밤마다 꺼져 있음",
+     "detail": "가로등이 꺼져 있음"
+    },
+    "location": {
+     "address": "경남 창원시 마산회원구 합성북16길 75",
+     "place_name": "합성초등학교",
+     "dong": "합성1동",
+     "sigungu": "창원시 마산회원구"
+    },
+    "location_confirmed": true,
+    "agency": "합성1동행정복지센터 보안등 담당",
+    "channel": "안전신문고",
+    "decision_reason": "고장 난 등은 합성초등학교(합성1동 관할) 후문 골목에 있습니다. 골목길 보안등 고장은 합성1동행정복지센터 보안등 담당이 접수합니다. 지식베이스 절차에 따라 밤에 꺼진 모습의 사진과 위치를 함께 올릴 수 있는 안전신문고를 제출 창구로 골랐습니다.",
+    "cases": [
+     "가로등,보안등 고장 신고는 어떻게 하나요 (경상남도 고성군)",
+     "가로등 및 보안등 보수 요청 (경기도 수원시)",
+     "가로등 미점등 (경기도 수원시)"
+    ],
+    "review": {
+     "passed": true,
+     "round": 2,
+     "checks": [
+      "✓ 연락처: 확인되지 않은 연락처 없음",
+      "✓ 개인정보: 개인정보 없음",
+      "✓ 위치: 본문에 위치가 들어 있음",
+      "✓ 증빙 근거: 필수 표시는 공식 요건만",
+      "✓ 분량: 149자",
+      "✓ AI 검토: 고칠 점 없음"
+     ]
+    },
+    "package": {
+     "version": 3,
+     "title": "합성초등학교 후문 골목 가로등 고장 수리 요청",
+     "body_chars": 149,
+     "body": "안녕하십니까.\n아래 위치의 가로등이 일주일째 밤마다 꺼져 있습니다.\n\n■ 위치\n- 합성초등학교(경남 창원시 마산회원구 합성북16길 75) 후문 골목\n- 기둥 관리번호: [ ]\n\n■ 요청 사항\n- 꺼진 가로등을 점검·수리하고 결과를 알려 주시기 바랍니다.\n\n감사합니다.",
+     "placeholders": [
+      "[ ]"
+     ],
+     "evidence": [
+      "[recommended] 기둥 관리번호 표찰 사진",
+      "[recommended] 꺼진 상태의 야간 사진(주변 골목이 함께 보이게)",
+      "[recommended] 고장이 시작된 날짜 메모"
+     ]
+    },
+    "pii_in_draft": false,
+    "files": {
+     "ics": {
+      "name": "민원처리확인_20261009.ics",
+      "date": "2026-10-09",
+      "weekday": "금",
+      "days": 7,
+      "shifted": false,
+      "period": "보통 3~7일",
+      "summary": "민원 처리 결과 확인 · 합성1동행정복지센터",
+      "uid": "485f35be781b4cb8a9d42c6c65ec5322@minwon-agent",
+      "size": 1067
+     },
+     "pdf": {
+      "name": "AI민원길잡이_가로등·보안등_고장_20261002.pdf",
+      "pages": 2,
+      "size": 83147
+     }
+    },
+    "downloads": {
+     "pdf": {
+      "status": 200,
+      "bytes": 83147,
+      "is_pdf": true
+     },
+     "ics": {
+      "status": 200,
+      "bytes": 1067,
+      "is_calendar": true
+     }
+    }
+   }
+  }
+ ],
+ "run_at": "2026-10-02T15:52:50",
+ "server": {
+  "status": "ok",
+  "llm_provider": "claude_code",
+  "model": "claude-opus-5-5 (Claude Code)",
+  "brain_mode": "llm",
+  "kakao_enabled": true,
+  "data_go_kr_enabled": true
+ },
+ "note": "최종 실행: D8(검토에 시·군·구·동 전달)·D9(사례 관련성 기준) 수정 후"
+}

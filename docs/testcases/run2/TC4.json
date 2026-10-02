@@ -1,0 +1,255 @@
+{
+ "id": "TC4",
+ "type": "API 오류",
+ "session": "277e08cc3e8f4ec48391f202265e3044",
+ "turns": [
+  {
+   "input": "창원시 성산구 상남동 상가 앞 인도에 불법주정차가 매일 저녁 심해요.",
+   "seconds": 0.0,
+   "nodes": [
+    {
+     "node": "guard",
+     "title": "입력 안전 점검",
+     "source": "system",
+     "detail": "이상 없음",
+     "error": ""
+    },
+    {
+     "node": "understand",
+     "title": "문제 분석",
+     "source": "rule_fallback",
+     "detail": "불법 주정차 · 긴급도 medium",
+     "error": "ClaudeCodeError: Claude Code(claude)를 찾을 수 없습니다. 설치·로그인 후 다시 실행해 주세요"
+    },
+    {
+     "node": "plan",
+     "title": "처리 계획 수립",
+     "source": "rule_fallback",
+     "detail": "부족한 정보 질문 → 위치 확인 → 담당 부서·절차 조회 → 비슷한 민원 사례 조회 → 민원 초안 작성 → 초안 검증 → 결과물 만들기",
+     "error": "ClaudeCodeError: Claude Code(claude)를 찾을 수 없습니다. 설치·로그인 후 다시 실행해 주세요"
+    },
+    {
+     "node": "check",
+     "title": "정보 충분성 판단",
+     "source": "rule_fallback",
+     "detail": "질문 1개 필요: 원인 대상",
+     "error": "ClaudeCodeError: Claude Code(claude)를 찾을 수 없습니다. 설치·로그인 후 다시 실행해 주세요"
+    }
+   ],
+   "tools": [],
+   "end": "ask",
+   "questions": [
+    "원인이 되는 대상을 알고 계신가요? (예: 공사 업체 이름, 차량 번호, 버스 노선) 모르면 '모름'이라고 답해 주세요."
+   ],
+   "options": []
+  },
+  {
+   "input": "모름",
+   "seconds": 0.6,
+   "nodes": [
+    {
+     "node": "ask",
+     "title": "추가 질문·답변",
+     "source": "system",
+     "detail": "답변 받음 (2자)",
+     "error": ""
+    },
+    {
+     "node": "check",
+     "title": "정보 충분성 판단",
+     "source": "rule_fallback",
+     "detail": "필수 정보 충분",
+     "error": "ClaudeCodeError: Claude Code(claude)를 찾을 수 없습니다. 설치·로그인 후 다시 실행해 주세요"
+    },
+    {
+     "node": "locate",
+     "title": "Tool: 위치 확인",
+     "source": "rule_fallback",
+     "detail": "문장에서 지역 추출: 경상남도 창원시 성산구 상남동 — 카카오 API 키가 올바르지 않습니다",
+     "error": ""
+    },
+    {
+     "node": "act",
+     "title": "Tool: 담당 부서·절차 조회",
+     "source": "tool",
+     "detail": "창원시 성산구청 주정차 단속 부서(교통지도과 등)",
+     "error": ""
+    },
+    {
+     "node": "decide",
+     "title": "담당 기관 판단",
+     "source": "rule_fallback",
+     "detail": "창원시 성산구청 주정차 단속 부서(교통지도과 등) · 제출 창구 안전신문고",
+     "error": "ClaudeCodeError: Claude Code(claude)를 찾을 수 없습니다. 설치·로그인 후 다시 실행해 주세요"
+    },
+    {
+     "node": "draft",
+     "title": "민원 초안 작성",
+     "source": "rule_fallback",
+     "detail": "[창원시 성산구] 창원시 성산구 상남동 상가 불법 주정차 개선 요청 → 315자, 증빙 3개",
+     "error": "ClaudeCodeError: Claude Code(claude)를 찾을 수 없습니다. 설치·로그인 후 다시 실행해 주세요"
+    },
+    {
+     "node": "review",
+     "title": "초안 검증",
+     "source": "rule_fallback",
+     "detail": "통과 (1회차)",
+     "error": "ClaudeCodeError: Claude Code(claude)를 찾을 수 없습니다. 설치·로그인 후 다시 실행해 주세요"
+    },
+    {
+     "node": "deliver",
+     "title": "Tool: 처리 확인 일정 만들기",
+     "source": "tool",
+     "detail": "10월 9일(금) 처리 결과 확인 일정 · 처리 기간 '보통 7일 안팎' 기준 7일 뒤",
+     "error": ""
+    }
+   ],
+   "tools": [
+    {
+     "tool": "geocode",
+     "ok": true,
+     "source": "text_fallback",
+     "summary": "문장에서 지역 추출: 경상남도 창원시 성산구 상남동",
+     "retries": 0,
+     "error": "카카오 API 키가 올바르지 않습니다"
+    },
+    {
+     "tool": "kb_lookup",
+     "ok": true,
+     "source": "kb+region",
+     "summary": "창원시 성산구청 주정차 단속 부서(교통지도과 등)",
+     "retries": 0,
+     "error": ""
+    },
+    {
+     "tool": "case_search",
+     "ok": false,
+     "source": "error",
+     "summary": "사례 조회 실패 → 사례 없이 진행",
+     "retries": 0,
+     "error": "등록되지 않은 공공데이터 서비스키입니다 (활용신청 직후라면 잠시 뒤 다시 시도)"
+    },
+    {
+     "tool": "schedule_followup",
+     "ok": true,
+     "source": "generated",
+     "summary": "10월 9일(금) 처리 결과 확인 일정 · 처리 기간 '보통 7일 안팎' 기준 7일 뒤",
+     "retries": 0,
+     "error": ""
+    },
+    {
+     "tool": "export_pdf",
+     "ok": true,
+     "source": "generated",
+     "summary": "민원 패키지 PDF 2쪽 · 71KB",
+     "retries": 0,
+     "error": ""
+    }
+   ],
+   "end": "ready",
+   "result": {
+    "status": "ready",
+    "safety": {
+     "pii": [],
+     "emergency": false,
+     "injection": false
+    },
+    "category": "불법 주정차",
+    "urgency": "medium",
+    "plan": [
+     "부족한 정보 질문",
+     "위치 확인",
+     "담당 부서·절차 조회",
+     "비슷한 민원 사례 조회",
+     "민원 초안 작성",
+     "초안 검증",
+     "결과물 만들기"
+    ],
+    "plan_fixes": [],
+    "facts": {
+     "location": "창원시 성산구 상남동 상가",
+     "time": "저녁",
+     "frequency": "매일",
+     "detail": "창원시 성산구 상남동 상가 앞 인도에 불법주정차가 매일 저녁 심해요.",
+     "target": "모름"
+    },
+    "location": {
+     "address": "경상남도 창원시 성산구 상남동",
+     "place_name": "",
+     "dong": "상남동",
+     "sigungu": "창원시 성산구"
+    },
+    "location_confirmed": true,
+    "agency": "창원시 성산구청 주정차 단속 부서(교통지도과 등)",
+    "channel": "안전신문고",
+    "decision_reason": "주정차 단속 부서(교통지도과 등)가 '불법 주정차 단속·과태료 부과' 업무를 맡고 있어 창원시 성산구청에 제출합니다.",
+    "cases": [],
+    "review": {
+     "passed": true,
+     "round": 1,
+     "checks": [
+      "✓ 연락처: 확인되지 않은 연락처 없음",
+      "✓ 개인정보: 개인정보 없음",
+      "✓ 위치: 본문에 위치가 들어 있음",
+      "✓ 증빙 근거: 필수 표시는 공식 요건만",
+      "✓ 분량: 315자",
+      "✓ AI 검토: AI 검토 실패 → 규칙 검사만 적용"
+     ]
+    },
+    "package": {
+     "version": 1,
+     "title": "[창원시 성산구] 창원시 성산구 상남동 상가 불법 주정차 개선 요청",
+     "body_chars": 315,
+     "body": "안녕하십니까. 경상남도 창원시 성산구 상남동 (창원시 성산구 상남동 상가) 인근의 불법 주정차 관련 불편을 알려드리고 개선을 요청드립니다.\n\n1. 현황\n- 위치: 경상남도 창원시 성산구 상남동 (창원시 성산구 상남동 상가)\n- 발생 시기: 저녁\n- 반복 여부: 매일\n- 상황: 창원시 성산구 상남동 상가 앞 인도에 불법주정차가 매일 저녁 심해요.\n- 원인 대상: 모름\n\n2. 요청 사항\n해당 장소의 불법 주정차를 단속해 주시고, 반복되는 곳인 만큼 계도나 단속 강화를 검토해 주시기 바랍니다.\n\n현장 사진 등 증빙자료를 함께 첨부합니다. 검토해 주셔서 감사합니다.",
+     "placeholders": [],
+     "evidence": [
+      "[required] 번호판과 위치가 함께 보이는 사진 2장 (같은 위치, 1분 이상 간격)",
+      "[recommended] 단속 구역임을 알 수 있는 배경 사진 (소화전·횡단보도·인도 등)",
+      "[recommended] 반복되는 날짜·시간 기록"
+     ]
+    },
+    "pii_in_draft": false,
+    "files": {
+     "ics": {
+      "name": "민원처리확인_20261009.ics",
+      "date": "2026-10-09",
+      "weekday": "금",
+      "days": 7,
+      "shifted": false,
+      "period": "보통 7일 안팎",
+      "summary": "민원 처리 결과 확인 · 창원시 성산구청",
+      "uid": "89364a2bd3b94bb793ec5f610c972361@minwon-agent",
+      "size": 1111
+     },
+     "pdf": {
+      "name": "AI민원길잡이_불법_주정차_20261002.pdf",
+      "pages": 2,
+      "size": 72713
+     }
+    },
+    "downloads": {
+     "pdf": {
+      "status": 200,
+      "bytes": 72713,
+      "is_pdf": true
+     },
+     "ics": {
+      "status": 200,
+      "bytes": 1111,
+      "is_calendar": true
+     }
+    }
+   }
+  }
+ ],
+ "run_at": "2026-10-02T15:33:59",
+ "server": {
+  "status": "ok",
+  "llm_provider": "claude_code",
+  "model": "claude-opus-5-5 (Claude Code)",
+  "brain_mode": "llm",
+  "kakao_enabled": true,
+  "data_go_kr_enabled": true
+ },
+ "note": "카카오 키·공공데이터 키를 틀린 값으로, Claude 실행 파일 경로를 없는 곳으로 바꾼 서버(포트 8001)에서 실행. D5 수정 후"
+}
