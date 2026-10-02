@@ -175,7 +175,9 @@ def run_e2e(case: dict, base: str) -> dict:
         "sigungu": location.get("sigungu", ""),
         "address": location.get("address", ""),
         "review_passed": (state.get("review") or {}).get("passed"),
+        "review_issues": (state.get("review") or {}).get("issues", []),
         "fallback_steps": [x["node"] for x in state.get("log") or [] if x.get("source") == "rule_fallback"],
+        "fallback_errors": sorted({x.get("error", "")[:120] for x in state.get("log") or [] if x.get("source") == "rule_fallback"}),
         "answers": answers,
     }
     checks = {
@@ -243,6 +245,11 @@ def report(result: dict) -> str:
     if "e2e" in parts:
         fallback += parts["e2e"]["summary"]["fallback_cases"]
     lines += ["", f"규칙 엔진으로 대체된 판단: {fallback}건 (0이면 모든 판단을 Claude가 함)"]
+    if fallback:
+        errors = {r["error"][:120] for p in ("understand", "turn") for r in parts.get(p, {}).get("rows", []) if r.get("error")}
+        errors |= {e for r in parts.get("e2e", {}).get("rows", []) for e in r["got"]["fallback_errors"] if e}
+        lines += ["", "> 주의: Claude 호출이 실패해 규칙 엔진이 대신한 판단이 있어 Claude 정확도로 볼 수 없습니다. 원인을 고친 뒤 다시 실행하세요.", ""]
+        lines += [f"- {e}" for e in sorted(errors)] or ["- (오류 내용 없음)"]
 
     if "understand" in parts:
         lines += ["", "## 입력 확인 그룹별", "", "| 그룹 | 맞음 |", "|---|---|"]
