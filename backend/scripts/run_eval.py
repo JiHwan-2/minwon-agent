@@ -9,10 +9,12 @@
   .venv\\Scripts\\python scripts\\run_eval.py                         (understand·turn, 서버 불필요, 약 2~3분)
   .venv\\Scripts\\python scripts\\run_eval.py --parts e2e              (서버 필요, 약 5~10분)
   .venv\\Scripts\\python scripts\\run_eval.py --parts understand --only U01,R01 --note "지시문 수정 후"
-결과: docs/eval/날짜-시각.md(요약·틀린 것) + 같은 이름 .json(전체 기록)
+  .venv\\Scripts\\python scripts\\run_eval.py --compare                (실행 없이 저장된 결과들을 비교해 회차마다 달라진 문항 찾기)
+결과: docs/eval/날짜-시각.md(요약·틀린 것) + 같은 이름 .json(전체 기록), 비교는 docs/eval/stability-날짜-시각.md
 """
 
 import argparse
+import glob
 import json
 import statistics
 import sys
@@ -57,23 +59,28 @@ def run_understand(case: dict) -> dict:
     seconds = round(time.perf_counter() - started, 1)
     u = out.value
     got = {"intent": u.intent, "category": u.category, "referral": u.referral, "title": u.title, "reply": u.reply}
-    checks = {}
-    if "intent" in case:
-        checks["intent"] = accepts(case["intent"], u.intent)
-    if "category" in case:
-        checks["category"] = u.intent == "complaint" and accepts(case["category"], u.category)
-    if "referral" in case:
-        checks["referral"] = u.intent == "referral" and u.referral == case["referral"]
     detected = {
         "pii": sorted(f["kind"] for f in masked.findings),
         "emergency": safety.is_emergency(masked.text),
         "crisis": safety.is_crisis(masked.text),
         "injection": safety.looks_like_injection(masked.text),
     }
-    for key, want in case.get("safety", {}).items():
-        checks[f"safety.{key}"] = detected[key] == (sorted(want) if key == "pii" else want)
+    checks = score_understand(case, got, detected)
     return {**case, "got": got, "detected": detected, "checks": checks, "ok": all(checks.values()),
             "source": out.source, "error": out.error, "seconds": seconds}
+
+
+def score_understand(case: dict, got: dict, detected: dict) -> dict:
+    checks = {}
+    if "intent" in case:
+        checks["intent"] = accepts(case["intent"], got["intent"])
+    if "category" in case:
+        checks["category"] = got["intent"] == "complaint" and accepts(case["category"], got["category"])
+    if "referral" in case:
+        checks["referral"] = got["intent"] == "referral" and got["referral"] == case["referral"]
+    for key, want in case.get("safety", {}).items():
+        checks[f"safety.{key}"] = detected[key] == (sorted(want) if key == "pii" else want)
+    return checks
 
 
 def summarize_understand(rows: list[dict]) -> dict:
@@ -122,9 +129,14 @@ def run_turn(case: dict, default: dict) -> dict:
         out = get_brain().call("switch", ctx)
         kind, reason, source, error = out.value.kind, out.value.reason, out.source, out.error
     seconds = round(time.perf_counter() - started, 1)
-    ok = kind == case["kind"]
-    return {**case, "got": {"kind": kind, "reason": reason}, "checks": {"kind": ok}, "ok": ok,
+    got = {"kind": kind, "reason": reason}
+    checks = score_turn(case, got)
+    return {**case, "got": got, "checks": checks, "ok": all(checks.values()),
             "source": source, "error": error, "seconds": seconds}
+
+
+def score_turn(case: dict, got: dict) -> dict:
+    return {"kind": got["kind"] == case["kind"]}
 
 
 def summarize_turn(rows: list[dict]) -> dict:
@@ -180,14 +192,18 @@ def run_e2e(case: dict, base: str) -> dict:
         "fallback_errors": sorted({x.get("error", "")[:120] for x in state.get("log") or [] if x.get("source") == "rule_fallback"}),
         "answers": answers,
     }
-    checks = {
+    checks = score_e2e(case, got)
+    return {**case, "got": got, "checks": checks, "ok": all(checks.values()), "seconds": seconds}
+
+
+def score_e2e(case: dict, got: dict) -> dict:
+    return {
         "finished": got["end"] == "ready",
         "category": got["category"] == case["category"],
         "sigungu": case["sigungu"] in got["sigungu"],
         "agency": any(k in got["agency"] for k in case["agency"]),
         "unit": any(k in got["unit"] for k in case["unit"]),
     }
-    return {**case, "got": got, "checks": checks, "ok": all(checks.values()), "seconds": seconds}
 
 
 def summarize_e2e(rows: list[dict]) -> dict:
@@ -275,6 +291,125 @@ def report(result: dict) -> str:
     return "\n".join(lines) + "\n"
 
 
+# ---- 여러 번 실행 비교 (흔들림) ----
+
+PART_LABEL = {"understand": "입력 확인", "turn": "대화 도중", "e2e": "처음부터 끝까지"}
+SCORERS = {
+    "understand": lambda case, row: score_understand(case, row["got"], row["detected"]),
+    "turn": lambda case, row: score_turn(case, row["got"]),
+    "e2e": lambda case, row: score_e2e(case, row["got"]),
+}
+SUMMARIZERS = {"understand": summarize_understand, "turn": summarize_turn, "e2e": summarize_e2e}
+METRICS = [
+    ("understand", "입력 확인 문항 (모든 항목 정답)", lambda s: (s["all_ok"], s["cases"])),
+    ("understand", "입력 확인 판단", lambda s: s["intent"]),
+    ("understand", "진짜 민원을 막은 경우 (낮을수록 좋음)", lambda s: s["blocked_complaints"]),
+    ("understand", "다른 창구", lambda s: s["referral"]),
+    ("understand", "생활불편 유형", lambda s: s["category"]),
+    ("turn", "대화 도중 판단", lambda s: (s["all_ok"], s["cases"])),
+    ("turn", "답·수정 요청을 관계없는 말로 오해 (낮을수록 좋음)", lambda s: s["missed_answers"]),
+    ("e2e", "담당 기관 (기관·부서 모두)", lambda s: s["agency_and_unit"]),
+    ("e2e", "전체 흐름 생활불편 유형", lambda s: s["category"]),
+    ("e2e", "초안 검증 통과", lambda s: s["review_passed"]),
+]
+
+
+def answer_of(part: str, got: dict) -> str:
+    """회차마다 같은 답을 냈는지 비교할 핵심 답."""
+    if part == "understand":
+        return f"{got['intent']}·{got['referral'] if got['intent'] == 'referral' else got['category']}"
+    if part == "turn":
+        return got["kind"]
+    return f"{got['category']}·{got['agency']} {got['unit']}"
+
+
+def valid_part(part: str, rows: list[dict]) -> bool:
+    """규칙 엔진 대체가 섞인 실행은 Claude 결과로 보지 않는다."""
+    if part == "e2e":
+        return not any(r["got"]["fallback_steps"] for r in rows)
+    return all(r["source"] in ("llm", "skip") for r in rows)
+
+
+def compare(paths: list[Path], data: dict) -> str:
+    current = {part: {c["id"]: c for c in data[part]} for part in SCORERS}
+    runs = sorted(({**json.loads(p.read_text(encoding="utf-8")), "file": p.stem} for p in paths), key=lambda r: r["file"])
+    by_part: dict[str, list[tuple[str, list[dict]]]] = {}
+    skipped = []
+    for run in runs:
+        for part, body in run["parts"].items():
+            if not valid_part(part, body["rows"]):
+                skipped.append(f"{run['file']}({PART_LABEL[part]})")
+                continue
+            rows = []
+            for r in body["rows"]:
+                case = current[part].get(r["id"])
+                if case is None:
+                    continue  # 평가 세트에서 빠진 문항
+                checks = SCORERS[part](case, r)
+                rows.append({**r, **case, "checks": checks, "ok": all(checks.values())})
+            by_part.setdefault(part, []).append((run["file"], rows))
+
+    n = max((len(v) for v in by_part.values()), default=0)
+    lines = [f"# 흔들림 측정 ({n}회 반복)", "",
+             "같은 평가 세트를 여러 번 돌려 회차마다 결과가 달라지는지 본다. 채점은 지금 평가 세트의 정답 기준으로 다시 했다.", ""]
+    for part, part_runs in by_part.items():
+        lines.append(f"- {PART_LABEL[part]}: " + ", ".join(f"[{f}]({f}.md)" for f, _ in part_runs))
+    if skipped:
+        lines.append("- 제외 (규칙 엔진 대체가 섞여 Claude 결과로 볼 수 없음): " + ", ".join(skipped))
+
+    head = [f"{i + 1}회" for i in range(n)]
+    lines += ["", "## 회차별 결과", "", "| 항목 | " + " | ".join(head) + " | 평균 |", "|---|" + "---|" * (n + 1)]
+    summaries = {part: [SUMMARIZERS[part](rows) for _, rows in part_runs] for part, part_runs in by_part.items()}
+    for part, label, pick in METRICS:
+        if part not in summaries:
+            continue
+        cells = [pick(s) for s in summaries[part]]
+        rates = [ok / total * 100 for ok, total in cells if total]
+        avg = f"{statistics.mean(rates):.1f}%" if rates else "-"
+        lines.append(f"| {label} | " + " | ".join([f"{ok}/{total}" for ok, total in cells] + ["-"] * (n - len(cells))) + f" | {avg} |")
+    for part, label, key in (("understand", "문제 분석 판단 시간(초)", "seconds_avg"), ("turn", "대화 도중 판단 시간(초)", "seconds_avg"),
+                             ("e2e", "전체 흐름 시간(초)", "seconds_avg")):
+        if part in summaries:
+            vals = [s[key] for s in summaries[part]]
+            nums = [v for v in vals if v is not None]
+            avg = f"{statistics.mean(nums):.1f}" if nums else "-"
+            lines.append(f"| {label} | " + " | ".join([str(v) for v in vals] + ["-"] * (n - len(vals))) + f" | {avg} |")
+
+    flipped, varied, always_wrong, total = [], [], [], 0
+    for part, part_runs in by_part.items():
+        seen: dict[str, list[dict]] = {}
+        for _, rows in part_runs:
+            for r in rows:
+                seen.setdefault(r["id"], []).append(r)
+        for cid, rs in seen.items():
+            total += 1
+            answers = [answer_of(part, r["got"]) for r in rs]
+            oks = [r["ok"] for r in rs]
+            want = rs[0]
+            if part == "understand":
+                truth = " · ".join(x for x in (show(want.get("intent", "")), show(want.get("category", "")), want.get("referral", "")) if x)
+            elif part == "turn":
+                truth = f"{want['stage']} · {want['kind']}"
+            else:
+                truth = f"{want['category']} · {'/'.join(want['agency'])} {'/'.join(want['unit'])}"
+            row = (f"| {PART_LABEL[part]} | {cid} | {want['text']} | {truth} | {sum(oks)}/{len(oks)} | "
+                   + " / ".join(f"{a} {'✓' if ok else '✗'}" for a, ok in zip(answers, oks)) + " |")
+            if len(set(oks)) > 1:
+                flipped.append(row)
+            elif not any(oks):
+                always_wrong.append(row)
+            elif len(set(answers)) > 1:
+                varied.append(row)
+
+    lines += ["", f"전체 {total}개 문항 중 회차마다 정답 여부가 달라진 문항 {len(flipped)}개, "
+              f"매번 틀린 문항 {len(always_wrong)}개, 답은 달라졌지만 모두 정답인 문항 {len(varied)}개.", ""]
+    table_head = ["| 구분 | ID | 입력 | 정답 | 맞은 횟수 | 회차별 답 |", "|---|---|---|---|---|---|"]
+    for title, rows in (("회차마다 정답 여부가 달라진 문항", flipped), ("매번 틀린 문항", always_wrong),
+                        ("답은 달라졌지만 모두 정답인 문항", varied)):
+        lines += [f"## {title}", ""] + ((table_head + rows) if rows else ["없음"]) + [""]
+    return "\n".join(lines)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="정확도 평가 세트 실행")
     ap.add_argument("--parts", default="understand,turn", help="understand,turn,e2e 중 쉼표로")
@@ -284,7 +419,22 @@ def main() -> int:
     ap.add_argument("--e2e-workers", type=int, default=3, help="동시에 돌릴 전체 흐름 수")
     ap.add_argument("--note", default="")
     ap.add_argument("--out", default=str(OUT_DIR))
+    ap.add_argument("--compare", nargs="*", metavar="결과.json",
+                    help="실행하지 않고 저장된 결과들을 비교해 흔들림 보고서를 만든다 (파일을 안 주면 docs/eval의 결과 전부)")
     args = ap.parse_args()
+
+    if args.compare is not None:
+        patterns = args.compare or [str(Path(args.out) / "*.json")]
+        paths = sorted({Path(p) for pat in patterns for p in glob.glob(pat)})  # PowerShell은 *를 펼쳐 주지 않음
+        if not paths:
+            print("비교할 결과 파일이 없습니다.")
+            return 2
+        text = compare(paths, json.loads(DATASET.read_text(encoding="utf-8")))
+        target = Path(args.out) / f"stability-{datetime.now().strftime('%Y%m%d-%H%M')}.md"
+        target.write_bytes(text.encode("utf-8"))
+        print(text)
+        print(f"저장: {target}")
+        return 0
 
     parts = [p.strip() for p in args.parts.split(",") if p.strip()]
     only = {x.strip() for x in args.only.split(",") if x.strip()}
