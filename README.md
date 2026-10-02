@@ -84,6 +84,18 @@ cd backend
 .venv\Scripts\python scripts\run_testcases.py --only TC1,TC5 --out ..\docs\testcases\new
 ```
 
+정확도 평가 세트(`backend/eval/dataset.json`)로 Claude 판단이 정답과 얼마나 맞는지 숫자로 확인합니다. 구성과 지난 결과는 [docs/eval/README.md](docs/eval/README.md)에 있습니다.
+
+```bash
+.venv\Scripts\python scripts\run_eval.py
+```
+
+```bash
+.venv\Scripts\python scripts\run_eval.py --parts e2e
+```
+
+첫 번째는 입력 확인·대화 도중 판단(서버 불필요, 약 2분), 두 번째는 서버를 켠 상태에서 처음부터 끝까지 담당 기관을 확인합니다(약 5~10분).
+
 ## 새 PC·팀원 개발환경 맞추기
 
 **1. 설치할 것:** Git, Python 3.11 이상, Node.js 20 이상, Claude Code (AI 판단 엔진 겸 코딩 도구. 설치 후 터미널에서 `claude`를 한 번 실행해 로그인)

@@ -1,0 +1,485 @@
+{
+  "run_at": "2026-10-02 19:18",
+  "model": "claude-opus-5-5 (Claude Code)",
+  "note": "첫 실행: 처음부터 끝까지 담당 기관",
+  "parts": {
+    "e2e": {
+      "summary": {
+        "cases": 11,
+        "all_ok": 9,
+        "agency_and_unit": [
+          9,
+          11
+        ],
+        "finished": [
+          11,
+          11
+        ],
+        "category": [
+          10,
+          11
+        ],
+        "sigungu": [
+          11,
+          11
+        ],
+        "agency": [
+          10,
+          11
+        ],
+        "unit": [
+          10,
+          11
+        ],
+        "review_passed": [
+          11,
+          11
+        ],
+        "fallback_cases": 11,
+        "seconds_avg": 43.6
+      },
+      "rows": [
+        {
+          "id": "A01",
+          "text": "창원시 마산회원구 합성동 합성초등학교 후문 골목 보안등이 일주일째 밤마다 꺼져 있어요",
+          "category": "street_light",
+          "sigungu": "마산회원구",
+          "agency": [
+            "행정복지센터"
+          ],
+          "unit": [
+            "보안등"
+          ],
+          "got": {
+            "end": "ready",
+            "category": "street_light",
+            "agency": "합성1동행정복지센터",
+            "unit": "보안등 담당",
+            "sigungu": "창원시 마산회원구",
+            "address": "경남 창원시 마산회원구 합성북16길 75",
+            "review_passed": true,
+            "fallback_steps": [
+              "decide",
+              "draft",
+              "review"
+            ],
+            "answers": []
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": true,
+            "unit": true
+          },
+          "ok": true,
+          "seconds": 42.4
+        },
+        {
+          "id": "A02",
+          "text": "창원시 성산구 상남동 상남시장 앞 인도에 불법 주정차가 매일 저녁 심해요",
+          "category": "illegal_parking",
+          "sigungu": "성산구",
+          "agency": [
+            "성산구청"
+          ],
+          "unit": [
+            "주정차"
+          ],
+          "got": {
+            "end": "ready",
+            "category": "illegal_parking",
+            "agency": "창원시 성산구청",
+            "unit": "주정차 단속 부서(교통지도과 등)",
+            "sigungu": "창원시 성산구",
+            "address": "경남 창원시 성산구 마디미로 28",
+            "review_passed": true,
+            "fallback_steps": [
+              "check",
+              "decide",
+              "draft",
+              "review"
+            ],
+            "answers": [
+              "모름"
+            ]
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": true,
+            "unit": true
+          },
+          "ok": true,
+          "seconds": 49.3
+        },
+        {
+          "id": "A03",
+          "text": "김해시 삼계동 삼계초등학교 정문 앞 횡단보도에 신호등이 없어서 등굣길 아이들이 위험해요",
+          "category": "traffic_safety",
+          "sigungu": "김해시",
+          "agency": [
+            "경찰서"
+          ],
+          "unit": [
+            "교통"
+          ],
+          "got": {
+            "end": "ready",
+            "category": "traffic_safety",
+            "agency": "김해시청",
+            "unit": "교통 담당 부서(교통행정과 등)",
+            "sigungu": "김해시",
+            "address": "경남 김해시 가야로38번길 30",
+            "review_passed": true,
+            "fallback_steps": [
+              "check",
+              "check",
+              "decide",
+              "draft",
+              "review"
+            ],
+            "answers": [
+              "모름",
+              "모름"
+            ]
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": false,
+            "unit": true
+          },
+          "ok": false,
+          "seconds": 57.4
+        },
+        {
+          "id": "A04",
+          "text": "창원시 성산구 가음정동 가음정공원 놀이터 그네 줄이 끊어져 있어요",
+          "category": "park_facility",
+          "sigungu": "성산구",
+          "agency": [
+            "성산구청"
+          ],
+          "unit": [
+            "공원"
+          ],
+          "got": {
+            "end": "ready",
+            "category": "park_facility",
+            "agency": "창원시 성산구청",
+            "unit": "공원 관리 부서(공원녹지과 등)",
+            "sigungu": "창원시 성산구",
+            "address": "경남 창원시 성산구 가음정동 산 43",
+            "review_passed": true,
+            "fallback_steps": [
+              "understand",
+              "plan",
+              "check",
+              "decide",
+              "draft",
+              "review"
+            ],
+            "answers": []
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": true,
+            "unit": true
+          },
+          "ok": true,
+          "seconds": 38.3
+        },
+        {
+          "id": "A05",
+          "text": "진주시 가좌동 경상국립대 정문 앞 도로에 큰 포트홀이 생겼어요",
+          "category": "road_damage",
+          "sigungu": "진주시",
+          "agency": [
+            "진주시청"
+          ],
+          "unit": [
+            "도로"
+          ],
+          "got": {
+            "end": "ready",
+            "category": "road_damage",
+            "agency": "진주시청",
+            "unit": "도로 관리 부서(건설과·도로과 등)",
+            "sigungu": "진주시",
+            "address": "경남 진주시 가좌동 산 182-1",
+            "review_passed": true,
+            "fallback_steps": [
+              "understand",
+              "plan",
+              "check",
+              "decide",
+              "draft",
+              "review"
+            ],
+            "answers": []
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": true,
+            "unit": true
+          },
+          "ok": true,
+          "seconds": 38.9
+        },
+        {
+          "id": "A06",
+          "text": "양산시 물금읍 양산부산대병원 앞 버스정류장에 버스가 안 서고 그냥 지나가요",
+          "category": "public_transport",
+          "sigungu": "양산시",
+          "agency": [
+            "양산시청"
+          ],
+          "unit": [
+            "대중교통"
+          ],
+          "got": {
+            "end": "ready",
+            "category": "public_transport",
+            "agency": "양산시청",
+            "unit": "대중교통 부서(대중교통과 등)",
+            "sigungu": "양산시",
+            "address": "경남 양산시 물금읍 금오로 20",
+            "review_passed": true,
+            "fallback_steps": [
+              "understand",
+              "plan",
+              "check",
+              "check",
+              "decide",
+              "draft",
+              "review"
+            ],
+            "answers": [
+              "모름"
+            ]
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": true,
+            "unit": true
+          },
+          "ok": true,
+          "seconds": 45.6
+        },
+        {
+          "id": "A07",
+          "text": "창원시 진해구 석동 아파트 단지 옆 공사장에서 새벽 6시부터 소음이 심해요",
+          "category": "noise",
+          "sigungu": "진해구",
+          "agency": [
+            "진해구청"
+          ],
+          "unit": [
+            "환경"
+          ],
+          "got": {
+            "end": "ready",
+            "category": "noise",
+            "agency": "창원시 진해구청",
+            "unit": "환경 부서(환경위생과 등)",
+            "sigungu": "창원시 진해구",
+            "address": "경남 창원시 진해구 충장로 575",
+            "review_passed": true,
+            "fallback_steps": [
+              "understand",
+              "plan",
+              "check",
+              "check",
+              "decide",
+              "draft",
+              "review"
+            ],
+            "answers": [
+              "모름",
+              "1"
+            ]
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": true,
+            "unit": true
+          },
+          "ok": true,
+          "seconds": 44.8
+        },
+        {
+          "id": "A08",
+          "text": "거제시 고현동 고현시장 뒷골목에 쓰레기 무단투기가 매일 쌓여요",
+          "category": "garbage",
+          "sigungu": "거제시",
+          "agency": [
+            "거제시청",
+            "행정복지센터"
+          ],
+          "unit": [
+            "청소",
+            "환경"
+          ],
+          "got": {
+            "end": "ready",
+            "category": "garbage",
+            "agency": "거제시청",
+            "unit": "청소 부서(자원순환과 등)",
+            "sigungu": "거제시",
+            "address": "경남 거제시 거제중앙로17길 6",
+            "review_passed": true,
+            "fallback_steps": [
+              "understand",
+              "plan",
+              "check",
+              "decide",
+              "draft",
+              "review"
+            ],
+            "answers": []
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": true,
+            "unit": true
+          },
+          "ok": true,
+          "seconds": 39.0
+        },
+        {
+          "id": "A09",
+          "text": "통영시 무전동 동네 하천에 기름 같은 게 떠 있고 냄새가 나요",
+          "category": "pollution",
+          "sigungu": "통영시",
+          "agency": [
+            "통영시청"
+          ],
+          "unit": [
+            "환경"
+          ],
+          "got": {
+            "end": "ready",
+            "category": "pollution",
+            "agency": "통영시청",
+            "unit": "환경 부서(환경관리과 등)",
+            "sigungu": "통영시",
+            "address": "경남 통영시 무전동 951-1",
+            "review_passed": true,
+            "fallback_steps": [
+              "understand",
+              "plan",
+              "check",
+              "check",
+              "decide",
+              "draft",
+              "review"
+            ],
+            "answers": [
+              "모름"
+            ]
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": true,
+            "unit": true
+          },
+          "ok": true,
+          "seconds": 45.0
+        },
+        {
+          "id": "A10",
+          "text": "김해시 내외동 연지공원 근처 길에 들개 무리가 돌아다녀서 아이들이 무서워해요",
+          "category": "animal",
+          "sigungu": "김해시",
+          "agency": [
+            "김해시청"
+          ],
+          "unit": [
+            "동물"
+          ],
+          "got": {
+            "end": "ready",
+            "category": "park_facility",
+            "agency": "김해시청",
+            "unit": "공원 관리 부서(공원녹지과 등)",
+            "sigungu": "김해시",
+            "address": "경남 김해시 금관대로1368번길 7",
+            "review_passed": true,
+            "fallback_steps": [
+              "understand",
+              "plan",
+              "check",
+              "decide",
+              "draft",
+              "review"
+            ],
+            "answers": []
+          },
+          "checks": {
+            "finished": true,
+            "category": false,
+            "sigungu": true,
+            "agency": true,
+            "unit": false
+          },
+          "ok": false,
+          "seconds": 39.4
+        },
+        {
+          "id": "A11",
+          "text": "창원시 마산합포구 오동동 골목 하수구가 막혀서 비만 오면 물이 넘쳐요",
+          "category": "water_sewer",
+          "sigungu": "마산합포구",
+          "agency": [
+            "창원시청"
+          ],
+          "unit": [
+            "상하수도"
+          ],
+          "got": {
+            "end": "ready",
+            "category": "water_sewer",
+            "agency": "창원시청",
+            "unit": "상하수도 담당 부서(상하수도사업소 등)",
+            "sigungu": "창원시 마산합포구",
+            "address": "경남 창원시 마산합포구 오동서6길 24",
+            "review_passed": true,
+            "fallback_steps": [
+              "understand",
+              "plan",
+              "check",
+              "decide",
+              "draft",
+              "review"
+            ],
+            "answers": []
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": true,
+            "unit": true
+          },
+          "ok": true,
+          "seconds": 39.0
+        }
+      ]
+    }
+  }
+}

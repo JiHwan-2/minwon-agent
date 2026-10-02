@@ -26,6 +26,7 @@ cd backend
 .venv\Scripts\uvicorn minwon.api:app --app-dir . --reload --port 8000
 .venv\Scripts\python -m pytest -q
 .venv\Scripts\python scripts\run_testcases.py --only TC1   (실제 서버로 대표 테스트케이스 실행, 결과는 docs/testcases.md)
+.venv\Scripts\python scripts\run_eval.py   (정확도 평가 세트 eval/dataset.json, --parts e2e는 서버 필요. 결과는 docs/eval/)
 cd frontend
 npm run dev
 ```
@@ -52,7 +53,7 @@ understand에서 Claude가 입력 확인: 민원 아님·불분명·다른 창�
 ## 작업 흐름
 1. 시작 전 `git pull`
 2. 각자 기능 브랜치에서 작업: `git switch -c feat/기능이름`
-3. 변경 → `pytest` 통과 → 화면 변경이면 브라우저에서 직접 확인
+3. 변경 → `pytest` 통과 → 화면 변경이면 브라우저에서 직접 확인. 지시문(prompts.py)·지식베이스를 고쳤으면 `run_eval.py`로 정확도가 떨어지지 않았는지 확인
 4. 커밋 메시지: 한국어. 첫 줄은 무엇을 했는지, 본문은 왜 했는지
 5. 커밋하면 바로 push (`git push -u origin 브랜치` 처음 한 번, 이후 `git push`)
 6. GitHub에서 Pull Request → 상대가 확인 → `main`에 병합
