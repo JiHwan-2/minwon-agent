@@ -68,6 +68,18 @@ def resolve_candidate(candidate: dict, query: str) -> dict:
     return tool_result("geocode", True, "kakao", f"선택한 위치: {loc['address']} ({where})", loc, retries)
 
 
+def _area_search(query: str, context_text: str) -> tuple[dict, int] | None:
+    """문장에서 뽑은 '시·구 동'을 카카오 주소 검색으로 다시 찾는다 (장소 이름이 지도에 없을 때)."""
+    region = regions.parse(f"{query} {context_text}")
+    if not (region["sigungu"] and region["dong"]):
+        return None
+    docs, n = kakao.address(f"{region['sigungu']} {region['dong']}")
+    if not docs:
+        return None
+    loc, more = _with_region(_candidate(docs[0]), query)
+    return loc | {"ambiguous": False, "candidates": []}, n - 1 + more
+
+
 def geocode(query: str, context_text: str = "") -> dict:
     """장소 표현 → 주소·좌표·행정구역. 후보가 여러 곳이면 ambiguous로 표시해 사용자 확인을 받게 한다.
     카카오 실패 시 문장에서 지역명을 추출하는 대체 경로."""
@@ -86,6 +98,12 @@ def geocode(query: str, context_text: str = "") -> dict:
                     summary = f"후보 {len(candidates)}곳 — 사용자 확인 필요 (1순위: {candidates[0]['name'] or loc['address']})"
                 return tool_result("geocode", True, "kakao", summary, loc, retries)
             reason = "카카오 검색 결과 없음"
+            area = _area_search(query, context_text)
+            if area:
+                loc, more = area
+                where = " ".join(v for v in (loc["sigungu"], loc["dong"]) if v)
+                return tool_result("geocode", True, "kakao", f"장소를 못 찾아 동 단위로 확인: {where}", loc | {"approximate": True},
+                                   retries + more, reason)
         except kakao.KakaoError as e:
             retries, reason = max(e.attempts - 1, 0), str(e)
     else:
@@ -111,6 +129,11 @@ def _places(docs: list[dict]) -> list[dict]:
     ]
 
 
+def _is_office(name: str) -> bool:
+    """행정복지센터 본청만 (같은 이름이 붙은 무인민원발급기·창구는 제외)."""
+    return name.endswith(("행정복지센터", "주민센터")) and "무인" not in name
+
+
 def find_nearby(kind: str, location: dict) -> dict:
     """좌표 주변에서 관할 기관을 찾는다. police=경찰서(지구대·파출소 제외), community_center=행정동 행정복지센터."""
     tool = f"find_nearby:{kind}"
@@ -126,13 +149,13 @@ def find_nearby(kind: str, location: dict) -> dict:
             places = [p for p in _places(docs) if p["name"].endswith("경찰서")]
         else:
             dong = location.get("dong", "")
-            docs, n = kakao.keyword(f"{location.get('sigungu', '')} {dong} 행정복지센터".strip(), size=3, **near)
+            docs, n = kakao.keyword(f"{location.get('sigungu', '')} {dong} 행정복지센터".strip(), size=5, **near)
             retries = n - 1
-            places = [p for p in _places(docs) if dong and dong in p["name"]]
+            places = [p for p in _places(docs) if dong and dong in p["name"] and _is_office(p["name"])]
             if not places:
-                docs, n = kakao.keyword("행정복지센터", size=3, radius=3000, **near)
+                docs, n = kakao.keyword("행정복지센터", size=5, radius=3000, **near)
                 retries += n - 1
-                places = _places(docs)
+                places = [p for p in _places(docs) if _is_office(p["name"])]
     except kakao.KakaoError as e:
         return tool_result(tool, False, "error", f"{label} 검색 실패 → 일반 안내로 대체", [], max(e.attempts - 1, 0), str(e))
 

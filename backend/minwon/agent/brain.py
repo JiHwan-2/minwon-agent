@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from functools import cache
 from typing import Any, TypeVar
 
@@ -41,7 +42,7 @@ class ClaudeCodeBrain:
 
     def _cmd(self, schema: type[BaseModel], system: str, effort: str) -> list[str]:
         exe = settings.claude_cli or shutil.which("claude")
-        if not exe:
+        if not exe or (settings.claude_cli and not Path(exe).exists()):
             raise ClaudeCodeError("Claude Code(claude)를 찾을 수 없습니다. 설치·로그인 후 다시 실행해 주세요")
         return [
             exe, "-p",

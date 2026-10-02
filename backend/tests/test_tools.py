@@ -144,6 +144,34 @@ def test_plan_normalization_adds_missing_tool_steps():
             "steps": [{"action": "write", "title": "작성", "reason": "r"}]}
     fixed, fixes = _normalize_plan(plan, knowledge.category("traffic_safety"))
     actions = [s["action"] for s in fixed["steps"]]
-    assert actions == ["geocode", "find_nearby", "kb_lookup", "write", "review"]
+    assert actions == ["geocode", "find_nearby", "kb_lookup", "case_search", "write", "review", "deliver"]
     assert "police" in fixed["nearby_kinds"] and "location" in fixed["required_info"]
     assert len(fixes) >= 4
+
+
+def test_community_center_search_skips_unmanned_kiosk(monkeypatch: pytest.MonkeyPatch):
+    docs = [
+        {"place_name": "무인민원발급창구 합성1동행정복지센터", "road_address_name": "경남 창원시 마산회원구 합성북16길 1", "distance": "120"},
+        {"place_name": "합성1동행정복지센터", "road_address_name": "경남 창원시 마산회원구 합성북16길 1", "phone": "055-000-0000", "distance": "125"},
+    ]
+    monkeypatch.setattr(kakao, "keyword", lambda *a, **k: (docs, 1))
+    r = find_nearby("community_center", {"x": "128.58", "y": "35.24", "sigungu": "창원시 마산회원구", "dong": "합성1동"})
+    assert r["ok"] and [p["name"] for p in r["data"]] == ["합성1동행정복지센터"]
+
+
+@pytest.mark.parametrize(("text", "sido"), [
+    ("제 번호는 [휴대전화번호 가림]이고 창원시 성산구 상남동 공사장이 시끄러워요", "경상남도"),  # '휴대전화'의 '대전'은 시·도가 아님
+    ("서울시 강남구 역삼동 가로등이 꺼졌어요", "서울특별시"),
+    ("경남 김해시 내동 횡단보도", "경상남도"),
+    ("강원 고성군 거진읍 도로가 파였어요", "강원특별자치도"),
+])
+def test_region_parse_matches_province_only_at_word_start(text, sido):
+    assert regions.parse(text)["sido"] == sido
+
+
+def test_geocode_retries_with_area_when_place_is_not_on_map(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(kakao, "request", fake_kakao.request)
+    r = geocode("창원시 성산구 상남동 공사장", "새벽 5시부터 공사장 소음이 심해요")
+    assert r["ok"] and r["source"] == "kakao" and "동 단위로 확인" in r["summary"]
+    assert r["data"]["sigungu"] == "창원시 성산구" and r["data"]["dong"] == "상남동" and r["data"]["x"] == "128.6900"
+    assert r["data"]["approximate"] and r["error"] == "카카오 검색 결과 없음"

@@ -10,6 +10,7 @@ export const NODE_LABEL = {
   decide: "담당 기관 판단",
   draft: "민원 초안 작성",
   review: "초안 검증",
+  deliver: "결과물 만들기",
 };
 
 export const TOOL_SOURCE_LABEL = {
@@ -17,6 +18,8 @@ export const TOOL_SOURCE_LABEL = {
   text_fallback: "대체 경로",
   kb: "지식베이스",
   "kb+region": "지식베이스+지역",
+  data_go_kr: "공공데이터 API",
+  generated: "파일 생성",
   skipped: "건너뜀",
   error: "실패",
 };
@@ -26,8 +29,10 @@ export const ACTION_LABEL = {
   geocode: "위치 확인",
   find_nearby: "주변 기관",
   kb_lookup: "부서·절차",
+  case_search: "사례 조회",
   write: "초안 작성",
   review: "검증",
+  deliver: "결과물",
 };
 
 export const SLOT_LABEL = {

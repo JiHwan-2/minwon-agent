@@ -46,7 +46,7 @@ def test_normal_flow_plans_asks_searches_and_becomes_ready(monkeypatch: pytest.M
     plan = node_data(events, "plan")["plan"]
     actions = [s["action"] for s in plan["steps"]]
     assert actions[0] == "ask_user"
-    assert "find_nearby" in actions and actions[-1] == "review"
+    assert "find_nearby" in actions and "case_search" in actions and actions[-2:] == ["review", "deliver"]
     assert plan["nearby_kinds"] == ["police"]
 
     ask = events[-1]
@@ -54,10 +54,12 @@ def test_normal_flow_plans_asks_searches_and_becomes_ready(monkeypatch: pytest.M
     assert {q["slot"] for q in ask["questions"]} == {"location", "time"}
 
     events = send(sid, "창원시 마산회원구 합성동 합성초등학교 정문 앞이고 평일 등하교 시간에 그래요")
-    assert ended_nodes(events) == ["ask", "check", "locate", "act", "decide", "draft", "review"]
+    assert ended_nodes(events) == ["ask", "check", "locate", "act", "decide", "draft", "review", "deliver"]
     tools = [e["tool"] for e in events if e["type"] == "tool_start"]
-    assert tools == ["geocode", "find_nearby:police", "kb_lookup"]
-    assert all(e["result"]["ok"] for e in events if e["type"] == "tool_end")
+    assert tools == ["geocode", "find_nearby:police", "kb_lookup", "case_search", "schedule_followup", "export_pdf"]
+    results = {e["result"]["tool"]: e["result"] for e in events if e["type"] == "tool_end"}
+    assert results["case_search"]["source"] == "skipped"  # 테스트에서는 공공데이터 키를 비워 둠
+    assert all(r["ok"] for t, r in results.items() if t != "case_search")
 
     ready = events[-1]
     assert ready["type"] == "ready"
@@ -73,10 +75,11 @@ def test_normal_flow_plans_asks_searches_and_becomes_ready(monkeypatch: pytest.M
     state = client.get(f"/api/sessions/{sid}").json()
     assert state["status"] == "ready"
     assert [entry["node"] for entry in state["log"]] == [
-        "guard", "understand", "plan", "check", "ask", "check", "locate", "act", "act", "decide", "draft", "review",
+        "guard", "understand", "plan", "check", "ask", "check", "locate", "act", "act", "act", "decide", "draft", "review",
+        "deliver", "deliver",
     ]
     tool_logs = [entry["via"] for entry in state["log"] if entry["node"] in ("locate", "act")]
-    assert tool_logs == ["카카오 로컬 API", "카카오 로컬 API", "지식베이스 + 지역 정보"]
+    assert tool_logs == ["카카오 로컬 API", "카카오 로컬 API", "지식베이스 + 지역 정보", "건너뜀"]
     assert state["location_confirmed"]
     assert "재시도" not in " ".join(entry["detail"] for entry in state["log"])
 
@@ -173,7 +176,7 @@ def test_messages_after_completion_revise_the_draft():
     assert first["type"] == "ready" and first["package"]["version"] == 1
 
     events = send(sid, "더 짧게 써 주세요")
-    assert ended_nodes(events) == ["draft", "review"]
+    assert ended_nodes(events) == ["draft", "review", "deliver"]
     shorter = events[-1]["package"]
     assert shorter["version"] == 2 and len(shorter["body"]) < len(first["package"]["body"])
 
@@ -223,7 +226,7 @@ def test_review_catches_problems_and_draft_is_rewritten(monkeypatch: pytest.Monk
     sid = new_session()
     events = send(sid, "창원 합성초등학교 앞 횡단보도가 평일 아침마다 위험해요")
     assert "ask" not in ended_nodes(events)
-    assert ended_nodes(events)[-4:] == ["draft", "review", "draft", "review"]
+    assert ended_nodes(events)[-5:] == ["draft", "review", "draft", "review", "deliver"]
 
     first_review = [e for e in events if e["type"] == "node_end" and e["node"] == "review"][0]["data"]["review"]
     assert not first_review["passed"] and first_review["retry"]
@@ -313,3 +316,16 @@ def test_llm_failure_falls_back_to_rule_engine(monkeypatch: pytest.MonkeyPatch):
     llm_steps = [e for e in log if e["node"] in ("understand", "plan", "check")]
     assert all(e["source"] == "rule_fallback" for e in llm_steps)
     assert "TimeoutError" in llm_steps[0]["error"]
+
+
+def test_ai_keeps_only_relevant_cases(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(kakao, "request", fake_kakao.request)
+    items = [{"title": t, "agency": a, "date": "", "id": str(i)} for i, (t, a) in enumerate(
+        [("컨테이너 형식승인 방법", "해양수산부"), ("횡단보도 신규 설치 민원 안내", "경상남도 창원시"), ("화물 컨테이너 검사", "해양수산부")])]
+    found = {"queries": ["횡단보도"], "query": "횡단보도", "total": 3, "items": items, "local": "", "source_name": "테스트"}
+    monkeypatch.setattr("minwon.tools.cases.similar_cases",
+                        lambda *a, **k: {"tool": "case_search", "ok": True, "source": "data_go_kr", "summary": "3건", "data": found, "retries": 0, "error": ""})
+    _use_llm(monkeypatch, _ScriptedLLM(bad_drafts=0, decision_override={"relevant_cases": [1, 1, 9]}))
+    final = send(new_session(), "창원 합성초등학교 앞 횡단보도가 평일 아침마다 위험해요")[-1]
+    assert [c["title"] for c in final["cases"]["items"]] == ["횡단보도 신규 설치 민원 안내"]
+    assert final["cases"]["excluded"] == 2

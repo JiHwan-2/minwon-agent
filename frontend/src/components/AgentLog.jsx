@@ -201,7 +201,7 @@ function Body({ entry }) {
   const d = entry.data ?? {};
   if (entry.node === "ask") return <AskBody entry={entry} />;
   if (entry.node === "confirm_location") return <ConfirmBody entry={entry} />;
-  if (entry.node === "act" || entry.node === "locate") return <ActBody entry={entry} />;
+  if (entry.node === "act" || entry.node === "locate" || entry.node === "deliver") return <ActBody entry={entry} />;
   if (entry.status !== "done") return null;
   if (entry.node === "decide") return <DecideBody decision={d.decision} />;
   if (entry.node === "draft") return <DraftBody entry={entry} />;
@@ -231,9 +231,10 @@ export default function AgentLog({ timeline, running }) {
             <li>문제 분석</li>
             <li>처리 계획</li>
             <li>정보 판단 · 추가 질문</li>
-            <li>Tool 실행: 위치 확인 · 관할 기관 검색 · 담당 부서 조회</li>
+            <li>Tool 실행: 위치 확인 · 관할 기관 검색 · 담당 부서 조회 · 비슷한 민원 사례 조회(공공데이터)</li>
             <li>담당 기관 판단</li>
             <li>민원 초안 작성 ⇄ 초안 검증 (문제가 있으면 다시 작성)</li>
+            <li>결과물 만들기: 민원 패키지 PDF · 처리 결과 확인 일정</li>
           </ol>
         </div>
       ) : (

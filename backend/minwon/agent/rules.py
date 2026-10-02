@@ -103,8 +103,10 @@ class RuleBrain:
             steps.append(PlanStep(action="find_nearby", title="주변 기관 검색", reason="현장을 관할하는 기관을 찾습니다."))
         steps += [
             PlanStep(action="kb_lookup", title="담당 부서·절차 조회", reason=f"{cat['label']} 민원을 처리하는 부서와 제출 창구를 확인합니다."),
+            PlanStep(action="case_search", title="비슷한 민원 사례 조회", reason="공공데이터에서 같은 유형의 민원을 어느 기관이 처리했는지 확인합니다."),
             PlanStep(action="write", title="민원 초안 작성", reason="모은 정보로 제출할 민원과 증빙 목록을 만듭니다."),
             PlanStep(action="review", title="초안 검증", reason="빠진 사실이나 개인정보가 없는지 확인합니다."),
+            PlanStep(action="deliver", title="결과물 만들기", reason="민원 패키지 PDF와 처리 결과 확인 일정 파일을 만듭니다."),
         ]
         return Plan(
             goal=f"{cat['label']} 불편을 담당 기관에 정확히 전달할 민원을 준비합니다.",
@@ -156,6 +158,7 @@ class RuleBrain:
             reason=f"{primary['unit']}가 '{primary['duty']}' 업무를 맡고 있어 {primary['agency']}에 제출합니다.",
             steps=ctx["procedure"],
             cautions=cautions,
+            relevant_cases=list(range(len(ctx.get("similar_cases", [])))),  # 규칙 엔진은 관련성을 판단하지 않고 모두 유지
         )
 
     def write(self, ctx: dict) -> Draft:

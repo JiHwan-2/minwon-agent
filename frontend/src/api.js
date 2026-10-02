@@ -11,6 +11,23 @@ export const getHealth = () => fetch("/api/health").then(readJson);
 export const createSession = () =>
   fetch("/api/sessions", { method: "POST" }).then(readJson).then((b) => b.session_id);
 
+export const followupUrl = (sessionId) => `/api/sessions/${sessionId}/files/followup.ics`;
+
+export async function downloadPdf(sessionId, edits, filename) {
+  const res = await fetch(`/api/sessions/${sessionId}/files/package.pdf`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(edits),
+  });
+  if (!res.ok) await readJson(res);
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 export async function sendMessage(sessionId, text, onEvent) {
   const res = await fetch(`/api/sessions/${sessionId}/messages`, {
     method: "POST",

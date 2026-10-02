@@ -45,7 +45,15 @@ function Bubble({ m, canChoose, onSend }) {
       )}
       {m.pkg && (
         <>
-          <PackageCard pkg={m.pkg} decision={m.decision} review={m.review} locationConfirmed={m.locationConfirmed} />
+          <PackageCard
+            pkg={m.pkg}
+            decision={m.decision}
+            review={m.review}
+            locationConfirmed={m.locationConfirmed}
+            cases={m.cases}
+            files={m.files}
+            sessionId={m.sessionId}
+          />
           <p className="bubble-note">안내 정보는 참고용이에요. 부서 이름은 지자체마다 조금 다를 수 있어요.</p>
         </>
       )}

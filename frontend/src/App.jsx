@@ -94,7 +94,15 @@ export default function App() {
       }
       case "ready": {
         setPhase("ready");
-        const result = { pkg: ev.package, decision: ev.decision, review: ev.review, locationConfirmed: ev.location_confirmed !== false };
+        const result = {
+          pkg: ev.package,
+          decision: ev.decision,
+          review: ev.review,
+          locationConfirmed: ev.location_confirmed !== false,
+          cases: ev.cases,
+          files: ev.files,
+          sessionId: sessionRef.current,
+        };
         if (revisingRef.current) {
           addMessage("agent", `요청하신 내용을 반영해 다시 썼어요. (${ev.package.version}번째 초안)`, result);
           break;

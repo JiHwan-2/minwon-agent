@@ -192,6 +192,11 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .checklist label { display: flex; gap: 8px; align-items: flex-start; cursor: pointer; font-size: 14px; }
 .checklist input { margin-top: 4px; accent-color: var(--primary); }
 .checklist small { display: block; color: var(--muted); }
+.files { border-color: var(--primary); background: var(--primary-soft); }
+.file-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.cases { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; }
+.cases li { display: grid; gap: 1px; padding-left: 10px; border-left: 3px solid var(--border); }
+.cases small { color: var(--muted); }
 .ev-group { display: grid; gap: 6px; padding-left: 10px; border-left: 3px solid var(--border); }
 .ev-danger { border-left-color: var(--danger); }
 .ev-primary { border-left-color: var(--primary); }

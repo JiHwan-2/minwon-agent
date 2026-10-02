@@ -16,6 +16,10 @@ GYEONGNAM = {
     "의령": "의령군", "함안": "함안군", "창녕": "창녕군", "고성": "고성군", "남해": "남해군",
     "하동": "하동군", "산청": "산청군", "함양": "함양군", "거창": "거창군", "합천": "합천군",
 }
+SIDO_WORD = re.compile(
+    r"(?:^|[^가-힣])(" + "|".join(sorted({*SIDO, *SIDO.values()}, key=len, reverse=True))
+    + r")(?:특별시|광역시|특별자치시|특별자치도|시|도)?(?![가-힣])"
+)
 CHANGWON_GU = ["의창구", "성산구", "마산합포구", "마산회원구", "진해구"]
 NOT_PLACE = {"하수구", "배수구", "출입구", "비상구", "환기구", "통풍구", "놀이기구", "운동기구"}
 
@@ -26,10 +30,9 @@ DONG = re.compile(r"(?:^|\s)([가-힣]{1,6}\d?(?:동|읍|면))(?=\s|$|[,.에의]
 
 def parse(text: str) -> dict:
     result = {"sido": "", "sigungu": "", "dong": ""}
-    for short, full in SIDO.items():
-        if short in text:
-            result["sido"] = full
-            break
+    if m := SIDO_WORD.search(text):
+        name = m.group(1)
+        result["sido"] = SIDO.get(name, name)
 
     city = next((full for short, full in GYEONGNAM.items() if short in text), "")
     if city:

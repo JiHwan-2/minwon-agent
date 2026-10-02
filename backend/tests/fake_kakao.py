@@ -53,4 +53,6 @@ def request(path: str, params: dict, retries: int = 1):
             return {"documents": POLICE}, 1
         if "행정복지센터" in query:
             return {"documents": CENTER}, 1
+    if path == "search/address.json" and query == "창원시 성산구 상남동":
+        return {"documents": [{"address_name": "경남 창원시 성산구 상남동", "x": "128.6900", "y": "35.2200"}]}, 1
     return {"documents": []}, 1

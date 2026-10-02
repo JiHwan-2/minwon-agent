@@ -8,18 +8,28 @@ from minwon import knowledge, safety
 from minwon.agent.brain import get_brain
 from minwon.agent.state import AgentState
 from minwon.settings import settings
-from minwon.tools import regions
+from minwon.tools import cases, regions
+from minwon.tools import export
+from minwon.tools.export import export_pdf, schedule_followup
 from minwon.tools.kb import kb_lookup
 from minwon.tools.locate import NEARBY_LABEL, find_nearby, geocode, resolve_candidate
 
 MAX_CONFIRM_ROUNDS = 2
 
-TOOL_TITLE = {"geocode": "위치 확인", "kb_lookup": "담당 부서·절차 조회"}
+TOOL_TITLE = {
+    "geocode": "위치 확인",
+    "kb_lookup": "담당 부서·절차 조회",
+    "case_search": "비슷한 민원 사례 조회",
+    "schedule_followup": "처리 확인 일정 만들기",
+    "export_pdf": "민원 패키지 PDF 만들기",
+}
 SOURCE_DETAIL = {
     "kakao": "카카오 로컬 API",
     "text_fallback": "대체 경로: 문장에서 지역 추출",
     "kb": "지식베이스",
     "kb+region": "지식베이스 + 지역 정보",
+    "data_go_kr": "공공데이터포털 (국민권익위 민원 질의응답)",
+    "generated": "파일 생성",
     "skipped": "건너뜀",
     "error": "실패",
 }
@@ -83,25 +93,30 @@ def _normalize_plan(plan: dict, cat: dict) -> tuple[dict, list[str]]:
     if nearby != plan["nearby_kinds"]:
         fixes.append("주변 기관 검색 대상 추가")
 
-    steps = [s for s in plan["steps"] if s["action"] != "review"]
+    steps = [s for s in plan["steps"] if s["action"] not in ("review", "deliver")]
     present = {s["action"] for s in steps}
     defaults = {
         "geocode": ("위치 확인", "관할 시·군·구를 정하려면 정확한 주소가 필요합니다.", "location" in required),
         "find_nearby": ("주변 기관 검색", "현장을 관할하는 기관을 찾습니다.", bool(nearby)),
         "kb_lookup": ("담당 부서·절차 조회", "처리 부서와 제출 창구를 확인합니다.", True),
+        "case_search": ("비슷한 민원 사례 조회", "공공데이터에서 같은 유형의 민원을 어느 기관이 처리했는지 확인합니다.", True),
         "write": ("민원 초안 작성", "모은 정보로 민원과 증빙 목록을 만듭니다.", True),
     }
-    must_precede = {"geocode": ("kb_lookup", "write"), "find_nearby": ("kb_lookup", "write"), "kb_lookup": ("write",), "write": ()}
+    must_precede = {"geocode": ("kb_lookup", "write"), "find_nearby": ("kb_lookup", "write"), "kb_lookup": ("write",),
+                    "case_search": ("write",), "write": ()}
     for action, (title, reason, needed) in defaults.items():
         if needed and action not in present:
             index = next((i for i, s in enumerate(steps) if s["action"] in must_precede[action]), len(steps))
             steps.insert(index, {"action": action, "title": title, "reason": reason})
             present.add(action)
             fixes.append(f"'{title}' 단계 추가")
-    review = next((s for s in plan["steps"] if s["action"] == "review"), None)
-    if review is None:
-        fixes.append("'초안 검증' 단계 추가")
-    steps.append(review or {"action": "review", "title": "초안 검증", "reason": "빠진 사실이나 개인정보가 없는지 확인합니다."})
+    closing = (("review", "초안 검증", "빠진 사실이나 개인정보가 없는지 확인합니다."),
+               ("deliver", "결과물 만들기", "민원 패키지 PDF와 처리 결과 확인 일정 파일을 만듭니다."))
+    for action, title, reason in closing:
+        step = next((s for s in plan["steps"] if s["action"] == action), None)
+        if step is None:
+            fixes.append(f"'{title}' 단계 추가")
+        steps.append(step or {"action": action, "title": title, "reason": reason})
     return {**plan, "required_info": required, "nearby_kinds": nearby, "steps": steps}, fixes
 
 
@@ -264,12 +279,16 @@ def act(state: AgentState) -> dict:
         for kind in plan["nearby_kinds"]:
             nearby[kind] = run(f"find_nearby:{kind}", location.get("address", ""), find_nearby, kind, location)["data"]
 
-    agencies = run("kb_lookup", state["understanding"]["category_label"], kb_lookup,
-                   state["understanding"]["category"], location, nearby)["data"]
+    u = state["understanding"]
+    agencies = run("kb_lookup", u["category_label"], kb_lookup, u["category"], location, nearby)["data"]
+    found = {}
+    if "case_search" in actions:
+        found = run("case_search", ", ".join(cases.queries(u["category"], u["keywords"])) or "-",
+                    cases.similar_cases, u["category"], u["keywords"], location)["data"]
     logs = _tool_logs("act", calls)
     if location.get("ambiguous") and not state.get("location_confirmed"):
         logs.insert(0, _log("act", "위치 미확정", "후보가 여러 곳이라 1순위 후보로 진행 — 제출 전 사용자 확인 필요", "rule_fallback"))
-    return {"nearby": nearby, "agencies": agencies, "tool_calls": calls, "log": logs}
+    return {"nearby": nearby, "agencies": agencies, "cases": found, "tool_calls": calls, "log": logs}
 
 
 def _facts(state: AgentState) -> list[dict]:
@@ -289,6 +308,7 @@ def decide(state: AgentState) -> dict:
         "channels": channels,
         "procedure": ag["procedure"],
         "period": ag["period"],
+        "similar_cases": [{"title": c["title"], "agency": c["agency"]} for c in (state.get("cases") or {}).get("items", [])],
     }
     out = get_brain().call("decide", ctx)
     d = out.value.model_dump()
@@ -313,7 +333,17 @@ def decide(state: AgentState) -> dict:
     detail = f"{primary['agency']} {primary['unit']} · 제출 창구 {channel['name']}"
     if fixes:
         detail += f" (보정: {', '.join(fixes)})"
-    return {"decision": decision, "log": [_log("decide", "담당 기관 판단", detail, out.source, error=out.error)]}
+    update = {"decision": decision}
+
+    # 검색어만 같고 다른 문제인 사례는 시민에게 보여 주지 않는다 (AI가 고른 번호만, 목록 밖 번호는 무시)
+    found = state.get("cases") or {}
+    items = found.get("items", [])
+    if items:
+        keep = [items[i] for i in dict.fromkeys(d["relevant_cases"]) if 0 <= i < len(items)]
+        update["cases"] = found | {"items": keep, "excluded": len(items) - len(keep)}
+        if len(keep) < len(items):
+            detail += f" · 관련 없는 사례 {len(items) - len(keep)}건 제외"
+    return update | {"log": [_log("decide", "담당 기관 판단", detail, out.source, error=out.error)]}
 
 
 def draft(state: AgentState) -> dict:
@@ -355,7 +385,6 @@ def draft(state: AgentState) -> dict:
 
 PHONE = re.compile(r"(?<!\d)(?:0\d{1,2}[-\s]?\d{3,4}[-\s]?\d{4}|1\d{3}-\d{4})(?!\d)")
 URL = re.compile(r"(?:https?://|www\.)[^\s)\]]+")
-PLACEHOLDER = re.compile(r"\[[^\]]+\]")
 
 
 def _digits(text: str) -> str:
@@ -430,7 +459,9 @@ def review(state: AgentState) -> dict:
     error = ""
     brain = get_brain()
     if brain.mode == "llm":
+        loc = state.get("location") or {}
         ctx = {"dialogue": state["dialogue"], "facts": _facts(state), "decision": {k: state["decision"][k] for k in ("agency", "reason")},
+               "location": {k: loc.get(k, "") for k in ("address", "place_name", "sigungu", "dong")} if loc.get("address") else None,
                "draft": {"title": package["title"], "body": package["body"]}}
         out = brain.call("critique", ctx)
         source, error = out.source, out.error
@@ -448,7 +479,7 @@ def review(state: AgentState) -> dict:
         "passed": passed,
         "issues": issues,
         "checks": checks,
-        "placeholders": PLACEHOLDER.findall(package["body"]),
+        "placeholders": export.blanks(package["body"]),
         "round": rounds,
         "retry": retry,
     }
@@ -463,7 +494,17 @@ def review(state: AgentState) -> dict:
 
 
 def route_after_review(state: AgentState) -> str:
-    return "draft" if state["review"]["retry"] else "done"
+    return "draft" if state["review"]["retry"] else "deliver"
+
+
+def deliver(state: AgentState) -> dict:
+    """Tool Use: 검증을 마친 민원 패키지를 PDF로, 처리 결과 확인일을 캘린더 일정 파일로 만든다."""
+    _started("deliver")
+    calls: list[dict] = []
+    values = dict(state)
+    followup = _run_tool("deliver", calls, "schedule_followup", state["decision"]["period"], schedule_followup, values)["data"]
+    pdf = _run_tool("deliver", calls, "export_pdf", state["package"]["title"], export_pdf, values | {"files": {"ics": followup}})["data"]
+    return {"files": {"ics": followup, "pdf": pdf}, "tool_calls": calls, "log": _tool_logs("deliver", calls)}
 
 
 def route_entry(state: AgentState) -> str:

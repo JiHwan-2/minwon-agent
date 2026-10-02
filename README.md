@@ -11,9 +11,11 @@
      → [처리 계획] 단계·사용할 Tool 결정 (누락 시 자동 보정)
      → [정보 판단] ⇄ [추가 질문] (최대 2회, 대화 상태 저장)
      → [Tool 실행] 위치 확인(카카오) → 관할 기관 검색(경찰서·행정복지센터) → 담당 부서·절차 조회
+                   → 비슷한 민원 사례 조회(공공데이터포털 국민권익위 민원 질의응답)
      → [담당 기관 판단] 주 담당 기관·제출 창구·할 일
      → [민원 초안 작성] ⇄ [초안 검증] 연락처·개인정보·위치·분량 + AI 검토 (문제 시 다시 작성, 최대 2회)
-     → 민원 패키지 → (사용자 수정 요청 → 다시 작성)
+     → [결과물 만들기] 민원 패키지 PDF · 처리 결과 확인 일정(.ics, 처리 기간 기준)
+     → 민원 패키지 + 파일 → (사용자 수정 요청 → 다시 작성 → 파일 다시 만들기)
 ```
 
 - 판단 엔진: Claude. 이 PC에 설치·로그인된 **Claude Code(`claude -p`)를 단계마다 실행**해 판단하므로 LLM API 키가 필요 없습니다. Claude Code가 없거나 호출이 실패하면 **규칙 엔진으로 자동 대체**하고 작업 기록에 표시합니다.
@@ -44,6 +46,8 @@ copy .env.example .env
 
 `.env`의 `LLM_PROVIDER=rule`이면 규칙 엔진으로 동작합니다. Claude로 판단하려면 `LLM_PROVIDER=claude_code`로 바꾸세요. 터미널에서 `claude auth status`가 `"loggedIn": true`이면 준비된 것입니다 (모델은 `CLAUDE_MODEL`, 기본 `claude-opus-5-5` = Claude Opus 5.5). 민원 1건에 Claude를 6~8번 부르고, 단계마다 5~35초 걸립니다. 사용량은 로그인한 Claude 요금제 한도에서 차감됩니다.
 위치·기관 검색에는 `KAKAO_REST_API_KEY`(카카오 디벨로퍼스 REST API 키, 카카오맵 사용 설정 ON)가 필요하며, 없으면 문장에서 지역명을 추출해 일반 안내로 대체합니다.
+비슷한 민원 사례 조회에는 `DATA_GO_KR_SERVICE_KEY`(공공데이터포털 일반 인증키, 「국민권익위원회_민원정책 질의응답조회서비스」 활용신청 — 자동승인)가 필요하며, 없으면 이 단계만 건너뜁니다.
+민원 패키지 PDF는 PC에 설치된 한글 글꼴(Windows 맑은 고딕 등)을 씁니다. 글꼴을 못 찾으면 `PDF_FONT_PATH`에 TTF 경로를 넣으세요.
 
 **2. 프론트엔드** (터미널 2)
 
@@ -68,6 +72,14 @@ cd backend
 .venv\Scripts\python -m pytest -q
 ```
 
+자동 테스트는 가짜 응답을 써서 실제 Claude·카카오·공공데이터를 부르지 않습니다.
+실제 서비스와 똑같이 대표 테스트케이스(정상·부정확한 입력·데이터 없음·API 오류·악의적 입력)를 돌리려면 서버를 켠 상태에서 실행합니다. 결과는 [docs/testcases.md](docs/testcases.md)에 정리되어 있습니다.
+
+```bash
+.venv\Scripts\python scriptsun_testcases.py --only TC1,TC5 --out ..\docs	estcases
+ew
+```
+
 ## 새 PC·팀원 개발환경 맞추기
 
 **1. 설치할 것:** Git, Python 3.11 이상, Node.js 20 이상, Claude Code (AI 판단 엔진 겸 코딩 도구. 설치 후 터미널에서 `claude`를 한 번 실행해 로그인)
@@ -85,6 +97,7 @@ git clone https://github.com/JiHwan-2/minwon-agent.git
 | 구분 | 받는 방법 | 비고 |
 |---|---|---|
 | 카카오 REST API 키 | 팀장이 카카오 디벨로퍼스 앱의 **멤버** 메뉴에서 팀원을 초대 → 팀원이 자기 계정으로 콘솔의 **앱 → 플랫폼 키**에서 확인 | 같은 앱의 키라 결과가 같음 |
+| 공공데이터포털 서비스키 | 각자 data.go.kr 가입 → 「국민권익위원회_민원정책 질의응답조회서비스」 활용신청(자동승인) → 마이페이지의 **일반 인증키(Decoding)** | `DATA_GO_KR_SERVICE_KEY`. 승인 직후엔 잠시 뒤부터 동작 |
 | Claude (판단 엔진) | 키 없음. 각자 PC에서 Claude Code에 **자기 계정으로 로그인** | `LLM_PROVIDER=claude_code`. 계정을 나눠 쓰지 않음 |
 | 키가 없을 때 | `LLM_PROVIDER=rule`, `KAKAO_REST_API_KEY` 비워 두기 | 규칙 엔진·문장 기반 지역 추출로 동작 |
 
@@ -112,7 +125,8 @@ backend/minwon/
   safety.py           개인정보 가림, 긴급상황·지시 주입 감지
   settings.py         .env 설정
   knowledge/          생활불편 유형·필수 정보, 담당 부서·창구·절차·증빙 지식베이스
-  tools/              카카오 로컬 API, 위치 확인·주변 기관 검색, 지식베이스 조회
+  tools/              카카오 로컬 API, 위치 확인·주변 기관 검색, 지식베이스 조회,
+                      비슷한 민원 사례 조회(cases.py, 공공데이터), PDF·처리 확인 일정 파일(export.py)
   agent/
     graph.py          LangGraph 워크플로
     nodes.py          guard · understand · plan · check · ask · act · decide · draft · review

@@ -18,6 +18,8 @@ class AgentState(TypedDict, total=False):
     confirm_rounds: int                               # 위치 후보 확인 질문 횟수
     nearby: dict                                      # 종류별 주변 기관
     agencies: dict                                    # 담당 부서·창구·절차·증빙
+    cases: dict                                       # 공공데이터에서 찾은 비슷한 민원 사례
+    files: dict                                       # 만든 결과물 정보 (PDF·처리 확인 일정)
     tool_calls: Annotated[list[dict], operator.add]   # Tool 호출 기록
     decision: dict                                    # 주 담당 기관·제출 창구·할 일
     package: dict                                     # 민원 초안·증빙 체크리스트 (최신본)

@@ -9,7 +9,7 @@ CategoryCode = Literal[
     "pollution", "park_facility", "animal", "public_transport", "water_sewer", "other",
 ]
 Slot = Literal["location", "time", "frequency", "detail", "harm", "target"]
-Action = Literal["ask_user", "geocode", "find_nearby", "kb_lookup", "write", "review"]
+Action = Literal["ask_user", "geocode", "find_nearby", "kb_lookup", "case_search", "write", "review", "deliver"]
 NearbyKind = Literal["police", "community_center"]
 
 
@@ -25,7 +25,8 @@ class Understanding(BaseModel):
 class PlanStep(BaseModel):
     action: Action = Field(
         description="ask_user=부족한 정보 질문, geocode=위치를 주소·행정구역으로 확인, "
-        "find_nearby=주변 공공기관 검색, kb_lookup=담당 부서·절차 조회, write=민원 초안 작성, review=초안 검증"
+        "find_nearby=주변 공공기관 검색, kb_lookup=담당 부서·절차 조회, case_search=비슷한 민원 사례 조회(공공데이터), "
+        "write=민원 초안 작성, review=초안 검증, deliver=결과물 파일(PDF·처리 확인 일정) 만들기"
     )
     title: str = Field(description="사용자에게 보여줄 단계 이름, 15자 이내")
     reason: str = Field(description="이 단계가 필요한 이유 한 문장")
@@ -57,6 +58,7 @@ class Decision(BaseModel):
     reason: str = Field(description="이 기관·창구를 고른 이유 1~2문장. 검색 결과와 유형을 근거로 든다")
     steps: list[str] = Field(description="이 시민이 실제로 할 일을 순서대로 3~5개, 상황에 맞게 구체적으로")
     cautions: list[str] = Field(description="제출 전에 알아 둘 점 0~2개 (예: 신호등은 경찰서 심의 필요)")
+    relevant_cases: list[int] = Field(description="similar_cases 중 이 민원과 같은 종류의 문제인 사례 번호(0부터). 관련 없으면 빈 목록")
 
 
 EvidenceLevel = Literal["required", "recommended", "separate"]

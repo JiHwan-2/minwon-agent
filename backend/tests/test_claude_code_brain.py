@@ -31,8 +31,10 @@ class FakeClaude:
 
 
 @pytest.fixture
-def fake_cli(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(brain_module, "settings", dataclasses.replace(brain_module.settings, claude_cli="claude-test"))
+def fake_cli(monkeypatch: pytest.MonkeyPatch, tmp_path):
+    exe = tmp_path / "claude.exe"  # 실행하지는 않고, 경로가 있는지만 확인됨
+    exe.write_text("")
+    monkeypatch.setattr(brain_module, "settings", dataclasses.replace(brain_module.settings, claude_cli=str(exe)))
     monkeypatch.setattr(brain_module.time, "sleep", lambda _s: None)
 
     def install(*replies):
@@ -56,7 +58,7 @@ def test_builds_command_without_tools_or_api_key(fake_cli, monkeypatch: pytest.M
     assert result == Understanding(**UNDERSTOOD)
     call = fake.calls[0]
     cmd = call["cmd"]
-    assert cmd[:2] == ["claude-test", "-p"]
+    assert cmd[0].endswith("claude.exe") and cmd[1] == "-p"
     assert cmd[cmd.index("--tools") + 1] == ""
     assert json.loads(cmd[cmd.index("--json-schema") + 1])["title"] == "Understanding"
     assert "판단 엔진" in cmd[cmd.index("--system-prompt") + 1]
@@ -109,3 +111,9 @@ def test_timeout_falls_back(fake_cli, monkeypatch: pytest.MonkeyPatch):
     out = Brain(ClaudeCodeBrain()).call("understand", "가로등이 꺼졌어요")
     assert out.source == "rule_fallback"
     assert "TimeoutExpired" in out.error
+
+
+def test_configured_cli_path_that_does_not_exist_is_explained(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(brain_module, "settings", dataclasses.replace(brain_module.settings, claude_cli=r"C:\없는\claude.exe"))
+    out = Brain(ClaudeCodeBrain()).call("understand", "가로등이 꺼졌어요")
+    assert out.source == "rule_fallback" and "Claude Code(claude)를 찾을 수 없습니다" in out.error
