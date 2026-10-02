@@ -75,6 +75,8 @@ p { margin: 0; }
 .btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
 .btn-ghost { background: var(--surface); border-color: var(--border); }
 .btn-ghost:hover:not(:disabled) { background: var(--surface-2); }
+.btn-stop { background: var(--danger); color: #fff; white-space: nowrap; }
+.btn-stop:hover:not(:disabled) { filter: brightness(1.08); }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* 레이아웃 */
@@ -120,6 +122,8 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .entry-done .entry-marker { background: var(--ok); border-color: var(--ok); color: #fff; }
 .entry-waiting .entry-marker { border-color: var(--warn); color: var(--warn); }
 .entry-error .entry-marker { border-color: var(--danger); color: var(--danger); }
+.entry-cancelled .entry-marker { border-color: var(--muted); color: var(--muted); }
+.entry-cancelled .entry-card { opacity: 0.75; }
 .entry-card { border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; background: var(--surface); min-width: 0; }
 .entry-running .entry-card { border-color: var(--primary); }
 .entry-waiting .entry-card { border-color: var(--warn); background: var(--warn-soft); }
@@ -133,6 +137,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .status-running { color: var(--primary); font-weight: 700; }
 .status-waiting { color: var(--warn); font-weight: 700; }
 .status-error { color: var(--danger); font-weight: 700; }
+.status-cancelled { color: var(--muted); font-weight: 700; }
 
 .tag { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: var(--surface-2); }
 .urgency-high { background: var(--danger-soft); color: var(--danger); }

@@ -5,12 +5,12 @@ from langgraph.config import get_stream_writer
 from langgraph.types import interrupt
 
 from minwon import knowledge, safety
+from minwon.agent import cancel
 from minwon.agent.brain import get_brain
 from minwon.agent.state import AgentState
 from minwon.settings import settings
-from minwon.tools import cases, regions
-from minwon.tools import export
-from minwon.tools.export import export_pdf, schedule_followup
+from minwon.tools import cases, export, regions
+from minwon.tools.export import export_pdf
 from minwon.tools.kb import kb_lookup
 from minwon.tools.locate import NEARBY_LABEL, find_nearby, geocode, resolve_candidate
 
@@ -20,7 +20,6 @@ TOOL_TITLE = {
     "geocode": "위치 확인",
     "kb_lookup": "담당 부서·절차 조회",
     "case_search": "비슷한 민원 사례 조회",
-    "schedule_followup": "처리 확인 일정 만들기",
     "export_pdf": "민원 패키지 PDF 만들기",
 }
 SOURCE_DETAIL = {
@@ -36,6 +35,7 @@ SOURCE_DETAIL = {
 
 
 def _started(node: str) -> None:
+    cancel.check()  # 앞 단계 중에 중단을 눌렀으면 다음 단계로 넘어가지 않는다
     get_stream_writer()({"node": node, "status": "start"})
 
 
@@ -111,7 +111,7 @@ def _normalize_plan(plan: dict, cat: dict) -> tuple[dict, list[str]]:
             present.add(action)
             fixes.append(f"'{title}' 단계 추가")
     closing = (("review", "초안 검증", "빠진 사실이나 개인정보가 없는지 확인합니다."),
-               ("deliver", "결과물 만들기", "민원 패키지 PDF와 처리 결과 확인 일정 파일을 만듭니다."))
+               ("deliver", "결과물 만들기", "검증한 민원 패키지를 PDF 파일로 만듭니다."))
     for action, title, reason in closing:
         step = next((s for s in plan["steps"] if s["action"] == action), None)
         if step is None:
@@ -498,13 +498,11 @@ def route_after_review(state: AgentState) -> str:
 
 
 def deliver(state: AgentState) -> dict:
-    """Tool Use: 검증을 마친 민원 패키지를 PDF로, 처리 결과 확인일을 캘린더 일정 파일로 만든다."""
+    """Tool Use: 검증을 마친 민원 패키지를 PDF로 만든다."""
     _started("deliver")
     calls: list[dict] = []
-    values = dict(state)
-    followup = _run_tool("deliver", calls, "schedule_followup", state["decision"]["period"], schedule_followup, values)["data"]
-    pdf = _run_tool("deliver", calls, "export_pdf", state["package"]["title"], export_pdf, values | {"files": {"ics": followup}})["data"]
-    return {"files": {"ics": followup, "pdf": pdf}, "tool_calls": calls, "log": _tool_logs("deliver", calls)}
+    pdf = _run_tool("deliver", calls, "export_pdf", state["package"]["title"], export_pdf, dict(state))["data"]
+    return {"files": {"pdf": pdf}, "tool_calls": calls, "log": _tool_logs("deliver", calls)}
 
 
 def route_entry(state: AgentState) -> str:

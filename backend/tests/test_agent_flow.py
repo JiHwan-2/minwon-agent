@@ -56,7 +56,7 @@ def test_normal_flow_plans_asks_searches_and_becomes_ready(monkeypatch: pytest.M
     events = send(sid, "창원시 마산회원구 합성동 합성초등학교 정문 앞이고 평일 등하교 시간에 그래요")
     assert ended_nodes(events) == ["ask", "check", "locate", "act", "decide", "draft", "review", "deliver"]
     tools = [e["tool"] for e in events if e["type"] == "tool_start"]
-    assert tools == ["geocode", "find_nearby:police", "kb_lookup", "case_search", "schedule_followup", "export_pdf"]
+    assert tools == ["geocode", "find_nearby:police", "kb_lookup", "case_search", "export_pdf"]
     results = {e["result"]["tool"]: e["result"] for e in events if e["type"] == "tool_end"}
     assert results["case_search"]["source"] == "skipped"  # 테스트에서는 공공데이터 키를 비워 둠
     assert all(r["ok"] for t, r in results.items() if t != "case_search")
@@ -76,7 +76,7 @@ def test_normal_flow_plans_asks_searches_and_becomes_ready(monkeypatch: pytest.M
     assert state["status"] == "ready"
     assert [entry["node"] for entry in state["log"]] == [
         "guard", "understand", "plan", "check", "ask", "check", "locate", "act", "act", "act", "decide", "draft", "review",
-        "deliver", "deliver",
+        "deliver",
     ]
     tool_logs = [entry["via"] for entry in state["log"] if entry["node"] in ("locate", "act")]
     assert tool_logs == ["카카오 로컬 API", "카카오 로컬 API", "지식베이스 + 지역 정보", "건너뜀"]

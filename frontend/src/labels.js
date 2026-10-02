@@ -11,6 +11,8 @@ export const NODE_LABEL = {
   draft: "민원 초안 작성",
   review: "초안 검증",
   deliver: "결과물 만들기",
+  switch: "민원 종류 변경",
+  stop: "처리 중단",
 };
 
 export const TOOL_SOURCE_LABEL = {

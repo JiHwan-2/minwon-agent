@@ -16,18 +16,39 @@ UNDERSTOOD = {
 }
 
 
-class FakeClaude:
-    """subprocess.run 대신 불려서 받은 명령을 기록하고, 정해 둔 응답을 차례로 돌려준다."""
+class FakeProcess:
+    def __init__(self, stdout: str, error: Exception | None = None):
+        self.stdout, self.error = stdout, error
+        self.returncode, self.killed, self.input = 0, False, None
 
-    def __init__(self, *replies: dict | str):
+    def communicate(self, input=None, timeout=None):
+        if input is not None:
+            self.input = input
+        if self.error and not self.killed:
+            raise self.error
+        return self.stdout, ""
+
+    def kill(self):
+        self.killed = True
+
+
+class FakeClaude:
+    """subprocess.Popen 대신 불려서 받은 명령을 기록하고, 정해 둔 응답을 차례로 돌려준다."""
+
+    def __init__(self, *replies: dict | str | Exception):
         self.replies = list(replies)
         self.calls: list[dict] = []
+        self.processes: list[FakeProcess] = []
 
     def __call__(self, cmd, **kwargs):
-        self.calls.append({"cmd": cmd, **kwargs})
         reply = self.replies.pop(0)
-        stdout = reply if isinstance(reply, str) else json.dumps(reply, ensure_ascii=False)
-        return subprocess.CompletedProcess(cmd, 0, stdout=stdout, stderr="")
+        if isinstance(reply, Exception):
+            proc = FakeProcess("", reply)
+        else:
+            proc = FakeProcess(reply if isinstance(reply, str) else json.dumps(reply, ensure_ascii=False))
+        self.calls.append({"cmd": cmd, "proc": proc, **kwargs})
+        self.processes.append(proc)
+        return proc
 
 
 @pytest.fixture
@@ -39,7 +60,7 @@ def fake_cli(monkeypatch: pytest.MonkeyPatch, tmp_path):
 
     def install(*replies):
         fake = FakeClaude(*replies)
-        monkeypatch.setattr(brain_module.subprocess, "run", fake)
+        monkeypatch.setattr(brain_module.subprocess, "Popen", fake)
         return fake
 
     return install
@@ -62,7 +83,7 @@ def test_builds_command_without_tools_or_api_key(fake_cli, monkeypatch: pytest.M
     assert cmd[cmd.index("--tools") + 1] == ""
     assert json.loads(cmd[cmd.index("--json-schema") + 1])["title"] == "Understanding"
     assert "판단 엔진" in cmd[cmd.index("--system-prompt") + 1]
-    assert "가로등이 일주일째" in call["input"]  # 시민 입력은 명령줄이 아니라 표준입력으로
+    assert "가로등이 일주일째" in call["proc"].input  # 시민 입력은 명령줄이 아니라 표준입력으로
     assert "ANTHROPIC_API_KEY" not in call["env"]  # API 과금 대신 로그인된 계정 사용
 
 
@@ -103,14 +124,11 @@ def test_missing_cli_falls_back_with_clear_message(monkeypatch: pytest.MonkeyPat
     assert "Claude Code(claude)를 찾을 수 없습니다" in out.error
 
 
-def test_timeout_falls_back(fake_cli, monkeypatch: pytest.MonkeyPatch):
-    def slow(cmd, **kwargs):
-        raise subprocess.TimeoutExpired(cmd, kwargs["timeout"])
-
-    monkeypatch.setattr(brain_module.subprocess, "run", slow)
+def test_timeout_kills_process_and_falls_back(fake_cli):
+    fake = fake_cli(subprocess.TimeoutExpired("claude", 120))
     out = Brain(ClaudeCodeBrain()).call("understand", "가로등이 꺼졌어요")
     assert out.source == "rule_fallback"
-    assert "TimeoutExpired" in out.error
+    assert "TimeoutExpired" in out.error and fake.processes[0].killed
 
 
 def test_configured_cli_path_that_does_not_exist_is_explained(monkeypatch: pytest.MonkeyPatch):

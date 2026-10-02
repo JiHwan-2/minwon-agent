@@ -10,6 +10,7 @@ import argparse
 import json
 import re
 import sys
+import threading
 import time
 from datetime import datetime
 from pathlib import Path
@@ -48,6 +49,19 @@ CASES = {
         "answers": [],
         "after_ready": [],
     },
+    "TC7": {
+        "type": "민원 종류 변경",
+        "input": "우리 골목 가로등이 일주일째 꺼져 있어요.",
+        "answers": ["그리고 우리 아파트 앞 놀이터 그네가 부서져서 아이들이 다칠 것 같아요"],
+        "after_ready": [],
+    },
+    "TC8": {
+        "type": "처리 중단",
+        "input": "창원시 성산구 상남동 상가 공사 소음이 매일 아침 7시부터 심해요.",
+        "stop_after": 8,  # 보낸 뒤 8초에 중단 버튼을 누른 것처럼 요청하고, 같은 내용을 다시 보내 정상 진행 확인
+        "answers": [],
+        "after_ready": [],
+    },
 }
 
 PHONE = re.compile(r"01[016789]-?\d{3,4}-?\d{4}")
@@ -58,6 +72,16 @@ def send(client: httpx.Client, base: str, sid: str, text: str) -> list[dict]:
     with client.stream("POST", f"{base}/api/sessions/{sid}/messages", json={"text": text}, timeout=900) as resp:
         resp.raise_for_status()
         return [json.loads(line) for line in resp.iter_lines() if line.strip()]
+
+
+def send_and_stop(client: httpx.Client, base: str, sid: str, text: str, after: float) -> list[dict]:
+    """메시지를 보내고 after초 뒤 중단 요청을 보낸다 (사용자가 '중단'을 누른 것과 같음)."""
+    timer = threading.Timer(after, lambda: httpx.post(f"{base}/api/sessions/{sid}/cancel", timeout=10))
+    timer.start()
+    try:
+        return send(client, base, sid, text)
+    finally:
+        timer.cancel()
 
 
 def summarize_turn(text: str, events: list[dict], seconds: float) -> dict:
@@ -79,6 +103,10 @@ def summarize_turn(text: str, events: list[dict], seconds: float) -> dict:
         turn["options"] = [o["label"] for o in last.get("options", [])]
     if last.get("type") == "error":
         turn["error"] = last.get("message")
+    if changed := next((e for e in events if e["type"] == "topic_changed"), None):
+        turn["topic_changed"] = {k: changed.get(k) for k in ("from", "to", "reason", "source")}
+    if last.get("type") == "cancelled":
+        turn["cancelled"] = {"restored": last.get("restored"), "message": last.get("message")}
     return turn
 
 
@@ -110,11 +138,7 @@ def final_result(client: httpx.Client, base: str, sid: str) -> dict:
         "files": files,
     }
     pdf = client.get(f"{base}/api/sessions/{sid}/files/package.pdf")
-    ics = client.get(f"{base}/api/sessions/{sid}/files/followup.ics")
-    result["downloads"] = {
-        "pdf": {"status": pdf.status_code, "bytes": len(pdf.content), "is_pdf": pdf.content.startswith(b"%PDF")},
-        "ics": {"status": ics.status_code, "bytes": len(ics.content), "is_calendar": ics.text.startswith("BEGIN:VCALENDAR")},
-    }
+    result["downloads"] = {"pdf": {"status": pdf.status_code, "bytes": len(pdf.content), "is_pdf": pdf.content.startswith(b"%PDF")}}
     return result
 
 
@@ -122,10 +146,13 @@ def run_case(client: httpx.Client, base: str, case_id: str) -> dict:
     case = CASES[case_id]
     sid = client.post(f"{base}/api/sessions").json()["session_id"]
     answers, after_ready = list(case["answers"]), list(case["after_ready"])
-    turns, text = [], case["input"]
+    turns, text, stop_after = [], case["input"], case.get("stop_after")
     for _ in range(8):
         started = time.monotonic()
-        events = send(client, base, sid, text)
+        if stop_after:
+            events = send_and_stop(client, base, sid, text, stop_after)
+        else:
+            events = send(client, base, sid, text)
         turns.append(summarize_turn(text, events, time.monotonic() - started))
         print(f"  [{case_id}] {turns[-1]['end']} ({turns[-1]['seconds']}초): {text[:40]}", flush=True)
         end = turns[-1]["end"]
@@ -134,6 +161,9 @@ def run_case(client: httpx.Client, base: str, case_id: str) -> dict:
         elif end == "ready" and after_ready:
             turns[-1]["result"] = final_result(client, base, sid)
             text = after_ready.pop(0)
+        elif end == "cancelled" and stop_after:
+            turns[-1]["state_after_stop"] = client.get(f"{base}/api/sessions/{sid}").json()["status"]
+            stop_after = None  # 같은 내용을 다시 보내 정상 진행 확인
         else:
             break
     if turns[-1]["end"] == "ready":

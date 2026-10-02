@@ -6,6 +6,7 @@ function Bubble({ m, canChoose, onSend }) {
   return (
     <div className={`bubble bubble-${m.role}${m.pkg ? " bubble-wide" : ""}`}>
       <p>{m.text}</p>
+      {m.stopped && <p className="bubble-note">⏹ 처리를 멈춘 메시지예요</p>}
       {m.masked && (
         <p className="bubble-note">
           🔒 {m.masked.map((f) => `${f.label} ${f.count}건`).join(", ")}을 가린 뒤 처리했어요.
@@ -61,7 +62,7 @@ function Bubble({ m, canChoose, onSend }) {
   );
 }
 
-export default function Chat({ messages, phase, onSend, latestId }) {
+export default function Chat({ messages, phase, onSend, onStop, stopping, latestId }) {
   const [text, setText] = useState("");
   const endRef = useRef(null);
   const busy = phase === "running";
@@ -80,7 +81,7 @@ export default function Chat({ messages, phase, onSend, latestId }) {
   };
 
   const placeholder = done
-    ? "고칠 점을 말해 주세요. 예) 더 짧게 / 요청사항에 CCTV 설치도 넣어 줘 (다른 불편은 '새 민원')"
+    ? "고칠 점이나 다른 불편을 말해 주세요. 예) 더 짧게 / 요청사항에 CCTV 설치도 넣어 줘"
     : phase === "asking"
       ? "질문에 이어서 답해 주세요. 모르는 건 '모름'이라고 적어도 돼요."
       : "예) 학교 앞 횡단보도가 너무 위험해요.";
@@ -94,7 +95,7 @@ export default function Chat({ messages, phase, onSend, latestId }) {
         {busy && (
           <div className="bubble bubble-agent bubble-busy">
             <span className="spinner" aria-hidden="true" />
-            <p>Agent가 작업하고 있어요…</p>
+            <p>{stopping ? "멈추는 중이에요…" : "Agent가 작업하고 있어요… 멈추려면 '중단'을 누르세요."}</p>
           </div>
         )}
         <div ref={endRef} />
@@ -123,9 +124,15 @@ export default function Chat({ messages, phase, onSend, latestId }) {
           disabled={busy}
           aria-label="메시지 입력"
         />
-        <button className="btn btn-primary" type="submit" disabled={busy || !text.trim()}>
-          {done ? "수정 요청" : "보내기"}
-        </button>
+        {busy ? (
+          <button className="btn btn-stop" type="button" onClick={onStop} disabled={stopping} aria-label="처리 중단">
+            {stopping ? "멈추는 중…" : "■ 중단"}
+          </button>
+        ) : (
+          <button className="btn btn-primary" type="submit" disabled={!text.trim()}>
+            보내기
+          </button>
+        )}
       </form>
     </section>
   );

@@ -1,22 +1,19 @@
-"""결과물 만들기: 민원 패키지를 PDF로, 처리 결과 확인 일정을 캘린더 파일(.ics, RFC 5545)로 만든다."""
+"""결과물 만들기: 검증을 마친 민원 패키지를 PDF로 만든다."""
 
 import logging
 import os
 import re
-from datetime import date, datetime, timedelta, timezone
+from datetime import date
 from pathlib import Path
-from uuid import uuid4
 
 from fpdf import FPDF
 
-from minwon import knowledge
 from minwon.settings import settings
 from minwon.tools import tool_result
 
 log = logging.getLogger(__name__)
 logging.getLogger("fontTools").setLevel(logging.ERROR)  # 글꼴 부분 추출(subset) 로그가 PDF마다 수백 줄 찍히는 것을 막음
 
-WEEKDAYS = "월화수목금토일"
 EVIDENCE_GROUPS = [("required", "필수 (공식 요건)"), ("recommended", "권장 (있으면 처리에 도움)"), ("separate", "별도 절차 (피해 보상 등)")]
 FOOTER = "안내 정보는 참고용이며 부서 이름은 지자체마다 다를 수 있습니다. 내용을 확인한 뒤 민원은 직접 제출해 주세요."
 
@@ -133,8 +130,6 @@ def package_pdf(values: dict, title: str | None = None, body: str | None = None)
     where = channel["name"] + (f" ({channel['url']})" if channel.get("url") else "") + (f" · 전화 {channel['phone']}" if channel.get("phone") else "")
     doc.field("제출 창구", where)
     doc.field("처리 기간", decision["period"])
-    if followup := values.get("files", {}).get("ics"):
-        doc.field("처리 확인일", f"{followup['date']} ({followup['weekday']}) — 이날 접수번호로 처리 결과를 확인하세요")
     doc.field("판단 근거", decision["reason"])
     if decision.get("others"):
         doc.field("관련 기관", ", ".join(f"{o['agency']}({o['unit']})" for o in decision["others"]))
@@ -173,103 +168,6 @@ def package_pdf(values: dict, title: str | None = None, body: str | None = None)
         doc.write_line(f"출처: {values['cases']['source_name']} — 참고용이며 처리 결과는 기관·지역마다 다를 수 있습니다.", 8.5, MUTED)
 
     return bytes(doc.output()), doc.page_no()
-
-
-def followup_date(category: str, today: date) -> tuple[date, int, bool]:
-    """(확인일, 기준 일수, 주말이라 미뤘는지). 지식베이스의 처리 기간 끝 무렵, 주말이면 다음 월요일."""
-    days = knowledge.agency_rules(category).get("followup_days", 14)
-    due = today + timedelta(days=days)
-    shift = {5: 2, 6: 1}.get(due.weekday(), 0)
-    return due + timedelta(days=shift), days, bool(shift)
-
-
-def plan_followup(values: dict, today: date | None = None) -> dict:
-    due, days, shifted = followup_date(values["understanding"]["category"], today or date.today())
-    agency = values["decision"]["agency"]
-    previous = (values.get("files") or {}).get("ics") or {}
-    return {
-        "name": f"민원처리확인_{due:%Y%m%d}.ics",
-        "date": due.isoformat(),
-        "weekday": WEEKDAYS[due.weekday()],
-        "days": days,
-        "shifted": shifted,
-        "period": values["decision"]["period"],
-        "summary": f"민원 처리 결과 확인 · {agency['agency']}",
-        "uid": previous.get("uid") or f"{uuid4().hex}@minwon-agent",  # 수정 후 다시 받아도 같은 일정으로 인식되도록 유지
-    }
-
-
-def _ics_text(value: str) -> str:
-    return value.replace("\\", "\\\\").replace(";", "\\;").replace(",", "\\,").replace("\n", "\\n")
-
-
-def _fold(line: str) -> list[str]:
-    """RFC 5545: 한 줄은 75바이트 이하, 이어지는 줄은 공백으로 시작. 한글이 중간에서 잘리지 않게 글자 단위로 나눈다."""
-    out, current = [], ""
-    for ch in line:
-        if len((current + ch).encode("utf-8")) > 75:
-            out.append(current)
-            current = " " + ch
-        else:
-            current += ch
-    out.append(current)
-    return out
-
-
-def followup_ics(values: dict) -> str:
-    f = values["files"]["ics"]
-    decision, pkg = values["decision"], values["package"]
-    agency, channel = decision["agency"], decision["channel"]
-    due = date.fromisoformat(f["date"])
-    where = channel["name"] + (f" {channel['url']}" if channel.get("url") else "")
-    contact = f"{channel['name']}(전화 {channel['phone']})" if channel.get("phone") else "제출한 창구"
-    description = "\n".join([
-        f"민원: {pkg['title']}",
-        f"제출처: {agency['agency']} {agency['unit']}",
-        f"제출 창구: {where}",
-        f"처리 기간: {f['period']}",
-        "",
-        "할 일",
-        "1. 제출한 사이트에서 접수번호로 처리 상황을 확인합니다.",
-        f"2. 답변이 없거나 처리되지 않았으면 {contact}에 문의합니다.",
-        "",
-        "※ 처리 기간은 기관·상황에 따라 다를 수 있습니다. (AI민원길잡이)",
-    ])
-    lines = [
-        "BEGIN:VCALENDAR",
-        "VERSION:2.0",
-        "PRODID:-//AI민원길잡이//minwon-agent//KO",
-        "CALSCALE:GREGORIAN",
-        "METHOD:PUBLISH",
-        "BEGIN:VEVENT",
-        f"UID:{f['uid']}",
-        f"DTSTAMP:{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}",
-        f"DTSTART;VALUE=DATE:{due:%Y%m%d}",
-        f"DTEND;VALUE=DATE:{due + timedelta(days=1):%Y%m%d}",
-        f"SUMMARY:{_ics_text(f['summary'])}",
-        f"DESCRIPTION:{_ics_text(description)}",
-        *([f"URL:{channel['url']}"] if channel.get("url") else []),
-        "TRANSP:TRANSPARENT",
-        "BEGIN:VALARM",
-        "ACTION:DISPLAY",
-        f"DESCRIPTION:{_ics_text(f['summary'])}",
-        "TRIGGER:PT9H",  # 확인일 오전 9시 알림
-        "END:VALARM",
-        "END:VEVENT",
-        "END:VCALENDAR",
-    ]
-    return "\r\n".join(part for line in lines for part in _fold(line)) + "\r\n"
-
-
-def schedule_followup(values: dict, today: date | None = None) -> dict:
-    """Tool: 처리 기간을 근거로 결과 확인일을 정하고 캘린더 파일을 만든다."""
-    data = plan_followup(values, today)
-    text = followup_ics(values | {"files": {"ics": data}})
-    due = date.fromisoformat(data["date"])
-    summary = f"{due.month}월 {due.day}일({data['weekday']}) 처리 결과 확인 일정 · 처리 기간 '{data['period']}' 기준 {data['days']}일 뒤"
-    if data["shifted"]:
-        summary += " (주말이라 월요일로)"
-    return tool_result("schedule_followup", True, "generated", summary, data | {"size": len(text.encode("utf-8"))})
 
 
 def export_pdf(values: dict) -> dict:

@@ -11,8 +11,6 @@ export const getHealth = () => fetch("/api/health").then(readJson);
 export const createSession = () =>
   fetch("/api/sessions", { method: "POST" }).then(readJson).then((b) => b.session_id);
 
-export const followupUrl = (sessionId) => `/api/sessions/${sessionId}/files/followup.ics`;
-
 export async function downloadPdf(sessionId, edits, filename) {
   const res = await fetch(`/api/sessions/${sessionId}/files/package.pdf`, {
     method: "POST",
@@ -28,11 +26,15 @@ export async function downloadPdf(sessionId, edits, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export async function sendMessage(sessionId, text, onEvent) {
+export const cancelRun = (sessionId) =>
+  fetch(`/api/sessions/${sessionId}/cancel`, { method: "POST" }).then(readJson);
+
+export async function sendMessage(sessionId, text, onEvent, signal) {
   const res = await fetch(`/api/sessions/${sessionId}/messages`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text }),
+    signal,
   });
   if (!res.ok) await readJson(res);
 

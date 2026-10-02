@@ -12,6 +12,7 @@ from langgraph.types import Command
 from pydantic import BaseModel, Field
 
 from minwon import safety
+from minwon.agent import cancel, topic
 from minwon.agent.brain import get_brain
 from minwon.agent.graph import build_graph, revision_input, start_input
 from minwon.settings import settings
@@ -24,7 +25,9 @@ app = FastAPI(title="AI민원길잡이 API", version="0.2.0")
 app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins, allow_methods=["*"], allow_headers=["*"])
 
 graph = build_graph()
-sessions: set[str] = set()
+# 세션 → 대화 기록(thread)과 되돌아갈 지점. 중단·실패하면 그 턴 직전 체크포인트로 되돌리고,
+# 다른 종류의 민원으로 바뀌면 새 thread로 처음부터 시작한다.
+sessions: dict[str, dict] = {}
 
 SNAPSHOT_KEYS = (
     "safety", "understanding", "plan", "info", "dialogue", "location", "nearby", "agencies", "cases",
@@ -47,10 +50,29 @@ def _event(**payload) -> str:
     return json.dumps(payload, ensure_ascii=False) + "\n"
 
 
-def _config(session_id: str) -> dict:
+def _session(session_id: str) -> dict:
     if session_id not in sessions:
         raise HTTPException(404, "세션을 찾을 수 없습니다. 새 민원을 시작해 주세요.")
-    return {"configurable": {"thread_id": session_id}}
+    return sessions[session_id]
+
+
+def _config(session_id: str) -> dict:
+    """이번 턴을 이어 갈 지점: 직전 턴을 중단했으면 그 직전 체크포인트, 아니면 최신 상태."""
+    s = _session(session_id)
+    base = s["rollback"] or {"configurable": {"thread_id": s["thread"]}}
+    return {"configurable": {**base["configurable"], "session_id": session_id}}
+
+
+def _latest(session_id: str) -> dict:
+    return {"configurable": {"thread_id": _session(session_id)["thread"], "session_id": session_id}}
+
+
+def _restore(session_id: str, previous: dict, before) -> None:
+    """중단·실패한 턴을 없던 일로: 턴 시작 전 상태로 되돌린다 (첫 턴이면 빈 대화로)."""
+    if before.values:
+        sessions[session_id] = {"thread": previous["thread"], "rollback": before.config}
+    else:
+        sessions[session_id] = {"thread": uuid.uuid4().hex, "rollback": None}
 
 
 def _pending(snapshot) -> dict | None:
@@ -76,7 +98,7 @@ def health():
 @app.post("/api/sessions")
 def create_session():
     session_id = uuid.uuid4().hex
-    sessions.add(session_id)
+    sessions[session_id] = {"thread": session_id, "rollback": None}
     return {"session_id": session_id}
 
 
@@ -89,38 +111,68 @@ def get_session(session_id: str):
 
 
 def _run(session_id: str, text: str) -> Iterator[str]:
-    config = _config(session_id)
+    _session(session_id)
     masked = safety.mask_pii(text)
     if masked.findings:
         yield _event(type="masked", text=masked.text, findings=masked.findings)
 
-    snapshot = graph.get_state(config)
-    if _pending(snapshot):
-        graph_input = Command(resume={"text": masked.text, "pii": masked.findings})
-    elif snapshot.values.get("package"):
-        graph_input = revision_input(masked.text)
-    elif snapshot.values:
-        yield _event(type="error", code="session_busy", message="이전 처리가 끝나지 않았어요. '새 민원'으로 다시 시작해 주세요.")
-        return
-    else:
-        graph_input = start_input(masked.text, masked.findings)
-
+    previous = dict(sessions[session_id])
+    config = _config(session_id)
+    before = snapshot = graph.get_state(config)
+    pending = _pending(snapshot)
+    cancel.begin(session_id)
+    stopped = failed = False
     try:
+        # 질문에 답하는 중이거나 완성 후인데 다른 종류의 민원을 말하면 새 민원으로 바꿔 처음부터 응대
+        if (pending or snapshot.values.get("package")) and topic.worth_checking(masked.text):
+            with cancel.scope(session_id):
+                switch = topic.detect(snapshot.values, pending, masked.text)
+            if switch:
+                sessions[session_id] = {"thread": uuid.uuid4().hex, "rollback": None}
+                config = _config(session_id)
+                snapshot, pending = graph.get_state(config), None
+                yield _event(type="topic_changed", **switch)
+
+        if pending:
+            graph_input = Command(resume={"text": masked.text, "pii": masked.findings})
+        elif snapshot.values.get("package"):
+            graph_input = revision_input(masked.text)
+        elif snapshot.values:
+            yield _event(type="error", code="session_busy", message="이전 처리가 끝나지 않았어요. '새 민원'으로 다시 시작해 주세요.")
+            return
+        else:
+            graph_input = start_input(masked.text, masked.findings)
+
         for mode, chunk in graph.stream(graph_input, config, stream_mode=["custom", "updates"]):
             if mode == "custom":
                 status = chunk.pop("status")
                 kind = {"start": "node_start", "tool_start": "tool_start", "tool_end": "tool_end"}[status]
                 yield _event(type=kind, **chunk)
-                continue
-            for node, update in chunk.items():
-                if node != "__interrupt__":
-                    yield _event(type="node_end", node=node, data=update or {})
+            else:
+                for node, update in chunk.items():
+                    if node != "__interrupt__":
+                        yield _event(type="node_end", node=node, data=update or {})
+            if cancel.requested(session_id):
+                stopped = True
+                break
+    except cancel.Cancelled:
+        stopped = True
     except Exception as e:
         log.exception("Agent 실행 실패")
-        yield _event(type="error", code="agent_failed", message=f"처리 중 문제가 생겼어요. 잠시 후 다시 시도해 주세요. ({type(e).__name__})")
+        failed = True
+        yield _event(type="error", code="agent_failed", message=f"처리 중 문제가 생겼어요. 같은 내용으로 다시 보내 주세요. ({type(e).__name__})")
+    finally:
+        cancel.finish(session_id)
+
+    if stopped or failed:
+        _restore(session_id, previous, before)
+        if stopped:
+            yield _event(type="cancelled", message="처리를 멈췄어요. 내용을 고쳐서 다시 보내 주세요.",
+                         restored="asking" if _pending(before) else "ready" if before.values.get("package") else "new")
         return
 
-    snapshot = graph.get_state(config)
+    sessions[session_id]["rollback"] = None
+    snapshot = graph.get_state(_latest(session_id))
     if pending := _pending(snapshot):
         yield _event(type="ask", questions=pending["questions"], options=pending.get("options", []))
     else:
@@ -129,8 +181,15 @@ def _run(session_id: str, text: str) -> Iterator[str]:
 
 @app.post("/api/sessions/{session_id}/messages")
 def post_message(session_id: str, body: MessageIn):
-    _config(session_id)
+    _session(session_id)
     return StreamingResponse(_run(session_id, body.text), media_type="application/x-ndjson")
+
+
+@app.post("/api/sessions/{session_id}/cancel")
+def cancel_message(session_id: str):
+    """처리 중인 메시지를 멈춘다. 실행 중인 AI 호출은 바로 끝내고, 대화는 그 메시지를 보내기 전으로 돌아간다."""
+    _session(session_id)
+    return {"stopping": cancel.request(session_id)}
 
 
 def _finished(session_id: str) -> dict:
@@ -163,8 +222,3 @@ def get_package_pdf(session_id: str):
 def post_package_pdf(session_id: str, edits: DraftEdits):
     return _pdf(session_id, edits.title, edits.body)
 
-
-@app.get("/api/sessions/{session_id}/files/followup.ics")
-def get_followup_ics(session_id: str):
-    values = _finished(session_id)
-    return _download(export.followup_ics(values).encode("utf-8"), "text/calendar; charset=utf-8", values["files"]["ics"]["name"])

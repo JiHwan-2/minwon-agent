@@ -15,9 +15,9 @@ from typing import Any, TypeVar
 
 from pydantic import BaseModel
 
-from minwon.agent import prompts
+from minwon.agent import cancel, prompts
 from minwon.agent.rules import RuleBrain
-from minwon.agent.schemas import Critique, Decision, Draft, InfoCheck, Plan, Understanding
+from minwon.agent.schemas import Critique, Decision, Draft, InfoCheck, Plan, TopicCheck, Understanding
 from minwon.settings import settings
 
 log = logging.getLogger(__name__)
@@ -59,14 +59,23 @@ class ClaudeCodeBrain:
 
     def _run(self, cmd: list[str], content: str) -> dict:
         env = {k: v for k, v in os.environ.items() if k not in _DROP_ENV}
-        proc = subprocess.run(
-            cmd, input=content, capture_output=True, text=True, encoding="utf-8",
-            timeout=settings.claude_timeout, cwd=tempfile.gettempdir(), env=env,
+        cancel.check()
+        proc = subprocess.Popen(
+            cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            text=True, encoding="utf-8", cwd=tempfile.gettempdir(), env=env,
         )
+        with cancel.running(proc):  # 중단을 누르면 이 프로세스를 바로 끝낸다
+            try:
+                stdout, stderr = proc.communicate(content, timeout=settings.claude_timeout)
+            except subprocess.TimeoutExpired:
+                proc.kill()
+                proc.communicate()
+                raise
+        cancel.check()
         try:
-            return json.loads(proc.stdout)
+            return json.loads(stdout)
         except json.JSONDecodeError:
-            raise ClaudeCodeError(f"응답을 읽을 수 없습니다 (종료 코드 {proc.returncode}): {(proc.stderr or proc.stdout).strip()[:150]}")
+            raise ClaudeCodeError(f"응답을 읽을 수 없습니다 (종료 코드 {proc.returncode}): {(stderr or stdout).strip()[:150]}")
 
     def _ask(self, effort: str, schema: type[T], system: str, payload: Any) -> T:
         content = payload if isinstance(payload, str) else json.dumps(payload, ensure_ascii=False, indent=2)
@@ -101,6 +110,9 @@ class ClaudeCodeBrain:
     def critique(self, ctx: dict) -> Critique:
         return self._ask(settings.claude_effort_fast, Critique, prompts.CRITIQUE, ctx)
 
+    def switch(self, ctx: dict) -> TopicCheck:
+        return self._ask(settings.claude_effort_fast, TopicCheck, prompts.SWITCH, ctx)
+
 
 def _json_in(text: str) -> Any:
     """구조화 출력이 비어 있을 때 대비: 답변 텍스트에서 JSON 부분만 꺼낸다 (```json 감싸기 허용)."""
@@ -128,6 +140,8 @@ class Brain:
         if self.primary:
             try:
                 return Outcome(getattr(self.primary, task)(*args), "llm")
+            except cancel.Cancelled:
+                raise  # 중단은 대체 경로로 넘기지 않고 처리 전체를 멈춘다
             except Exception as e:
                 log.warning("LLM %s 실패, 규칙 엔진으로 대체: %s", task, e)
                 return Outcome(getattr(self.rule, task)(*args), "rule_fallback", f"{type(e).__name__}: {e}"[:200])

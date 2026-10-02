@@ -199,6 +199,13 @@ function ConfirmBody({ entry }) {
 
 function Body({ entry }) {
   const d = entry.data ?? {};
+  if (entry.node === "switch" || entry.node === "stop") {
+    return (
+      <div className="body">
+        <p className="small">{entry.log?.detail}</p>
+      </div>
+    );
+  }
   if (entry.node === "ask") return <AskBody entry={entry} />;
   if (entry.node === "confirm_location") return <ConfirmBody entry={entry} />;
   if (entry.node === "act" || entry.node === "locate" || entry.node === "deliver") return <ActBody entry={entry} />;
@@ -214,7 +221,7 @@ function Body({ entry }) {
   return null;
 }
 
-const STATUS_TEXT = { running: "실행 중", waiting: "대기", done: "완료", error: "오류" };
+const STATUS_TEXT = { running: "실행 중", waiting: "대기", done: "완료", error: "오류", cancelled: "중단" };
 
 export default function AgentLog({ timeline, running }) {
   return (
@@ -234,7 +241,7 @@ export default function AgentLog({ timeline, running }) {
             <li>Tool 실행: 위치 확인 · 관할 기관 검색 · 담당 부서 조회 · 비슷한 민원 사례 조회(공공데이터)</li>
             <li>담당 기관 판단</li>
             <li>민원 초안 작성 ⇄ 초안 검증 (문제가 있으면 다시 작성)</li>
-            <li>결과물 만들기: 민원 패키지 PDF · 처리 결과 확인 일정</li>
+            <li>결과물 만들기: 민원 패키지 PDF</li>
           </ol>
         </div>
       ) : (

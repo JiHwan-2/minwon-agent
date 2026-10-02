@@ -14,13 +14,18 @@
                    → 비슷한 민원 사례 조회(공공데이터포털 국민권익위 민원 질의응답)
      → [담당 기관 판단] 주 담당 기관·제출 창구·할 일
      → [민원 초안 작성] ⇄ [초안 검증] 연락처·개인정보·위치·분량 + AI 검토 (문제 시 다시 작성, 최대 2회)
-     → [결과물 만들기] 민원 패키지 PDF · 처리 결과 확인 일정(.ics, 처리 기간 기준)
-     → 민원 패키지 + 파일 → (사용자 수정 요청 → 다시 작성 → 파일 다시 만들기)
+     → [결과물 만들기] 민원 패키지 PDF
+     → 민원 패키지 + PDF → (사용자 수정 요청 → 다시 작성 → PDF 다시 만들기)
+
+대화 도중: 다른 종류의 불편을 말하면 [민원 종류 변경]을 판단해 새 민원으로 처음부터 응대
+처리 중:   [중단] 버튼 → 실행 중인 AI 호출을 바로 끝내고, 그 메시지를 보내기 전 상태로 되돌림
 ```
 
 - 판단 엔진: Claude. 이 PC에 설치·로그인된 **Claude Code(`claude -p`)를 단계마다 실행**해 판단하므로 LLM API 키가 필요 없습니다. Claude Code가 없거나 호출이 실패하면 **규칙 엔진으로 자동 대체**하고 작업 기록에 표시합니다.
 - 화면 오른쪽 **Agent 작업 기록**에 단계별 판단·근거·Tool 호출·검증 결과가 실시간으로 남습니다.
 - 최종 민원은 사용자가 확인·수정한 뒤 **직접 제출**합니다 (자동 제출하지 않음).
+- 처리 중에는 보내기 버튼이 **중단** 버튼으로 바뀝니다. 누르면 그 메시지를 보내기 전 상태로 돌아가 다시 입력할 수 있습니다.
+- 질문에 답하는 중이나 민원이 완성된 뒤 **다른 종류의 불편**을 말하면 Agent가 알아서 새 민원으로 바꿔 응대합니다 (답변·수정 요청은 그대로 이어 감).
 
 ## 실행 방법 (Windows PowerShell)
 
@@ -76,7 +81,8 @@ cd backend
 실제 서비스와 똑같이 대표 테스트케이스(정상·부정확한 입력·데이터 없음·API 오류·악의적 입력)를 돌리려면 서버를 켠 상태에서 실행합니다. 결과는 [docs/testcases.md](docs/testcases.md)에 정리되어 있습니다.
 
 ```bash
-.venv\Scripts\python scriptsun_testcases.py --only TC1,TC5 --out ..\docs	estcases
+.venv\Scripts\python scripts
+un_testcases.py --only TC1,TC5 --out ..\docs	estcases
 ew
 ```
 
@@ -126,7 +132,7 @@ backend/minwon/
   settings.py         .env 설정
   knowledge/          생활불편 유형·필수 정보, 담당 부서·창구·절차·증빙 지식베이스
   tools/              카카오 로컬 API, 위치 확인·주변 기관 검색, 지식베이스 조회,
-                      비슷한 민원 사례 조회(cases.py, 공공데이터), PDF·처리 확인 일정 파일(export.py)
+                      비슷한 민원 사례 조회(cases.py, 공공데이터), 민원 패키지 PDF(export.py)
   agent/
     graph.py          LangGraph 워크플로
     nodes.py          guard · understand · plan · check · ask · act · decide · draft · review

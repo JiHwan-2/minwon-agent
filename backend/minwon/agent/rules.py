@@ -14,6 +14,7 @@ from minwon.agent.schemas import (
     Plan,
     PlanStep,
     Question,
+    TopicCheck,
     Understanding,
 )
 
@@ -39,6 +40,8 @@ FREQUENCY = re.compile(r"(매일|날마다|자주|항상|계속|반복|[가-힣]
 HARM = re.compile(r"(다쳤|부상|사고가 났|넘어졌|피해를|아파|병원에)")
 TARGET = re.compile(r"(\d{2,3}[가-힣]\s?\d{4}|\d+번\s?버스|[가-힣A-Za-z0-9]+(?:건설|산업|업체|식당|노래방|술집|공장))")
 UNKNOWN = re.compile(r"^(모름|몰라요|모르겠어요|잘 모르겠|없음|없어요)")
+# 규칙 엔진은 '그리고·이번엔·그게 아니라'처럼 화제를 바꾸는 말이 있을 때만 새 민원으로 본다 (답변 속 시설 이름 오인 방지)
+SWITCH_CUE = re.compile(r"(그리고|그런데|근데|이번엔|이번에는|다른|또 |또한|추가로|새로|말고|아니라|아니고)")
 SHORTER = re.compile(r"(짧|간단|줄여|요약)")
 
 
@@ -106,7 +109,7 @@ class RuleBrain:
             PlanStep(action="case_search", title="비슷한 민원 사례 조회", reason="공공데이터에서 같은 유형의 민원을 어느 기관이 처리했는지 확인합니다."),
             PlanStep(action="write", title="민원 초안 작성", reason="모은 정보로 제출할 민원과 증빙 목록을 만듭니다."),
             PlanStep(action="review", title="초안 검증", reason="빠진 사실이나 개인정보가 없는지 확인합니다."),
-            PlanStep(action="deliver", title="결과물 만들기", reason="민원 패키지 PDF와 처리 결과 확인 일정 파일을 만듭니다."),
+            PlanStep(action="deliver", title="결과물 만들기", reason="검증한 민원 패키지를 PDF 파일로 만듭니다."),
         ]
         return Plan(
             goal=f"{cat['label']} 불편을 담당 기관에 정확히 전달할 민원을 준비합니다.",
@@ -207,3 +210,14 @@ class RuleBrain:
 
     def critique(self, ctx: dict) -> Critique:
         return Critique(passed=True, issues=[])
+
+    def switch(self, ctx: dict) -> TopicCheck:
+        current = ctx["current"]["category"]
+        message = ctx["message"]
+        found = classify(message)
+        current_keywords = knowledge.category(current)["keywords"]
+        new = (found not in (current, "other") and SWITCH_CUE.search(message) is not None
+               and not any(kw in message for kw in current_keywords))
+        reason = (f"화제를 바꾸는 말과 함께 '{knowledge.category(found)['label']}' 유형의 불편을 새로 말함" if new
+                  else "지금 민원에 대한 답변이나 수정 요청으로 봄")
+        return TopicCheck(new_complaint=new, category=found if new else current, reason=reason)

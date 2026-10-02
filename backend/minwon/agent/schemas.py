@@ -26,7 +26,7 @@ class PlanStep(BaseModel):
     action: Action = Field(
         description="ask_user=부족한 정보 질문, geocode=위치를 주소·행정구역으로 확인, "
         "find_nearby=주변 공공기관 검색, kb_lookup=담당 부서·절차 조회, case_search=비슷한 민원 사례 조회(공공데이터), "
-        "write=민원 초안 작성, review=초안 검증, deliver=결과물 파일(PDF·처리 확인 일정) 만들기"
+        "write=민원 초안 작성, review=초안 검증, deliver=민원 패키지 PDF 만들기"
     )
     title: str = Field(description="사용자에게 보여줄 단계 이름, 15자 이내")
     reason: str = Field(description="이 단계가 필요한 이유 한 문장")
@@ -93,3 +93,9 @@ class InfoCheck(BaseModel):
     facts: list[Fact] = Field(description="지금까지 확인된 정보")
     questions: list[Question] = Field(description="아직 모르는 필수 정보에 대한 질문, 최대 3개. 충분하면 빈 목록")
     location_query: str = Field(description="지도 검색에 넣을 위치 문자열(시·구·동 + 장소명). 모르면 빈 문자열")
+
+
+class TopicCheck(BaseModel):
+    new_complaint: bool = Field(description="새 메시지가 지금 민원과 다른 종류의 생활불편을 새로 말한 것이면 true. 지금 민원에 대한 답변·보충·수정 요청이면 false")
+    category: CategoryCode = Field(description="새 민원이면 그 유형 코드, 아니면 지금 민원의 유형 코드")
+    reason: str = Field(description="판단 이유 한 문장")

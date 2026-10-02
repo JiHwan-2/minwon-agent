@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { downloadPdf, followupUrl } from "../api.js";
+import { downloadPdf } from "../api.js";
 
 const EVIDENCE_GROUPS = [
   { level: "required", label: "필수", desc: "지키지 않으면 처리되지 않는 공식 요건이에요.", tone: "danger" },
@@ -7,15 +7,10 @@ const EVIDENCE_GROUPS = [
   { level: "separate", label: "별도 절차", desc: "민원과 따로 신청할 때 필요해요 (예: 피해 보상).", tone: "warn" },
 ];
 
-function shortDate(iso, weekday) {
-  const [, m, d] = iso.split("-").map(Number);
-  return `${m}월 ${d}일(${weekday})`;
-}
-
 function FilesSection({ files, sessionId, title, body }) {
   const [state, setState] = useState("idle"); // idle | saving | error
   const [error, setError] = useState("");
-  const { pdf, ics } = files;
+  const { pdf } = files;
 
   const savePdf = async () => {
     setState("saving");
@@ -41,17 +36,7 @@ function FilesSection({ files, sessionId, title, body }) {
         ) : (
           <span className="small warn">PDF를 만들지 못했어요. 아래 복사 버튼을 이용해 주세요.</span>
         )}
-        {ics && (
-          <a className="btn btn-ghost btn-sm" href={followupUrl(sessionId)} download={ics.name}>
-            📅 {shortDate(ics.date, ics.weekday)} 처리 확인 일정 추가
-          </a>
-        )}
       </div>
-      {ics && (
-        <p className="small muted">
-          처리 기간 '{ics.period}'를 기준으로 {ics.days}일 뒤{ics.shifted ? "(주말이라 다음 월요일)" : ""}에 결과를 확인하도록 일정을 잡았어요. 휴대폰·PC 캘린더에서 열면 추가돼요.
-        </p>
-      )}
       {pdf?.name && <p className="small muted">PDF에는 위에서 직접 고친 제목·본문이 그대로 들어가요.</p>}
       {state === "error" && <p className="small warn">PDF를 받지 못했어요. ({error})</p>}
     </section>

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { createSession, getHealth, sendMessage } from "./api.js";
+import { cancelRun, createSession, getHealth, sendMessage } from "./api.js";
 import { SLOT_LABEL } from "./labels.js";
 import Chat from "./components/Chat.jsx";
 import AgentLog from "./components/AgentLog.jsx";
 
 let seq = 0;
 const nextId = () => ++seq;
+const now = () => new Date().toTimeString().slice(0, 8);
 
 const GREETING = {
   id: nextId(),
@@ -21,8 +22,10 @@ export default function App() {
   const [messages, setMessages] = useState([GREETING]);
   const [timeline, setTimeline] = useState([]);
   const [phase, setPhase] = useState("idle"); // idle | running | asking | ready
+  const [stopping, setStopping] = useState(false);
   const sessionRef = useRef(null);
   const revisingRef = useRef(false);
+  const abortRef = useRef(null);
 
   useEffect(() => {
     getHealth().then(setHealth).catch(() => setHealth({ status: "down" }));
@@ -122,6 +125,34 @@ export default function App() {
         addMessage("agent", "고칠 점이 있으면 말씀해 주세요. 예: '더 짧게', '요청사항에 CCTV 설치도 넣어 줘'");
         break;
       }
+      case "topic_changed":
+        // 대화 중 다른 종류의 민원 → 새 민원으로 처음부터 (작업 기록도 새로 시작)
+        revisingRef.current = false;
+        setTimeline([
+          {
+            id: nextId(),
+            node: "switch",
+            status: "done",
+            log: { title: "민원 종류 변경", detail: `${ev.from} → ${ev.to} · ${ev.reason}`, source: ev.source, error: ev.error, at: now() },
+          },
+        ]);
+        addMessage("agent", `말씀하신 내용은 다른 종류의 민원(${ev.to})이라 새 민원으로 바꿔서 도와드릴게요. 앞의 '${ev.from}' 민원은 접어 둘게요.`);
+        break;
+      case "cancelled": {
+        const restored = { asking: "asking", ready: "ready" }[ev.restored] ?? "idle";
+        setTimeline((t) => [
+          ...t.map((e) => (e.status === "running" ? { ...e, status: "cancelled" } : e)),
+          { id: nextId(), node: "stop", status: "cancelled", log: { title: "처리 중단", detail: "사용자가 중단 — 이 메시지를 보내기 전 상태로 되돌림", source: "system", at: now() } },
+        ]);
+        setMessages((m) => {
+          const last = m.findLastIndex((x) => x.role === "user");
+          return m.map((x, i) => (i === last ? { ...x, stopped: true } : x));
+        });
+        addMessage("agent", ev.message);
+        revisingRef.current = restored === "ready";
+        setPhase(restored);
+        break;
+      }
       case "error":
         addMessage("error", ev.message);
         setTimeline((t) => t.map((e) => (e.status === "running" ? { ...e, status: "error" } : e)));
@@ -137,15 +168,41 @@ export default function App() {
     if (!continuing) setTimeline([]);
     addMessage("user", text);
     setPhase("running");
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
       if (!continuing || !sessionRef.current) sessionRef.current = await createSession();
-      await sendMessage(sessionRef.current, text, onEvent);
+      await sendMessage(sessionRef.current, text, onEvent, controller.signal);
     } catch (e) {
-      addMessage("error", `서버에 연결하지 못했어요. 백엔드가 켜져 있는지 확인해 주세요. (${e.message})`);
-      setTimeline((t) => t.map((x) => (x.status === "running" ? { ...x, status: "error" } : x)));
+      if (e.name === "AbortError") {
+        // 서버가 중단 응답을 못 보낸 경우: 연결만 끊고 처음부터 다시 시작하게 한다
+        sessionRef.current = null;
+        revisingRef.current = false;
+        addMessage("error", "처리를 멈췄어요. 이어서 하려면 다시 보내 주세요.");
+        setTimeline((t) => t.map((x) => (x.status === "running" ? { ...x, status: "cancelled" } : x)));
+        setPhase("idle");
+      } else {
+        addMessage("error", `서버에 연결하지 못했어요. 백엔드가 켜져 있는지 확인해 주세요. (${e.message})`);
+        setTimeline((t) => t.map((x) => (x.status === "running" ? { ...x, status: "error" } : x)));
+      }
     } finally {
+      abortRef.current = null;
+      setStopping(false);
       setPhase((p) => (p === "running" ? (revisingRef.current ? "ready" : "idle") : p));
     }
+  };
+
+  const stop = async () => {
+    if (stopping) return;
+    setStopping(true);
+    const controller = abortRef.current;
+    try {
+      if (sessionRef.current) await cancelRun(sessionRef.current);
+    } catch {
+      controller?.abort();
+    }
+    // 서버가 몇 초 안에 '중단됨'을 보내지 않으면 연결을 끊는다
+    setTimeout(() => controller?.abort(), 8000);
   };
 
   const reset = () => {
@@ -179,7 +236,14 @@ export default function App() {
       </header>
 
       <main className="layout">
-        <Chat messages={messages} phase={phase} onSend={send} latestId={messages[messages.length - 1]?.id} />
+        <Chat
+          messages={messages}
+          phase={phase}
+          onSend={send}
+          onStop={stop}
+          stopping={stopping}
+          latestId={messages[messages.length - 1]?.id}
+        />
         <AgentLog timeline={timeline} running={phase === "running"} />
       </main>
     </div>

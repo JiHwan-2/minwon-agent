@@ -25,7 +25,8 @@
 cd backend
 .venv\Scripts\uvicorn minwon.api:app --app-dir . --reload --port 8000
 .venv\Scripts\python -m pytest -q
-.venv\Scripts\python scriptsun_testcases.py --only TC1   (실제 서버로 대표 테스트케이스 실행, 결과는 docs/testcases.md)
+.venv\Scripts\python scripts
+un_testcases.py --only TC1   (실제 서버로 대표 테스트케이스 실행, 결과는 docs/testcases.md)
 cd frontend
 npm run dev
 ```
@@ -39,13 +40,14 @@ backend/minwon/
   api.py        세션·메시지(NDJSON 스트리밍) API
   safety.py     개인정보 가림, 긴급상황·지시 주입 감지
   agent/        LangGraph 워크플로 (graph.py), 단계(nodes.py), 판단 엔진(brain.py: Claude Code `claude -p` → 실패 시 rules.py)
-  tools/        카카오 로컬 API, 위치 확인·후보, 주변 기관, 지식베이스 조회, 비슷한 민원 사례(공공데이터), PDF·.ics 결과물
+  tools/        카카오 로컬 API, 위치 확인·후보, 주변 기관, 지식베이스 조회, 비슷한 민원 사례(공공데이터), 민원 패키지 PDF
   knowledge/    생활불편 유형·필수 정보(categories.json), 담당 부서·창구·절차·증빙(agencies.json)
 frontend/src/
   App.jsx       스트리밍 이벤트 → 화면 상태
   components/   Chat(대화) · AgentLog(작업 기록) · PackageCard(민원 패키지)
 ```
 Workflow: guard → understand → plan → check ⇄ ask → locate ⇄ confirm_location → act → decide → draft ⇄ review → deliver (완성 후 수정 요청 → draft)
+대화 도중 다른 종류의 민원이면 agent/topic.py 판단 → 새 thread로 처음부터. 중단 버튼은 agent/cancel.py(claude 프로세스 종료) → 그 턴 직전 체크포인트로 되돌림
 
 ## 작업 흐름
 1. 시작 전 `git pull`
