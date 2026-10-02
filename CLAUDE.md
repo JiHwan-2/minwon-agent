@@ -25,8 +25,7 @@
 cd backend
 .venv\Scripts\uvicorn minwon.api:app --app-dir . --reload --port 8000
 .venv\Scripts\python -m pytest -q
-.venv\Scripts\python scripts
-un_testcases.py --only TC1   (실제 서버로 대표 테스트케이스 실행, 결과는 docs/testcases.md)
+.venv\Scripts\python scripts\run_testcases.py --only TC1   (실제 서버로 대표 테스트케이스 실행, 결과는 docs/testcases.md)
 cd frontend
 npm run dev
 ```

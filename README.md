@@ -81,9 +81,7 @@ cd backend
 실제 서비스와 똑같이 대표 테스트케이스(정상·부정확한 입력·데이터 없음·API 오류·악의적 입력)를 돌리려면 서버를 켠 상태에서 실행합니다. 결과는 [docs/testcases.md](docs/testcases.md)에 정리되어 있습니다.
 
 ```bash
-.venv\Scripts\python scripts
-un_testcases.py --only TC1,TC5 --out ..\docs	estcases
-ew
+.venv\Scripts\python scripts\run_testcases.py --only TC1,TC5 --out ..\docs\testcases\new
 ```
 
 ## 새 PC·팀원 개발환경 맞추기
