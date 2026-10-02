@@ -200,7 +200,8 @@ def _run(session_id: str, text: str) -> Iterator[str]:
     if pending := _pending(snapshot):
         yield _event(type="ask", questions=pending["questions"], options=pending.get("options", []))
     elif understanding.get("intent", "complaint") != "complaint":
-        yield _event(type="redirect", intent=understanding["intent"], message=understanding["reply"])
+        yield _event(type="redirect", intent=understanding["intent"], message=understanding["reply"],
+                     referral=understanding.get("referral_info"))
     else:
         yield _event(type="ready", **{k: snapshot.values.get(k) for k in RESULT_KEYS})
 

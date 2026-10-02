@@ -36,6 +36,19 @@ function Bubble({ m, canChoose, onSend }) {
           ))}
         </div>
       )}
+      {m.referral && (
+        <div className="referral">
+          <strong>{m.referral.agency}</strong>
+          <span className="small muted">{m.referral.operator}</span>
+          <div className="row">
+            <a className="btn btn-primary btn-sm" href={m.referral.url} target="_blank" rel="noopener noreferrer">
+              홈페이지 바로가기 ↗
+            </a>
+            <span className="small">☎ {m.referral.phone}</span>
+            <span className="small muted">{m.referral.hours}</span>
+          </div>
+        </div>
+      )}
       {m.facts && (
         <ul className="facts-mini">
           {m.facts.map((f) => (

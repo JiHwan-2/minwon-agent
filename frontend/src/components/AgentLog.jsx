@@ -25,7 +25,7 @@ function GuardBody({ safety }) {
   );
 }
 
-const INTENT_TAG = { unclear: "불분명한 입력", not_complaint: "민원이 아닌 입력" };
+const INTENT_TAG = { referral: "다른 창구 안내", unclear: "불분명한 입력", not_complaint: "민원이 아닌 입력" };
 
 function UnderstandBody({ u }) {
   if (u.intent && u.intent !== "complaint") {

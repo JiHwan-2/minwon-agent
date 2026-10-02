@@ -11,7 +11,7 @@ from minwon.agent.brain import Brain, ClaudeCodeBrain, ClaudeCodeError
 from minwon.agent.schemas import Understanding
 
 UNDERSTOOD = {
-    "intent": "complaint", "reply": "",
+    "intent": "complaint", "referral": "none", "reply": "",
     "category": "street_light", "title": "골목 가로등 고장", "summary": "골목 가로등이 일주일째 꺼져 있습니다.",
     "urgency": "medium", "keywords": ["가로등", "골목"], "location_hint": "",
 }

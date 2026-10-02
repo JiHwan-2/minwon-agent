@@ -46,7 +46,8 @@ frontend/src/
   components/   Chat(대화) · AgentLog(작업 기록) · PackageCard(민원 패키지)
 ```
 Workflow: guard → understand → plan → check ⇄ ask → locate ⇄ confirm_location → act → decide → draft ⇄ review → deliver (완성 후 수정 요청 → draft)
-대화 도중 다른 종류의 민원이면 agent/topic.py 판단 → 새 thread로 처음부터. 중단 버튼은 agent/cancel.py(claude 프로세스 종료) → 그 턴 직전 체크포인트로 되돌림
+understand에서 Claude가 입력 확인: 민원 아님·불분명·다른 창구(소비자 피해·임금체불·사기·개인 간 분쟁 → agencies.json의 referrals)면 안내만 하고 끝. 위기 표현은 safety.py가 AI보다 먼저 109 안내
+대화 도중 말은 agent/topic.py가 판단: 다른 종류의 민원이면 새 thread로 처음부터, 관계없는 말이면 진행하지 않고 안내. 중단 버튼은 agent/cancel.py(claude 프로세스 종료) → 그 턴 직전 체크포인트로 되돌림
 
 ## 작업 흐름
 1. 시작 전 `git pull`

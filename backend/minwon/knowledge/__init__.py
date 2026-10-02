@@ -40,3 +40,16 @@ def category(code: str) -> dict:
 
 def category_guide() -> str:
     return "\n".join(f"- {code}: {c['label']} ({c['examples']})" for code, c in categories().items())
+
+
+def referrals() -> dict[str, dict]:
+    """시·군·구청 민원이 아니라 다른 공식 창구가 해결하는 일 (소비자 피해·임금체불·사기·개인 간 분쟁)."""
+    return {code: r for code, r in _agencies()["referrals"].items() if not code.startswith("_")}
+
+
+def referral(code: str) -> dict:
+    return {"code": code, **referrals()[code]}
+
+
+def referral_guide() -> str:
+    return "\n".join(f"- {code}: {r['label']} ({r['examples']}) → {r['agency']}" for code, r in referrals().items())

@@ -133,7 +133,7 @@ export default function App() {
       }
       case "redirect":
         // 민원이 아니거나 불분명한 입력: 안내만 하고 같은 대화에서 이어서 말하길 기다린다
-        addMessage("agent", ev.message);
+        addMessage("agent", ev.message, ev.referral ? { referral: ev.referral } : {});
         setPhase("clarify");
         break;
       case "off_topic": {

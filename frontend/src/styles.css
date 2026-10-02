@@ -215,6 +215,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .ev-info small, .ev-basis { display: block; color: var(--muted); }
 .ev-basis { font-style: italic; }
 
+.referral { display: grid; gap: 6px; padding: 10px 12px; border-radius: 10px; background: var(--surface); border: 1px solid var(--border); }
 .options { display: grid; gap: 6px; }
 .option-btn {
   display: flex; align-items: center; gap: 8px; text-align: left; padding: 8px 10px; border-radius: 10px;

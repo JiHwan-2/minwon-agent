@@ -72,7 +72,7 @@ def guard(state: AgentState) -> dict:
     return {"safety": result, "log": [_log("guard", "입력 안전 점검", " / ".join(notes) or "이상 없음")]}
 
 
-INTENT_LABEL = {"unclear": "불분명한 입력", "not_complaint": "민원이 아닌 입력"}
+INTENT_LABEL = {"referral": "다른 창구가 맞는 일", "unclear": "불분명한 입력", "not_complaint": "민원이 아닌 입력"}
 DEFAULT_REPLY = {
     "unclear": "어떤 점이 불편하신지 조금만 더 알려 주세요. 예를 들어 '집 앞 가로등이 며칠째 꺼져 있어요'처럼 말씀해 주시면 돼요.",
     "not_complaint": "저는 생활 속 불편을 민원으로 정리해 드리는 도우미예요. '학교 앞 횡단보도가 위험해요'처럼 불편했던 일을 말씀해 주세요.",
@@ -87,7 +87,18 @@ def understand(state: AgentState) -> dict:
     data["category_label"] = knowledge.category(data["category"])["label"]
     if state["safety"]["emergency"]:
         data |= {"intent": "complaint", "urgency": "high"}  # 긴급상황 표현은 민원 흐름으로 (112·119 안내는 guard가 함)
+    if data["intent"] == "referral" and data["referral"] == "none":
+        data["intent"] = "complaint"  # 창구를 고르지 못했으면 지금처럼 민원 흐름으로
+    if data["intent"] != "referral":
+        data["referral"] = "none"
 
+    if data["intent"] == "referral":
+        # 창구 이름·번호·주소는 Claude가 쓰지 않고 지식베이스(공식 안내로 확인한 값)에서 가져온다
+        ref = knowledge.referral(data["referral"])
+        data["referral_info"] = ref
+        data["reply"] = f"말씀하신 일은 '{ref['label']}'에 해당해서, 시·군·구청 민원보다 {ref['agency']}에서 도와줘요. {ref['first']}"
+        detail = f"{INTENT_LABEL['referral']}({ref['label']}) → {ref['agency']} 안내, 민원 흐름을 시작하지 않음"
+        return {"understanding": data, "log": [_log("understand", "입력 확인", detail, out.source, error=out.error)]}
     if data["intent"] != "complaint":
         if state["safety"].get("crisis"):
             # 109 안내(api가 먼저 보냄)에 이어 생활불편 예시를 들지 않고 정해진 문장으로만 답한다

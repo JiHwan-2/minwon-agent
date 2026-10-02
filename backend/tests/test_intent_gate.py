@@ -3,10 +3,10 @@
 
 import pytest
 
-from minwon import safety
+from minwon import knowledge, safety
 from minwon.agent import brain as brain_module
 from minwon.agent.rules import RuleBrain
-from minwon.agent.schemas import TopicCheck
+from minwon.agent.schemas import ReferralCode, TopicCheck
 from minwon.tools import kakao
 from tests import fake_kakao
 from tests.test_agent_flow import client, ended_nodes, new_session, send
@@ -55,6 +55,23 @@ class FailsToJudgeTurn(RuleBrain):
         raise TimeoutError("Claude 응답 없음")
 
 
+class RefersTo(RuleBrain):
+    """정한 낱말이 있으면 '다른 창구가 맞는 일'로 판단하는 가짜 Claude. 답 문장에는 일부러 틀린 번호를 넣는다."""
+
+    def __init__(self, codes: dict[str, str]):
+        super().__init__()
+        self.codes = codes
+        self.seen: list[str] = []
+
+    def understand(self, text):
+        self.seen.append(text)
+        base = super().understand(text)
+        code = next((v for k, v in self.codes.items() if k in text), None)
+        if code is None:
+            return base
+        return base.model_copy(update={"intent": "referral", "referral": code, "reply": "0000-0000으로 전화하세요", "category": "other"})
+
+
 class FailsToUnderstand(RuleBrain):
     def understand(self, text):
         raise TimeoutError("Claude 응답 없음")
@@ -77,7 +94,7 @@ def test_not_a_complaint_is_answered_without_starting_the_flow(monkeypatch: pyte
     events = send(sid, "기모띠")
     assert ended_nodes(events) == ["guard", "understand"]
     last = events[-1]
-    assert last == {"type": "redirect", "intent": "not_complaint", "message": REPLY["not_complaint"]}
+    assert last == {"type": "redirect", "intent": "not_complaint", "message": REPLY["not_complaint"], "referral": None}
     log = _state(sid)["log"]
     assert log[-1]["title"] == "입력 확인" and "민원이 아닌 입력" in log[-1]["detail"]
     assert _state(sid)["plan"] is None
@@ -228,3 +245,44 @@ def test_crisis_while_answering_pauses_without_reasking(monkeypatch: pytest.Monk
     last = events[-1]
     assert last["crisis"] and last["message"] == safety.CRISIS_REPLY["paused"] and last["questions"] == []
     assert _state(sid)["pending"] == before["pending"]  # 하던 민원은 그대로
+
+
+# ---- 다른 창구가 맞는 일 (소비자 피해·임금체불·사기·개인 간 분쟁) ----
+
+def test_referral_channels_are_complete_in_knowledge_base():
+    codes = set(ReferralCode.__args__) - {"none"}
+    assert set(knowledge.referrals()) == codes
+    for ref in knowledge.referrals().values():
+        assert all(ref[k] for k in ("label", "examples", "agency", "phone", "url", "first", "source"))
+        assert ref["url"].startswith("https://")
+
+
+def test_referral_uses_official_channel_not_claude_words(monkeypatch: pytest.MonkeyPatch):
+    _use(monkeypatch, RefersTo({"택배": "consumer"}))
+    sid = new_session()
+    events = send(sid, "택배가 3일째 안 와요")
+    assert ended_nodes(events) == ["guard", "understand"]  # 민원 흐름을 시작하지 않음
+    last = events[-1]
+    assert last["type"] == "redirect" and last["intent"] == "referral"
+    assert last["referral"]["code"] == "consumer" and last["referral"]["phone"] == "1372"
+    assert last["referral"]["url"] == "https://www.ccn.go.kr"
+    assert "1372 소비자상담센터" in last["message"] and "0000-0000" not in last["message"]  # Claude가 쓴 번호는 쓰지 않음
+    log = _state(sid)["log"][-1]
+    assert log["title"] == "입력 확인" and "1372 소비자상담센터 안내" in log["detail"]
+
+
+def test_referral_then_real_complaint_starts_fresh(monkeypatch: pytest.MonkeyPatch):
+    fake = _use(monkeypatch, RefersTo({"월급": "labor"}))
+    sid = new_session()
+    assert send(sid, "사장님이 두 달째 월급을 안 줘요")[-1]["referral"]["phone"] == "1350"
+    events = send(sid, "우리 골목 가로등이 일주일째 꺼져 있어요")
+    assert fake.seen[-1] == "우리 골목 가로등이 일주일째 꺼져 있어요"  # 앞의 말과 합치지 않음
+    assert "plan" in ended_nodes(events)
+
+
+def test_referral_without_a_channel_falls_back_to_complaint(monkeypatch: pytest.MonkeyPatch):
+    _use(monkeypatch, RefersTo({"가로등": "none"}))
+    sid = new_session()
+    events = send(sid, "우리 골목 가로등이 일주일째 꺼져 있어요")
+    assert "plan" in ended_nodes(events)
+    assert _state(sid)["understanding"]["intent"] == "complaint"
