@@ -16,6 +16,7 @@
 import argparse
 import glob
 import json
+import re
 import statistics
 import sys
 import time
@@ -58,7 +59,7 @@ def run_understand(case: dict) -> dict:
     out = get_brain().call("understand", masked.text)
     seconds = round(time.perf_counter() - started, 1)
     u = out.value
-    got = {"intent": u.intent, "category": u.category, "referral": u.referral, "title": u.title, "reply": u.reply}
+    got = {"intent": u.intent, "category": u.category, "referral": u.referral, "language": u.language, "title": u.title, "reply": u.reply}
     detected = {
         "pii": sorted(f["kind"] for f in masked.findings),
         "emergency": safety.is_emergency(masked.text),
@@ -80,7 +81,33 @@ def score_understand(case: dict, got: dict, detected: dict) -> dict:
         checks["referral"] = got["intent"] == "referral" and got["referral"] == case["referral"]
     for key, want in case.get("safety", {}).items():
         checks[f"safety.{key}"] = detected[key] == (sorted(want) if key == "pii" else want)
+    if "language" in case:
+        checks["language"] = got.get("language") == case["language"]
+        if got["intent"] in FILTERED:  # 민원이 아니라고 안내했으면 그 안내도 시민의 언어여야 한다
+            checks["reply_lang"] = written_in(got["reply"], case["language"])
+    if case.get("no_contact"):  # 연락처를 물어도 지어내지 않아야 한다 (정해진 안내문은 서버가 따로 붙임)
+        checks["no_contact"] = not CONTACT.search(got["reply"])
     return checks
+
+
+CONTACT = re.compile(r"\d{2,4}-\d{3,4}-\d{4}|\b\d{3,4}-\d{4}\b|https?://|www\.")
+_SCRIPTS = {
+    "ko": re.compile(r"[가-힣]"),
+    "zh": re.compile(r"[一-鿿]"),
+    "vi": re.compile(r"[ăâđêôơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]", re.IGNORECASE),
+}
+
+
+def written_in(text: str, lang: str) -> bool:
+    """안내 문장이 그 언어로 쓰였는지 글자 모양으로 확인한다 (영어는 한글·한자가 없고 라틴 문자로)."""
+    if not text.strip():
+        return False
+    if lang == "en":
+        body = re.sub(r"'[^']*'|\"[^\"]*\"|“[^”]*”", "", text)  # 따옴표 안 예시(한국어 지명 등)는 빼고 본다
+        return not _SCRIPTS["ko"].search(body) and not _SCRIPTS["zh"].search(body) and bool(re.search(r"[A-Za-z]{3,}", body))
+    if lang == "zh":
+        return bool(_SCRIPTS["zh"].search(text))
+    return bool(_SCRIPTS[lang].search(text))
 
 
 def summarize_understand(rows: list[dict]) -> dict:

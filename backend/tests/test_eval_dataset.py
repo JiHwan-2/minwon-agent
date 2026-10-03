@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from minwon import knowledge
+from minwon import i18n, knowledge
 from minwon.agent.schemas import CategoryCode, Intent, ReferralCode, TurnKind
 
 DATA = json.loads((Path(__file__).resolve().parents[1] / "eval" / "dataset.json").read_text(encoding="utf-8"))
@@ -28,6 +28,8 @@ def test_understand_labels_use_real_codes():
         if "referral" in c:
             assert c["referral"] in ReferralCode.__args__ and c["intent"] == "referral", c["id"]
         assert set(c.get("safety", {})) <= {"pii", "emergency", "crisis", "injection"}, c["id"]
+        if "language" in c:
+            assert c["language"] in i18n.LANGS, c["id"]
 
 
 def test_turn_labels_use_real_codes():

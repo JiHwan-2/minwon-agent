@@ -39,7 +39,10 @@ CRISIS_PATTERNS = re.compile(
 
 INJECTION_PATTERNS = re.compile(
     r"(이전\s*(?:지시|명령|규칙).{0,6}무시|시스템\s*프롬프트|프롬프트를?\s*(?:보여|출력|알려)|"
-    r"너의?\s*(?:규칙|지시사항)|ignore\s+(?:all\s+|the\s+)?(?:previous|above)\s+instructions|system\s+prompt)",
+    r"너의?\s*(?:규칙|지시사항)|ignore\s+(?:all\s+|the\s+)?(?:previous|above)\s+instructions|system\s+prompt|"
+    # 지원 외국어 (중국어·베트남어)
+    r"(?:忽略|无视|忘记)(?:之前|以上|前面|先前)?的?(?:所有|全部)?(?:指令|指示|规则|设定)|系统提示|提示词|"
+    r"(?:bỏ qua|phớt lờ|quên)\s+(?:tất cả\s+|mọi\s+)?(?:các\s+)?(?:hướng dẫn|chỉ dẫn|chỉ thị|lệnh|quy tắc)|lời nhắc hệ thống)",
     re.IGNORECASE,
 )
 

@@ -8,7 +8,7 @@ import pytest
 from minwon import i18n, knowledge
 from minwon.agent import brain as brain_module
 from minwon.agent.rules import RuleBrain
-from minwon.agent.schemas import Translation
+from minwon.agent.schemas import TopicCheck, Translation
 from tests.test_agent_flow import client, ended_nodes, new_session, send
 
 NOISE = "창원시 성산구 상남동 상가 공사 소음이 매일 아침 7시부터 심해요"
@@ -134,6 +134,19 @@ def test_referral_card_in_citizen_language(monkeypatch: pytest.MonkeyPatch):
     assert ref["phone"] == "1372" and ref["url"] == "https://www.ccn.go.kr"  # 번호·주소는 원문
     assert ref["agency"] == i18n.REFERRALS["consumer"]["vi"]["agency"]
     assert last["message"] == i18n.t("referral.reply", "vi", label=ref["label"], agency=ref["agency"], first=ref["first"])
+
+
+def test_off_topic_while_answering_is_answered_in_conversation_language(monkeypatch: pytest.MonkeyPatch):
+    class OffTopicInVietnamese(SpeaksVietnamese):
+        def switch(self, ctx):
+            return TopicCheck(kind="off_topic", category=ctx["current"]["category"], reason="질문과 관계없는 말")
+
+    _use(monkeypatch, OffTopicInVietnamese())
+    sid = new_session()
+    assert send(sid, "우리 골목 가로등이 일주일째 꺼져 있어요.")[-1]["type"] == "ask"
+    last = send(sid, "hihi vui ghê")[-1]
+    assert last["type"] == "off_topic" and last["message"] == i18n.t("off_topic.asking", "vi")
+    assert ended_nodes(send(sid, "hihi vui ghê")) == []  # 몇 번을 보내도 민원 흐름이 진행되지 않음
 
 
 def test_crisis_notice_in_the_language_it_was_written():
