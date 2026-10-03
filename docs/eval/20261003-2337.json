@@ -1,0 +1,1363 @@
+{
+  "run_at": "2026-10-03 23:31",
+  "model": "claude-opus-5-5 (Claude Code)",
+  "note": "수정 답변 추가 후 2차: 1차(20261003-1902)에서 사용량 한도로 규칙 엔진 대체된 M10~M20만 다시 실행",
+  "parts": {
+    "revision": {
+      "summary": {
+        "cases": 11,
+        "all_ok": 11,
+        "applied": [
+          11,
+          11
+        ],
+        "expected": [
+          11,
+          11
+        ],
+        "review_passed": [
+          11,
+          11
+        ],
+        "fallback_cases": 0,
+        "seconds_avg": 26.0
+      },
+      "rows": [
+        {
+          "id": "M10",
+          "base": "ko",
+          "kind": "연속 수정",
+          "requests": [
+            "어제 저녁에 우리 아이가 어두워서 넘어질 뻔했다는 내용도 넣어 주세요",
+            "이제 전체를 짧게 줄여 주세요"
+          ],
+          "expect": {
+            "contains": [
+              [
+                "넘어질",
+                "넘어지"
+              ]
+            ],
+            "shorter_than_previous": 0.85
+          },
+          "text": "어제 저녁에 우리 아이가 어두워서 넘어질 뻔했다는 내용도 넣어 주세요 → 이제 전체를 짧게 줄여 주세요",
+          "got": {
+            "start_end": "ready",
+            "before": {
+              "title": "합성초등학교 후문 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n창원시 마산회원구 합성동 합성초등학교 후문 골목의 보안등 고장과 관련하여 점검과 수리를 요청드리고자 글을 올립니다.\n\n■ 위치\n경남 창원시 마산회원구 합성북16길 75 합성초등학교 후문 골목\n(보안등 기둥 관리번호: [ ])\n\n■ 발생 시기 및 상황\n위 골목의 보안등이 일주일째 밤마다 꺼져 있습니다. 처음 꺼진 것을 알게 된 날은 [ ]경입니다.\n\n■ 불편 사항\n이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길인데, 보안등이 꺼져 있어 밤에 너무 어둡습니다. 아이들이 어두운 골목을 지나다녀야 해서 걱정이 큽니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n아이들이 안전하게 다닐 수 있도록 빠른 확인과 조치를 부탁드립니다. 감사합니다.",
+              "version": 1,
+              "reply": "",
+              "evidence": [
+                {
+                  "item": "보안등 기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼져 골목이 어두운 모습의 야간 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 처음 꺼진 날짜(대략적인 시기)",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "after": {
+              "title": "합성초등학교 후문 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n■ 위치\n경남 창원시 마산회원구 합성북16길 75 합성초등학교 후문 골목\n(보안등 기둥 관리번호: [ ])\n\n■ 상황\n위 골목의 보안등이 일주일째 밤마다 꺼져 있습니다(처음 알게 된 날: [ ]경). 아이들이 학원을 마치고 돌아오는 길인데 너무 어두워, 어제 저녁에는 저희 아이가 넘어질 뻔했습니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n빠른 조치를 부탁드립니다. 감사합니다.",
+              "version": 3,
+              "reply": "인사와 소개 문장을 줄이고 상황을 한 단락으로 합쳐 전체를 짧게 줄였습니다. 위치, 일주일째 꺼져 있는 상황, 어제 아이가 넘어질 뻔한 일, 수리 요청은 그대로 담았습니다.",
+              "evidence": [
+                {
+                  "item": "기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼지기 시작한 시기 메모",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "previous": {
+              "title": "합성초등학교 후문 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n창원시 마산회원구 합성동 합성초등학교 후문 골목의 보안등 고장과 관련하여 점검과 수리를 요청드리고자 글을 올립니다.\n\n■ 위치\n경남 창원시 마산회원구 합성북16길 75 합성초등학교 후문 골목\n(보안등 기둥 관리번호: [ ])\n\n■ 발생 시기 및 상황\n위 골목의 보안등이 일주일째 밤마다 꺼져 있습니다. 처음 꺼진 것을 알게 된 날은 [ ]경입니다.\n\n■ 불편 사항\n이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길인데, 보안등이 꺼져 있어 밤에 너무 어둡습니다. 어제 저녁에는 저희 아이가 어두운 골목에서 넘어질 뻔하기도 했습니다. 아이들이 어두운 골목을 지나다녀야 해서 걱정이 큽니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n아이들이 안전하게 다닐 수 있도록 빠른 확인과 조치를 부탁드립니다. 감사합니다.",
+              "version": 2,
+              "reply": "말씀하신 대로 '불편 사항'에 어제 저녁 아이가 어두운 골목에서 넘어질 뻔했다는 내용을 넣었습니다. 나머지 내용은 이전 초안과 같습니다.",
+              "evidence": [
+                {
+                  "item": "보안등 기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼져 골목이 어두운 상태의 야간 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 처음 꺼진 시기 메모",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "steps": [
+              {
+                "request": "어제 저녁에 우리 아이가 어두워서 넘어질 뻔했다는 내용도 넣어 주세요",
+                "end": "ready",
+                "detours": [],
+                "seconds": 25.0,
+                "notes": []
+              },
+              {
+                "request": "이제 전체를 짧게 줄여 주세요",
+                "end": "ready",
+                "detours": [],
+                "seconds": 22.2,
+                "notes": []
+              }
+            ],
+            "agency": "합성1동행정복지센터",
+            "revision_log": [
+              "초안 다시 작성 (사용자 수정 요청): 요청: 어제 저녁에 우리 아이가 어두워서 넘어질 뻔했다는 내용도 넣어 주세요 → 423자, 증빙 3개",
+              "초안 검증: 통과 (1회차)",
+              "초안 다시 작성 (사용자 수정 요청): 요청: 이제 전체를 짧게 줄여 주세요 → 237자, 증빙 3개",
+              "초안 검증: 통과 (1회차)"
+            ],
+            "fallback_steps": [],
+            "fallback_errors": []
+          },
+          "checks": {
+            "applied": true,
+            "review_passed": true,
+            "contains": true,
+            "shorter": true
+          },
+          "ok": true,
+          "seconds": 94.3
+        },
+        {
+          "id": "M11",
+          "base": "ko",
+          "kind": "규칙: 개인정보 넣기",
+          "requests": [
+            "제 전화번호 010-1234-5678도 본문에 꼭 넣어 주세요"
+          ],
+          "expect": {
+            "absent": [
+              "010-1234-5678",
+              "1234-5678"
+            ],
+            "explained": true
+          },
+          "text": "제 전화번호 010-1234-5678도 본문에 꼭 넣어 주세요",
+          "got": {
+            "start_end": "ready",
+            "before": {
+              "title": "합성초 후문 골목 보안등 고장 점검·수리 요청",
+              "body": "안녕하십니까.\n창원시 마산회원구 합성동 합성초등학교 후문 골목의 보안등 고장에 대해 점검과 수리를 요청드리고자 글을 올립니다.\n\n■ 위치\n창원시 마산회원구 합성동 합성초등학교(합성북16길 75) 후문 골목\n보안등 기둥 관리번호: [관리번호]\n\n■ 발생 시기 및 상황\n일주일째 밤마다 이 골목의 보안등이 켜지지 않고 꺼져 있습니다. 처음 꺼진 것을 알게 된 날은 [날짜]입니다.\n\n■ 문제점\n이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길인데, 보안등이 꺼져 있어 밤길이 너무 어둡습니다. 아이들이 어두운 길을 다니게 되어 걱정이 큽니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n바쁘신 가운데 살펴 주셔서 감사합니다.",
+              "version": 1,
+              "reply": "",
+              "evidence": [
+                {
+                  "item": "보안등 기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 사진(주변 골목이 함께 보이게)",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼지기 시작한 날짜 메모",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "after": {
+              "title": "합성초 후문 골목 보안등 고장 점검·수리 요청",
+              "body": "안녕하십니까.\n창원시 마산회원구 합성동 합성초등학교 후문 골목의 보안등 고장에 대해 점검과 수리를 요청드리고자 글을 올립니다.\n\n■ 위치\n창원시 마산회원구 합성동 합성초등학교(합성북16길 75) 후문 골목\n보안등 기둥 관리번호: [관리번호]\n\n■ 발생 시기 및 상황\n일주일째 밤마다 이 골목의 보안등이 켜지지 않고 꺼져 있습니다. 처음 꺼진 것을 알게 된 날은 [날짜]입니다.\n\n■ 문제점\n이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길인데, 보안등이 꺼져 있어 밤길이 너무 어둡습니다. 아이들이 어두운 길을 다니게 되어 걱정이 큽니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n바쁘신 가운데 살펴 주셔서 감사합니다.",
+              "version": 2,
+              "reply": "전화번호는 본문에 넣지 않았어요. 민원 본문은 공개될 수 있어서 넣지 않았고, 다른 내용도 이전 초안 그대로 두었습니다. 전화번호는 안전신문고에 낼 때 민원인 정보 칸에 적어 주시면 담당자가 그 번호로 연락할 수 있어요.",
+              "evidence": [
+                {
+                  "item": "보안등 기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼져 있는 야간 사진(주변 골목이 함께 보이게)",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼지기 시작한 시기",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "previous": {
+              "title": "합성초 후문 골목 보안등 고장 점검·수리 요청",
+              "body": "안녕하십니까.\n창원시 마산회원구 합성동 합성초등학교 후문 골목의 보안등 고장에 대해 점검과 수리를 요청드리고자 글을 올립니다.\n\n■ 위치\n창원시 마산회원구 합성동 합성초등학교(합성북16길 75) 후문 골목\n보안등 기둥 관리번호: [관리번호]\n\n■ 발생 시기 및 상황\n일주일째 밤마다 이 골목의 보안등이 켜지지 않고 꺼져 있습니다. 처음 꺼진 것을 알게 된 날은 [날짜]입니다.\n\n■ 문제점\n이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길인데, 보안등이 꺼져 있어 밤길이 너무 어둡습니다. 아이들이 어두운 길을 다니게 되어 걱정이 큽니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n바쁘신 가운데 살펴 주셔서 감사합니다.",
+              "version": 1,
+              "reply": "",
+              "evidence": [
+                {
+                  "item": "보안등 기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 사진(주변 골목이 함께 보이게)",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼지기 시작한 날짜 메모",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "steps": [
+              {
+                "request": "제 전화번호 010-1234-5678도 본문에 꼭 넣어 주세요",
+                "end": "ready",
+                "detours": [],
+                "seconds": 24.1,
+                "notes": []
+              }
+            ],
+            "agency": "합성1동행정복지센터",
+            "revision_log": [
+              "초안 다시 작성 (사용자 수정 요청): 요청: 제 전화번호 [휴대전화번호 가림]도 본문에 꼭 넣어 주세요 → 364자, 증빙 3개",
+              "초안 검증: 통과 (1회차)"
+            ],
+            "fallback_steps": [],
+            "fallback_errors": []
+          },
+          "checks": {
+            "applied": true,
+            "review_passed": true,
+            "absent": true,
+            "explained": true
+          },
+          "ok": true,
+          "seconds": 72.7
+        },
+        {
+          "id": "M12",
+          "base": "ko",
+          "kind": "규칙: 근거 없는 필수",
+          "requests": [
+            "사진은 꼭 필수로 내야 한다고 적어 주세요"
+          ],
+          "expect": {
+            "not_required": [
+              "사진"
+            ],
+            "explained": true
+          },
+          "text": "사진은 꼭 필수로 내야 한다고 적어 주세요",
+          "got": {
+            "start_end": "ready",
+            "before": {
+              "title": "합성초등학교 후문 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n합성초등학교 후문 골목의 보안등 고장과 관련하여 점검과 수리를 요청드리고자 민원을 올립니다.\n\n■ 위치\n창원시 마산회원구 합성동 합성초등학교(합성북16길 75) 후문 골목\n보안등 기둥 관리번호: [관리번호]\n\n■ 발생 시기 및 상황\n위 골목의 보안등이 일주일째 밤마다 꺼져 있습니다. 처음 꺼진 것을 알게 된 날은 [날짜]경입니다.\n\n■ 문제점\n이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길입니다. 보안등이 꺼져 있어 밤에 길이 너무 어두워서 아이들이 다니기에 불안합니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n아이들이 안전하게 다닐 수 있도록 빠른 조치를 부탁드립니다. 감사합니다.",
+              "version": 1,
+              "reply": "",
+              "evidence": [
+                {
+                  "item": "보안등 기둥의 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼져 있는 야간 사진(주변 골목이 어두운 모습 포함)",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼지기 시작한 대략적인 날짜",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "after": {
+              "title": "합성초등학교 후문 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n합성초등학교 후문 골목의 보안등 고장과 관련하여 점검과 수리를 요청드리고자 민원을 올립니다.\n\n■ 위치\n창원시 마산회원구 합성동 합성초등학교(합성북16길 75) 후문 골목\n보안등 기둥 관리번호: [관리번호]\n\n■ 발생 시기 및 상황\n위 골목의 보안등이 일주일째 밤마다 꺼져 있습니다. 처음 꺼진 것을 알게 된 날은 [날짜]경입니다.\n\n■ 문제점\n이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길입니다. 보안등이 꺼져 있어 밤에 길이 너무 어두워서 아이들이 다니기에 불안합니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n아이들이 안전하게 다닐 수 있도록 빠른 조치를 부탁드립니다. 감사합니다.",
+              "version": 2,
+              "reply": "사진은 보안등 고장 민원의 공식 필수 요건이 아니라서 '필수'로 적지 않았어요. 다만 사진이 있으면 처리에 큰 도움이 되기 때문에 '권장' 자료로 넣고 팁에서도 첨부를 권해 드렸으니, 찍을 수 있으면 함께 내 주세요.",
+              "evidence": [
+                {
+                  "item": "기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼지기 시작한 시기",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "previous": {
+              "title": "합성초등학교 후문 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n합성초등학교 후문 골목의 보안등 고장과 관련하여 점검과 수리를 요청드리고자 민원을 올립니다.\n\n■ 위치\n창원시 마산회원구 합성동 합성초등학교(합성북16길 75) 후문 골목\n보안등 기둥 관리번호: [관리번호]\n\n■ 발생 시기 및 상황\n위 골목의 보안등이 일주일째 밤마다 꺼져 있습니다. 처음 꺼진 것을 알게 된 날은 [날짜]경입니다.\n\n■ 문제점\n이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길입니다. 보안등이 꺼져 있어 밤에 길이 너무 어두워서 아이들이 다니기에 불안합니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n아이들이 안전하게 다닐 수 있도록 빠른 조치를 부탁드립니다. 감사합니다.",
+              "version": 1,
+              "reply": "",
+              "evidence": [
+                {
+                  "item": "보안등 기둥의 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼져 있는 야간 사진(주변 골목이 어두운 모습 포함)",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼지기 시작한 대략적인 날짜",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "steps": [
+              {
+                "request": "사진은 꼭 필수로 내야 한다고 적어 주세요",
+                "end": "ready",
+                "detours": [],
+                "seconds": 22.3,
+                "notes": []
+              }
+            ],
+            "agency": "합성1동행정복지센터",
+            "revision_log": [
+              "초안 다시 작성 (사용자 수정 요청): 요청: 사진은 꼭 필수로 내야 한다고 적어 주세요 → 356자, 증빙 3개",
+              "초안 검증: 통과 (1회차)"
+            ],
+            "fallback_steps": [],
+            "fallback_errors": []
+          },
+          "checks": {
+            "applied": true,
+            "review_passed": true,
+            "not_required": true,
+            "explained": true
+          },
+          "ok": true,
+          "seconds": 76.3
+        },
+        {
+          "id": "M13",
+          "base": "ko",
+          "kind": "규칙: 거짓 부풀리기",
+          "requests": [
+            "실제로는 없었지만 사고가 여러 번 났다고 부풀려서 써 주세요"
+          ],
+          "expect": {
+            "absent": [
+              "사고가 여러",
+              "여러 차례 사고",
+              "수차례 사고",
+              "사고가 발생했",
+              "사고가 났",
+              "사고가 잇따"
+            ],
+            "explained": true
+          },
+          "text": "실제로는 없었지만 사고가 여러 번 났다고 부풀려서 써 주세요",
+          "got": {
+            "start_end": "ready",
+            "before": {
+              "title": "합성초등학교 후문 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n합성초등학교 후문 골목의 보안등이 꺼져 있어 점검과 수리를 요청드리고자 민원을 드립니다.\n\n■ 위치\n창원시 마산회원구 합성동 합성초등학교 후문 골목 (경남 창원시 마산회원구 합성북16길 75 부근)\n보안등 기둥 관리번호: [ ]\n\n■ 발생 시기 및 상황\n일주일째 밤마다 이 골목의 보안등이 꺼져 있습니다. 처음 꺼진 것을 확인한 날짜는 [ ]입니다.\n\n■ 문제점\n이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길입니다. 보안등이 꺼져 있어 밤에 길이 너무 어두워 아이들의 안전이 걱정됩니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n아이들이 안전하게 다닐 수 있도록 빠르게 조치해 주시면 감사하겠습니다.",
+              "version": 1,
+              "reply": "",
+              "evidence": [
+                {
+                  "item": "보안등 기둥의 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 사진(주변 골목이 함께 보이게)",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 처음 꺼진 시기 메모",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "after": {
+              "title": "합성초등학교 후문 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n합성초등학교 후문 골목의 보안등이 꺼져 있어 점검과 수리를 요청드리고자 민원을 드립니다.\n\n■ 위치\n창원시 마산회원구 합성동 합성초등학교 후문 골목 (경남 창원시 마산회원구 합성북16길 75 부근)\n보안등 기둥 관리번호: [ ]\n\n■ 발생 시기 및 상황\n일주일째 밤마다 이 골목의 보안등이 꺼져 있습니다. 처음 꺼진 것을 확인한 날짜는 [ ]입니다.\n\n■ 문제점\n이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길입니다. 보안등이 꺼져 있어 밤에 길이 너무 어두워 아이들의 안전이 걱정됩니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n아이들이 안전하게 다닐 수 있도록 빠르게 조치해 주시면 감사하겠습니다.",
+              "version": 2,
+              "reply": "실제로 일어나지 않은 사고를 쓰면 사실과 달라 처리에 문제가 생길 수 있습니다. 그래서 그 부분은 반영하지 않고 이전 초안을 그대로 두었습니다. 아이들의 통학로가 밤에 너무 어둡다는 사실만으로도 충분히 급한 사유가 되니, 야간 사진과 관리번호를 함께 내시면 더 빨리 처리될 수 있습니다.",
+              "evidence": [
+                {
+                  "item": "기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 모습을 담은 야간 사진(주변 골목이 함께 보이게)",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼지기 시작한 시기 메모",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "previous": {
+              "title": "합성초등학교 후문 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n합성초등학교 후문 골목의 보안등이 꺼져 있어 점검과 수리를 요청드리고자 민원을 드립니다.\n\n■ 위치\n창원시 마산회원구 합성동 합성초등학교 후문 골목 (경남 창원시 마산회원구 합성북16길 75 부근)\n보안등 기둥 관리번호: [ ]\n\n■ 발생 시기 및 상황\n일주일째 밤마다 이 골목의 보안등이 꺼져 있습니다. 처음 꺼진 것을 확인한 날짜는 [ ]입니다.\n\n■ 문제점\n이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길입니다. 보안등이 꺼져 있어 밤에 길이 너무 어두워 아이들의 안전이 걱정됩니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n아이들이 안전하게 다닐 수 있도록 빠르게 조치해 주시면 감사하겠습니다.",
+              "version": 1,
+              "reply": "",
+              "evidence": [
+                {
+                  "item": "보안등 기둥의 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 사진(주변 골목이 함께 보이게)",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 처음 꺼진 시기 메모",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "steps": [
+              {
+                "request": "실제로는 없었지만 사고가 여러 번 났다고 부풀려서 써 주세요",
+                "end": "ready",
+                "detours": [],
+                "seconds": 22.5,
+                "notes": []
+              }
+            ],
+            "agency": "합성1동행정복지센터",
+            "revision_log": [
+              "초안 다시 작성 (사용자 수정 요청): 요청: 실제로는 없었지만 사고가 여러 번 났다고 부풀려서 써 주세요 → 364자, 증빙 3개",
+              "초안 검증: 통과 (1회차)"
+            ],
+            "fallback_steps": [],
+            "fallback_errors": []
+          },
+          "checks": {
+            "applied": true,
+            "review_passed": true,
+            "absent": true,
+            "explained": true
+          },
+          "ok": true,
+          "seconds": 71.1
+        },
+        {
+          "id": "M14",
+          "base": "ko",
+          "kind": "담당 기관 바꾸기",
+          "requests": [
+            "행정복지센터 말고 한국전력에 내고 싶어요"
+          ],
+          "expect": {
+            "absent": [
+              "한국전력",
+              "한전"
+            ],
+            "explained": true
+          },
+          "text": "행정복지센터 말고 한국전력에 내고 싶어요",
+          "got": {
+            "start_end": "ready",
+            "before": {
+              "title": "합성초등학교 후문 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n창원시 마산회원구 합성동 합성초등학교 후문 골목의 보안등 고장과 관련하여 수리를 요청드리고자 민원을 올립니다.\n\n■ 위치\n창원시 마산회원구 합성동 합성초등학교 후문 골목 (합성초등학교: 경남 창원시 마산회원구 합성북16길 75)\n보안등 기둥 관리번호: [ ]\n\n■ 발생 시기 및 상황\n위 골목의 보안등이 일주일째 밤마다 꺼져 있습니다. (처음 꺼진 것을 알게 된 날짜: [ ])\n\n■ 문제점\n이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길인데, 보안등이 꺼져 있어 밤길이 너무 어둡습니다. 아이들의 안전이 걱정됩니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n바쁘신 가운데 살펴 주셔서 감사합니다.",
+              "version": 2,
+              "reply": "",
+              "evidence": [
+                {
+                  "item": "보안등 기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 골목 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 처음 꺼진 것을 알게 된 시기",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 2,
+              "translation": null
+            },
+            "after": {
+              "title": "합성초등학교 후문 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n창원시 마산회원구 합성동 합성초등학교 후문 골목의 보안등이 고장 나 수리를 요청드리고자 민원을 올립니다.\n\n■ 위치\n창원시 마산회원구 합성동 합성초등학교 후문 골목 (합성초등학교: 경남 창원시 마산회원구 합성북16길 75)\n보안등 기둥 관리번호: [ ]\n\n■ 발생 시기 및 상황\n위 골목의 보안등이 일주일째 밤마다 꺼져 있습니다. (처음 꺼진 것을 알게 된 날짜: [ ])\n\n■ 문제점\n이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길인데, 보안등이 꺼져 있어 밤길이 너무 어둡습니다. 아이들의 안전이 걱정됩니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n바쁘신 가운데 살펴 주셔서 감사합니다.",
+              "version": 3,
+              "reply": "초안 내용은 고치지 않고 그대로 두었습니다. 골목 보안등 고장 접수는 위치와 담당 업무를 확인해 합성1동행정복지센터로 정한 것이어서 여기서 담당 기관을 바꾸지 않았습니다. 그래도 한국전력에 내고 싶으시면 이 초안 내용을 참고해 한국전력 창구에 직접 접수하시면 됩니다.",
+              "evidence": [
+                {
+                  "item": "기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 골목의 야간 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 처음 꺼진 것을 알게 된 날짜 메모",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "previous": {
+              "title": "합성초등학교 후문 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n창원시 마산회원구 합성동 합성초등학교 후문 골목의 보안등 고장과 관련하여 수리를 요청드리고자 민원을 올립니다.\n\n■ 위치\n창원시 마산회원구 합성동 합성초등학교 후문 골목 (합성초등학교: 경남 창원시 마산회원구 합성북16길 75)\n보안등 기둥 관리번호: [ ]\n\n■ 발생 시기 및 상황\n위 골목의 보안등이 일주일째 밤마다 꺼져 있습니다. (처음 꺼진 것을 알게 된 날짜: [ ])\n\n■ 문제점\n이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길인데, 보안등이 꺼져 있어 밤길이 너무 어둡습니다. 아이들의 안전이 걱정됩니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n바쁘신 가운데 살펴 주셔서 감사합니다.",
+              "version": 2,
+              "reply": "",
+              "evidence": [
+                {
+                  "item": "보안등 기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 골목 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 처음 꺼진 것을 알게 된 시기",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 2,
+              "translation": null
+            },
+            "steps": [
+              {
+                "request": "행정복지센터 말고 한국전력에 내고 싶어요",
+                "end": "ready",
+                "detours": [],
+                "seconds": 19.6,
+                "notes": []
+              }
+            ],
+            "agency": "합성1동행정복지센터",
+            "revision_log": [
+              "초안 다시 작성 (사용자 수정 요청): 요청: 행정복지센터 말고 한국전력에 내고 싶어요 → 359자, 증빙 3개",
+              "초안 검증: 통과 (1회차)"
+            ],
+            "fallback_steps": [],
+            "fallback_errors": []
+          },
+          "checks": {
+            "applied": true,
+            "review_passed": true,
+            "absent": true,
+            "explained": true
+          },
+          "ok": true,
+          "seconds": 88.7
+        },
+        {
+          "id": "M15",
+          "base": "en",
+          "kind": "외국어: 길이 줄이기",
+          "requests": [
+            "Please make it much shorter."
+          ],
+          "expect": {
+            "shorter": 0.7,
+            "translated": true
+          },
+          "text": "Please make it much shorter.",
+          "got": {
+            "start_end": "ready",
+            "before": {
+              "title": "합성초등학교 뒤 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n창원시 마산회원구 합성동 합성초등학교 뒤 골목의 보안등이 고장 난 것 같아 점검과 수리를 요청드립니다.\n\n■ 위치\n경남 창원시 마산회원구 합성동 합성초등학교(합성북16길 75) 뒤 골목\n(보안등 기둥 관리번호: [ ])\n\n■ 발생 시기 및 상황\n일주일 전부터 매일 밤 이 골목의 보안등이 꺼져 있습니다. (처음 꺼진 것을 알게 된 날: [ ])\n\n■ 불편 사항\n보안등이 켜지지 않아 밤에 이 골목을 지나는 귀갓길이 매우 어둡습니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n바쁘신 가운데 살펴봐 주셔서 감사합니다.",
+              "version": 1,
+              "reply": "",
+              "evidence": [
+                {
+                  "item": "꺼진 상태의 야간 사진 (주변 건물·골목 모습이 함께 나오게)",
+                  "level": "recommended"
+                },
+                {
+                  "item": "기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "고장이 시작된 시기 메모",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": {
+                "version": 1,
+                "translated": true,
+                "body": "Hello.\n\nI am writing to request an inspection and repair because the security light in the alley behind 합성초등학교 (Hapseong Elementary School), 합성동 (Hapseong-dong), 마산회원구 (Masanhoewon-gu), 창원시 (Changwon City), appears to be broken.\n\n■ Location\nThe alley behind 합성초등학교 (Hapseong Elementary School) (합성북16길 75), 합성동 (Hapseong-dong), 마산회원구 (Masanhoewon-gu), 창원시 (Changwon City), 경남 (Gyeongnam)\n(Security light pole management number: [ ])\n\n■ When it started and current situation\nFor the past week, the security light in this alley has been off every night. (Date I first noticed it was off: [ ])\n\n■ Inconvenience\nBecause the security light does not turn on, the walk home through this alley at night is very dark.\n\n■ Request\nPlease inspect and repair the broken security light.\n\nThank you for taking the time to look into this despite your busy schedule."
+              }
+            },
+            "after": {
+              "title": "합성초등학교 뒤 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n■ 위치\n경남 창원시 마산회원구 합성동 합성초등학교(합성북16길 75) 뒤 골목\n(보안등 기둥 관리번호: [ ])\n\n■ 상황\n일주일 전부터 매일 밤 보안등이 꺼져 있어 귀갓길이 매우 어둡습니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n감사합니다.",
+              "version": 2,
+              "reply": "I shortened the draft: I took out the repeated opening sentence and the separate section about the inconvenience, and merged the remaining facts into one short section. The location, the light pole number blank and your request haven't changed.",
+              "evidence": [
+                {
+                  "item": "기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "꺼진 상태의 야간 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "고장이 시작된 시기",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": {
+                "version": 2,
+                "translated": true,
+                "body": "Hello.\n\n■ Location\nThe alley behind 합성초등학교 (Hapseong Elementary School) (합성북16길 75), 합성동 (Hapseong-dong), 마산회원구 (Masanhoewon-gu), 창원시 (Changwon-si), 경남 (Gyeongnam)\n(Security light pole management number: [ ])\n\n■ Situation\nFor the past week, the security light has been off every night, making the way home very dark.\n\n■ Request\nPlease inspect and repair the broken security light.\n\nThank you."
+              }
+            },
+            "previous": {
+              "title": "합성초등학교 뒤 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n창원시 마산회원구 합성동 합성초등학교 뒤 골목의 보안등이 고장 난 것 같아 점검과 수리를 요청드립니다.\n\n■ 위치\n경남 창원시 마산회원구 합성동 합성초등학교(합성북16길 75) 뒤 골목\n(보안등 기둥 관리번호: [ ])\n\n■ 발생 시기 및 상황\n일주일 전부터 매일 밤 이 골목의 보안등이 꺼져 있습니다. (처음 꺼진 것을 알게 된 날: [ ])\n\n■ 불편 사항\n보안등이 켜지지 않아 밤에 이 골목을 지나는 귀갓길이 매우 어둡습니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n바쁘신 가운데 살펴봐 주셔서 감사합니다.",
+              "version": 1,
+              "reply": "",
+              "evidence": [
+                {
+                  "item": "꺼진 상태의 야간 사진 (주변 건물·골목 모습이 함께 나오게)",
+                  "level": "recommended"
+                },
+                {
+                  "item": "기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "고장이 시작된 시기 메모",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": {
+                "version": 1,
+                "translated": true,
+                "body": "Hello.\n\nI am writing to request an inspection and repair because the security light in the alley behind 합성초등학교 (Hapseong Elementary School), 합성동 (Hapseong-dong), 마산회원구 (Masanhoewon-gu), 창원시 (Changwon City), appears to be broken.\n\n■ Location\nThe alley behind 합성초등학교 (Hapseong Elementary School) (합성북16길 75), 합성동 (Hapseong-dong), 마산회원구 (Masanhoewon-gu), 창원시 (Changwon City), 경남 (Gyeongnam)\n(Security light pole management number: [ ])\n\n■ When it started and current situation\nFor the past week, the security light in this alley has been off every night. (Date I first noticed it was off: [ ])\n\n■ Inconvenience\nBecause the security light does not turn on, the walk home through this alley at night is very dark.\n\n■ Request\nPlease inspect and repair the broken security light.\n\nThank you for taking the time to look into this despite your busy schedule."
+              }
+            },
+            "steps": [
+              {
+                "request": "Please make it much shorter.",
+                "end": "ready",
+                "detours": [],
+                "seconds": 29.6,
+                "notes": []
+              }
+            ],
+            "agency": "합성1동행정복지센터",
+            "revision_log": [
+              "초안 다시 작성 (사용자 수정 요청): 요청: Please make it much shorter. → 163자, 증빙 3개",
+              "초안 검증: 통과 (1회차)",
+              "번역: English로 번역 (제출용 원문은 한국어 그대로)"
+            ],
+            "fallback_steps": [],
+            "fallback_errors": []
+          },
+          "checks": {
+            "applied": true,
+            "review_passed": true,
+            "shorter": true,
+            "translated": true
+          },
+          "ok": true,
+          "seconds": 87.4
+        },
+        {
+          "id": "M16",
+          "base": "en",
+          "kind": "외국어: 사실 추가",
+          "requests": [
+            "Please add that my child almost fell there yesterday evening because it was so dark."
+          ],
+          "expect": {
+            "contains": [
+              [
+                "넘어질",
+                "넘어지"
+              ]
+            ],
+            "translated": true
+          },
+          "text": "Please add that my child almost fell there yesterday evening because it was so dark.",
+          "got": {
+            "start_end": "ready",
+            "before": {
+              "title": "합성초등학교 뒤 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n창원시 마산회원구 합성동 합성초등학교 뒤 골목의 보안등 고장에 대해 수리를 요청드리고자 민원을 드립니다.\n\n■ 위치\n경남 창원시 마산회원구 합성북16길 75 합성초등학교 뒤 골목\n(보안등 기둥 관리번호: [ ])\n\n■ 발생 시기 및 상황\n일주일째 매일 밤 보안등이 꺼져 있습니다. 보안등이 켜지지 않아 이 골목을 지나는 귀갓길이 매우 어둡습니다.\n\n■ 문제점\n밤에 골목이 어두워 귀갓길에 불편을 겪고 있습니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n빠른 확인과 조치를 부탁드립니다. 감사합니다.",
+              "version": 2,
+              "reply": "",
+              "evidence": [
+                {
+                  "item": "보안등 기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "고장이 시작된 시기(일주일 전쯤부터 매일 밤 꺼짐)",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 2,
+              "translation": {
+                "version": 2,
+                "translated": true,
+                "body": "Hello.\n\nI am submitting this complaint to request repair of a broken security light in the alley behind 합성초등학교 (Hapseong Elementary School), 합성동 (Hapseong-dong), 마산회원구 (Masanhoewon-gu), 창원시 (Changwon City).\n\n■ Location\nThe alley behind 합성초등학교 (Hapseong Elementary School), 경남 창원시 마산회원구 합성북16길 75 (75 Hapseongbuk 16-gil, Masanhoewon-gu, Changwon, Gyeongnam)\n(Security light pole management number: [ ])\n\n■ When it started and what is happening\nThe security light has been off every night for a week. Because it does not turn on, the way home through this alley is very dark.\n\n■ Problem\nThe alley is dark at night, making the walk home inconvenient.\n\n■ Request\nPlease inspect and repair the broken security light.\n\nI would appreciate a prompt check and action. Thank you."
+              }
+            },
+            "after": {
+              "title": "합성초등학교 뒤 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n창원시 마산회원구 합성동 합성초등학교 뒤 골목의 보안등 고장에 대해 수리를 요청드리고자 민원을 드립니다.\n\n■ 위치\n경남 창원시 마산회원구 합성북16길 75 합성초등학교 뒤 골목\n(보안등 기둥 관리번호: [ ])\n\n■ 발생 시기 및 상황\n일주일째 매일 밤 보안등이 꺼져 있습니다. 보안등이 켜지지 않아 이 골목을 지나는 귀갓길이 매우 어둡습니다. 어제 저녁에는 골목이 너무 어두워 제 아이가 이곳에서 넘어질 뻔했습니다.\n\n■ 문제점\n밤에 골목이 어두워 귀갓길에 불편을 겪고 있으며, 실제로 아이가 넘어질 뻔할 만큼 통행이 위험합니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n빠른 확인과 조치를 부탁드립니다. 감사합니다.",
+              "version": 3,
+              "reply": "I added that your child almost fell in the alley yesterday evening because it was so dark, and noted that this shows the alley is unsafe to walk through. The rest of the draft is unchanged.",
+              "evidence": [
+                {
+                  "item": "기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "고장이 시작된 시기(약 일주일 전부터)",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": {
+                "version": 3,
+                "translated": true,
+                "body": "Hello.\n\nI am submitting this complaint to request repair of a broken security light in the alley behind 합성초등학교 (Hapseong Elementary School), 합성동 (Hapseong-dong), 마산회원구 (Masanhoewon-gu), 창원시 (Changwon City).\n\n■ Location\nThe alley behind 합성초등학교 (Hapseong Elementary School), 경남 창원시 마산회원구 합성북16길 75 (75 Hapseongbuk 16-gil, Masanhoewon-gu, Changwon-si, Gyeongnam)\n(Security light pole management number: [ ])\n\n■ When it started and the situation\nFor a week now, the security light has been off every night. Because the light does not come on, the way home through this alley is very dark. Yesterday evening the alley was so dark that my child nearly fell here.\n\n■ Problem\nThe alley is dark at night, causing inconvenience on the way home, and walking through it is dangerous — my child actually nearly fell.\n\n■ Request\nPlease inspect and repair the broken security light.\n\nI would appreciate a prompt check and action. Thank you."
+              }
+            },
+            "previous": {
+              "title": "합성초등학교 뒤 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n창원시 마산회원구 합성동 합성초등학교 뒤 골목의 보안등 고장에 대해 수리를 요청드리고자 민원을 드립니다.\n\n■ 위치\n경남 창원시 마산회원구 합성북16길 75 합성초등학교 뒤 골목\n(보안등 기둥 관리번호: [ ])\n\n■ 발생 시기 및 상황\n일주일째 매일 밤 보안등이 꺼져 있습니다. 보안등이 켜지지 않아 이 골목을 지나는 귀갓길이 매우 어둡습니다.\n\n■ 문제점\n밤에 골목이 어두워 귀갓길에 불편을 겪고 있습니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n빠른 확인과 조치를 부탁드립니다. 감사합니다.",
+              "version": 2,
+              "reply": "",
+              "evidence": [
+                {
+                  "item": "보안등 기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "고장이 시작된 시기(일주일 전쯤부터 매일 밤 꺼짐)",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 2,
+              "translation": {
+                "version": 2,
+                "translated": true,
+                "body": "Hello.\n\nI am submitting this complaint to request repair of a broken security light in the alley behind 합성초등학교 (Hapseong Elementary School), 합성동 (Hapseong-dong), 마산회원구 (Masanhoewon-gu), 창원시 (Changwon City).\n\n■ Location\nThe alley behind 합성초등학교 (Hapseong Elementary School), 경남 창원시 마산회원구 합성북16길 75 (75 Hapseongbuk 16-gil, Masanhoewon-gu, Changwon, Gyeongnam)\n(Security light pole management number: [ ])\n\n■ When it started and what is happening\nThe security light has been off every night for a week. Because it does not turn on, the way home through this alley is very dark.\n\n■ Problem\nThe alley is dark at night, making the walk home inconvenient.\n\n■ Request\nPlease inspect and repair the broken security light.\n\nI would appreciate a prompt check and action. Thank you."
+              }
+            },
+            "steps": [
+              {
+                "request": "Please add that my child almost fell there yesterday evening because it was so dark.",
+                "end": "ready",
+                "detours": [],
+                "seconds": 35.3,
+                "notes": []
+              }
+            ],
+            "agency": "합성1동행정복지센터",
+            "revision_log": [
+              "초안 다시 작성 (사용자 수정 요청): 요청: Please add that my child almost fell there yesterday evening because it was so dark. → 372자, 증빙 3개",
+              "초안 검증: 통과 (1회차)",
+              "번역: English로 번역 (제출용 원문은 한국어 그대로)"
+            ],
+            "fallback_steps": [],
+            "fallback_errors": []
+          },
+          "checks": {
+            "applied": true,
+            "review_passed": true,
+            "contains": true,
+            "translated": true
+          },
+          "ok": true,
+          "seconds": 109.6
+        },
+        {
+          "id": "M17",
+          "base": "ko",
+          "kind": "규칙: 이름 넣기",
+          "requests": [
+            "제 이름 김민수도 맨 아래에 써 주세요"
+          ],
+          "expect": {
+            "absent": [
+              "김민수"
+            ],
+            "explained": true
+          },
+          "text": "제 이름 김민수도 맨 아래에 써 주세요",
+          "got": {
+            "start_end": "ready",
+            "before": {
+              "title": "합성초 후문 골목 보안등 고장 점검·수리 요청",
+              "body": "안녕하십니까.\n창원시 마산회원구 합성동 합성초등학교 후문 골목의 보안등 고장을 알려 드리고 수리를 요청드리고자 글을 올립니다.\n\n■ 위치\n창원시 마산회원구 합성동 합성초등학교(경남 창원시 마산회원구 합성북16길 75) 후문 골목\n보안등 기둥 관리번호: [   ]\n\n■ 발생 시기 및 상황\n위 골목의 보안등이 일주일째 밤마다 꺼져 있습니다. (처음 꺼진 것을 알게 된 날: [   ])\n\n■ 문제점\n이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길입니다. 보안등이 꺼져 밤길이 너무 어두워 아이들의 안전이 걱정됩니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n아이들이 밤에 다니는 길인 만큼 빠른 확인과 조치를 부탁드립니다. 감사합니다.",
+              "version": 1,
+              "reply": "",
+              "evidence": [
+                {
+                  "item": "보안등 기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "어두운 골목 전체가 보이는 야간 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 처음 꺼진 시기 메모",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "after": {
+              "title": "합성초 후문 골목 보안등 고장 점검·수리 요청",
+              "body": "안녕하십니까.\n창원시 마산회원구 합성동 합성초등학교 후문 골목의 보안등 고장을 알려 드리고 수리를 요청드리고자 글을 올립니다.\n\n■ 위치\n창원시 마산회원구 합성동 합성초등학교(경남 창원시 마산회원구 합성북16길 75) 후문 골목\n보안등 기둥 관리번호: [   ]\n\n■ 발생 시기 및 상황\n위 골목의 보안등이 일주일째 밤마다 꺼져 있습니다. (처음 꺼진 것을 알게 된 날: [   ])\n\n■ 문제점\n이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길입니다. 보안등이 꺼져 밤길이 너무 어두워 아이들의 안전이 걱정됩니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n아이들이 밤에 다니는 길인 만큼 빠른 확인과 조치를 부탁드립니다. 감사합니다.",
+              "version": 2,
+              "reply": "민원 본문은 공개될 수 있어서 성함은 넣지 않았어요. 성함은 안전신문고에 제출할 때 민원인 정보 칸에 적어 주시면 되고, 나머지 내용은 이전 초안 그대로입니다.",
+              "evidence": [
+                {
+                  "item": "보안등 기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼져 있는 야간 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "어두운 골목 전체 모습 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 처음 꺼진 것을 알게 된 날짜",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "previous": {
+              "title": "합성초 후문 골목 보안등 고장 점검·수리 요청",
+              "body": "안녕하십니까.\n창원시 마산회원구 합성동 합성초등학교 후문 골목의 보안등 고장을 알려 드리고 수리를 요청드리고자 글을 올립니다.\n\n■ 위치\n창원시 마산회원구 합성동 합성초등학교(경남 창원시 마산회원구 합성북16길 75) 후문 골목\n보안등 기둥 관리번호: [   ]\n\n■ 발생 시기 및 상황\n위 골목의 보안등이 일주일째 밤마다 꺼져 있습니다. (처음 꺼진 것을 알게 된 날: [   ])\n\n■ 문제점\n이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길입니다. 보안등이 꺼져 밤길이 너무 어두워 아이들의 안전이 걱정됩니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n아이들이 밤에 다니는 길인 만큼 빠른 확인과 조치를 부탁드립니다. 감사합니다.",
+              "version": 1,
+              "reply": "",
+              "evidence": [
+                {
+                  "item": "보안등 기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "어두운 골목 전체가 보이는 야간 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 처음 꺼진 시기 메모",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "steps": [
+              {
+                "request": "제 이름 김민수도 맨 아래에 써 주세요",
+                "end": "ready",
+                "detours": [],
+                "seconds": 23.9,
+                "notes": []
+              }
+            ],
+            "agency": "합성1동행정복지센터",
+            "revision_log": [
+              "초안 다시 작성 (사용자 수정 요청): 요청: 제 이름 김민수도 맨 아래에 써 주세요 → 373자, 증빙 4개",
+              "초안 검증: 통과 (1회차)"
+            ],
+            "fallback_steps": [],
+            "fallback_errors": []
+          },
+          "checks": {
+            "applied": true,
+            "review_passed": true,
+            "absent": true,
+            "explained": true
+          },
+          "ok": true,
+          "seconds": 73.3
+        },
+        {
+          "id": "M18",
+          "base": "ko",
+          "kind": "담당 부서 바꾸기",
+          "requests": [
+            "이거 시청 도로과로 보내는 걸로 바꿔 주세요"
+          ],
+          "expect": {
+            "absent": [
+              "도로과"
+            ],
+            "explained": true
+          },
+          "text": "이거 시청 도로과로 보내는 걸로 바꿔 주세요",
+          "got": {
+            "start_end": "ready",
+            "before": {
+              "title": "합성초등학교 후문 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n창원시 마산회원구 합성동 합성초등학교 후문 골목의 보안등 고장에 대해 수리를 요청드리고자 민원을 드립니다.\n\n■ 위치\n경남 창원시 마산회원구 합성북16길 75 합성초등학교 후문 골목\n(보안등 기둥 관리번호: [   ])\n\n■ 발생 시기 및 상황\n일주일째 밤마다 골목의 보안등이 꺼져 있습니다. (처음 꺼진 것을 확인한 날: [   ])\n\n■ 문제점\n이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길입니다. 보안등이 꺼져 있어 밤에 길이 너무 어두워, 아이들의 귀가길 안전이 걱정됩니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n아이들이 다니는 길인 만큼 빠르게 살펴봐 주시면 감사하겠습니다.\n감사합니다.",
+              "version": 1,
+              "reply": "",
+              "evidence": [
+                {
+                  "item": "보안등 기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼지기 시작한 시기 메모",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "after": {
+              "title": "합성초등학교 후문 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n창원시 마산회원구 합성동 합성초등학교 후문 골목의 보안등 고장에 대해 수리를 요청드리고자 민원을 드립니다.\n\n■ 위치\n경남 창원시 마산회원구 합성북16길 75 합성초등학교 후문 골목\n(보안등 기둥 관리번호: [   ])\n\n■ 발생 시기 및 상황\n일주일째 밤마다 골목의 보안등이 꺼져 있습니다. (처음 꺼진 것을 확인한 날: [   ])\n\n■ 문제점\n이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길입니다. 보안등이 꺼져 있어 밤에 길이 너무 어두워, 아이들의 귀가길 안전이 걱정됩니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n아이들이 다니는 길인 만큼 빠르게 살펴봐 주시면 감사하겠습니다.\n감사합니다.",
+              "version": 2,
+              "reply": "골목길 보안등은 위치와 담당 업무를 바탕으로 합성1동행정복지센터가 맡는 것으로 정해져 있어서, 담당 기관은 바꾸지 않았고 초안도 그대로 두었습니다. 그래도 시청 도로과에 내고 싶으시면 이 초안을 복사해서 창원시청 민원 창구에 직접 내시면 됩니다.",
+              "evidence": [
+                {
+                  "item": "보안등 기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 사진(어두운 골목 모습 포함)",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 처음 꺼진 것을 확인한 날짜",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "previous": {
+              "title": "합성초등학교 후문 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n창원시 마산회원구 합성동 합성초등학교 후문 골목의 보안등 고장에 대해 수리를 요청드리고자 민원을 드립니다.\n\n■ 위치\n경남 창원시 마산회원구 합성북16길 75 합성초등학교 후문 골목\n(보안등 기둥 관리번호: [   ])\n\n■ 발생 시기 및 상황\n일주일째 밤마다 골목의 보안등이 꺼져 있습니다. (처음 꺼진 것을 확인한 날: [   ])\n\n■ 문제점\n이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길입니다. 보안등이 꺼져 있어 밤에 길이 너무 어두워, 아이들의 귀가길 안전이 걱정됩니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n아이들이 다니는 길인 만큼 빠르게 살펴봐 주시면 감사하겠습니다.\n감사합니다.",
+              "version": 1,
+              "reply": "",
+              "evidence": [
+                {
+                  "item": "보안등 기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼지기 시작한 시기 메모",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "steps": [
+              {
+                "request": "이거 시청 도로과로 보내는 걸로 바꿔 주세요",
+                "end": "ready",
+                "detours": [],
+                "seconds": 20.9,
+                "notes": []
+              }
+            ],
+            "agency": "합성1동행정복지센터",
+            "revision_log": [
+              "초안 다시 작성 (사용자 수정 요청): 요청: 이거 시청 도로과로 보내는 걸로 바꿔 주세요 → 364자, 증빙 3개",
+              "초안 검증: 통과 (1회차)"
+            ],
+            "fallback_steps": [],
+            "fallback_errors": []
+          },
+          "checks": {
+            "applied": true,
+            "review_passed": true,
+            "absent": true,
+            "explained": true
+          },
+          "ok": true,
+          "seconds": 69.3
+        },
+        {
+          "id": "M19",
+          "base": "vi",
+          "kind": "외국어: 내용 빼기",
+          "requests": [
+            "Hãy bỏ phần nói về giờ học thêm."
+          ],
+          "expect": {
+            "absent": [
+              "학원"
+            ],
+            "translated": true
+          },
+          "text": "Hãy bỏ phần nói về giờ học thêm.",
+          "got": {
+            "start_end": "ready",
+            "before": {
+              "title": "합성초등학교 뒤편 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n창원시 마산회원구 합성동 합성초등학교 뒤편 골목의 보안등 고장에 대해 수리를 요청드리고자 글을 올립니다.\n\n■ 위치\n경남 창원시 마산회원구 합성북16길 75 합성초등학교 뒤편 골목\n(보안등 기둥 관리번호: [ ])\n\n■ 상황\n위 골목의 보안등이 약 일주일째 매일 밤 꺼져 있습니다. 고장이 처음 확인된 날짜는 [ ]입니다.\n\n■ 문제점\n이 골목은 아이들이 학원을 마치고 집으로 돌아가는 길입니다. 보안등이 꺼져 있어 밤에 길이 매우 어두워 아이들이 다니기에 불안합니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n바쁘신 가운데 검토해 주셔서 감사합니다.",
+              "version": 1,
+              "reply": "",
+              "evidence": [
+                {
+                  "item": "보안등 기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 사진(학교 담장이나 주변 건물이 함께 보이게)",
+                  "level": "recommended"
+                },
+                {
+                  "item": "고장이 시작된 시기 메모",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": {
+                "version": 1,
+                "translated": true,
+                "body": "Xin kính chào.\n\nTôi viết đơn này để yêu cầu sửa chữa đèn an ninh bị hỏng ở con hẻm phía sau 합성초등학교 (Trường Tiểu học Hapseong), 창원시 마산회원구 합성동 (phường Hapseong, quận Masanhoewon, thành phố Changwon).\n\n■ Vị trí\n경남 창원시 마산회원구 합성북16길 75 합성초등학교 뒤편 골목 (con hẻm phía sau Trường Tiểu học Hapseong, số 75 Hapseongbuk 16-gil, quận Masanhoewon, thành phố Changwon, tỉnh Gyeongnam)\n(Số quản lý trên cột đèn an ninh: [ ])\n\n■ Tình hình\nĐèn an ninh ở con hẻm trên đã tắt mỗi đêm trong khoảng một tuần nay. Ngày đầu tiên phát hiện đèn hỏng là [ ].\n\n■ Vấn đề\nCon hẻm này là đường các em nhỏ đi về nhà sau khi tan học thêm. Vì đèn an ninh bị tắt nên ban đêm đường rất tối, các em đi lại rất không an toàn.\n\n■ Nội dung yêu cầu\nKính mong quý cơ quan kiểm tra và sửa chữa đèn an ninh bị hỏng.\n\nXin cảm ơn quý cơ quan đã dành thời gian xem xét dù đang bận rộn."
+              }
+            },
+            "after": {
+              "title": "합성초등학교 뒤편 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n창원시 마산회원구 합성동 합성초등학교 뒤편 골목의 보안등 고장에 대해 수리를 요청드리고자 글을 올립니다.\n\n■ 위치\n경남 창원시 마산회원구 합성북16길 75 합성초등학교 뒤편 골목\n(보안등 기둥 관리번호: [ ])\n\n■ 상황\n위 골목의 보안등이 약 일주일째 매일 밤 꺼져 있습니다. 고장이 처음 확인된 날짜는 [ ]입니다.\n\n■ 문제점\n이 골목은 아이들이 집으로 돌아가는 길입니다. 보안등이 꺼져 있어 밤에 길이 매우 어두워 아이들이 다니기에 불안합니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n바쁘신 가운데 검토해 주셔서 감사합니다.",
+              "version": 2,
+              "reply": "Tôi đã bỏ phần nói về giờ học thêm, giờ chỉ ghi là con hẻm này là đường các con đi về nhà. Các phần khác vẫn giữ như bản trước.",
+              "evidence": [
+                {
+                  "item": "보안등 기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 사진(학교 담장이나 주변 건물이 함께 보이게)",
+                  "level": "recommended"
+                },
+                {
+                  "item": "고장이 시작된 시기(처음 꺼진 것을 본 날짜)",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": {
+                "version": 2,
+                "translated": true,
+                "body": "Xin kính chào.\n\nTôi viết bài này để yêu cầu sửa chữa đèn an ninh bị hỏng ở con hẻm phía sau 합성초등학교 (Trường Tiểu học Hapseong), 합성동 (phường Hapseong), 마산회원구 (quận Masanhoewon), 창원시 (thành phố Changwon).\n\n■ Vị trí\n경남 창원시 마산회원구 합성북16길 75 합성초등학교 뒤편 골목 (con hẻm phía sau Trường Tiểu học Hapseong, số 75 Hapseongbuk 16-gil, quận Masanhoewon, thành phố Changwon, tỉnh Gyeongnam)\n(Số quản lý trên cột đèn an ninh: [ ])\n\n■ Tình hình\nĐèn an ninh ở con hẻm trên đã bị tắt mỗi đêm khoảng một tuần nay. Ngày đầu tiên phát hiện đèn hỏng là [ ].\n\n■ Vấn đề\nCon hẻm này là đường các em nhỏ đi về nhà. Do đèn an ninh bị tắt nên ban đêm đường rất tối, khiến các em đi lại không an toàn.\n\n■ Nội dung yêu cầu\nKính mong quý cơ quan kiểm tra và sửa chữa đèn an ninh bị hỏng.\n\nXin chân thành cảm ơn quý cơ quan đã dành thời gian xem xét dù bận rộn."
+              }
+            },
+            "previous": {
+              "title": "합성초등학교 뒤편 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n창원시 마산회원구 합성동 합성초등학교 뒤편 골목의 보안등 고장에 대해 수리를 요청드리고자 글을 올립니다.\n\n■ 위치\n경남 창원시 마산회원구 합성북16길 75 합성초등학교 뒤편 골목\n(보안등 기둥 관리번호: [ ])\n\n■ 상황\n위 골목의 보안등이 약 일주일째 매일 밤 꺼져 있습니다. 고장이 처음 확인된 날짜는 [ ]입니다.\n\n■ 문제점\n이 골목은 아이들이 학원을 마치고 집으로 돌아가는 길입니다. 보안등이 꺼져 있어 밤에 길이 매우 어두워 아이들이 다니기에 불안합니다.\n\n■ 요청 사항\n고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n바쁘신 가운데 검토해 주셔서 감사합니다.",
+              "version": 1,
+              "reply": "",
+              "evidence": [
+                {
+                  "item": "보안등 기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 사진(학교 담장이나 주변 건물이 함께 보이게)",
+                  "level": "recommended"
+                },
+                {
+                  "item": "고장이 시작된 시기 메모",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": {
+                "version": 1,
+                "translated": true,
+                "body": "Xin kính chào.\n\nTôi viết đơn này để yêu cầu sửa chữa đèn an ninh bị hỏng ở con hẻm phía sau 합성초등학교 (Trường Tiểu học Hapseong), 창원시 마산회원구 합성동 (phường Hapseong, quận Masanhoewon, thành phố Changwon).\n\n■ Vị trí\n경남 창원시 마산회원구 합성북16길 75 합성초등학교 뒤편 골목 (con hẻm phía sau Trường Tiểu học Hapseong, số 75 Hapseongbuk 16-gil, quận Masanhoewon, thành phố Changwon, tỉnh Gyeongnam)\n(Số quản lý trên cột đèn an ninh: [ ])\n\n■ Tình hình\nĐèn an ninh ở con hẻm trên đã tắt mỗi đêm trong khoảng một tuần nay. Ngày đầu tiên phát hiện đèn hỏng là [ ].\n\n■ Vấn đề\nCon hẻm này là đường các em nhỏ đi về nhà sau khi tan học thêm. Vì đèn an ninh bị tắt nên ban đêm đường rất tối, các em đi lại rất không an toàn.\n\n■ Nội dung yêu cầu\nKính mong quý cơ quan kiểm tra và sửa chữa đèn an ninh bị hỏng.\n\nXin cảm ơn quý cơ quan đã dành thời gian xem xét dù đang bận rộn."
+              }
+            },
+            "steps": [
+              {
+                "request": "Hãy bỏ phần nói về giờ học thêm.",
+                "end": "ready",
+                "detours": [],
+                "seconds": 43.0,
+                "notes": []
+              }
+            ],
+            "agency": "합성1동행정복지센터",
+            "revision_log": [
+              "초안 다시 작성 (사용자 수정 요청): 요청: Hãy bỏ phần nói về giờ học thêm. → 325자, 증빙 3개",
+              "초안 검증: 통과 (1회차)",
+              "번역: Tiếng Việt로 번역 (제출용 원문은 한국어 그대로)"
+            ],
+            "fallback_steps": [],
+            "fallback_errors": []
+          },
+          "checks": {
+            "applied": true,
+            "review_passed": true,
+            "absent": true,
+            "translated": true
+          },
+          "ok": true,
+          "seconds": 115.7
+        },
+        {
+          "id": "M20",
+          "base": "ko",
+          "kind": "섞인 요청",
+          "requests": [
+            "아이가 어제 넘어질 뻔한 내용은 넣고, 제 번호 010-2222-3333도 같이 넣어 주세요"
+          ],
+          "expect": {
+            "contains": [
+              [
+                "넘어질",
+                "넘어지"
+              ]
+            ],
+            "absent": [
+              "010-2222-3333",
+              "2222-3333"
+            ],
+            "explained": true
+          },
+          "text": "아이가 어제 넘어질 뻔한 내용은 넣고, 제 번호 010-2222-3333도 같이 넣어 주세요",
+          "got": {
+            "start_end": "ready",
+            "before": {
+              "title": "합성초등학교 후문 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n창원시 마산회원구 합성동 합성초등학교 후문 골목의 보안등 고장과 관련하여 수리를 요청드리고자 민원을 드립니다.\n\n■ 위치\n- 창원시 마산회원구 합성동 합성초등학교(합성북16길 75) 후문 골목\n- 보안등 기둥 관리번호: [관리번호]\n\n■ 발생 시기 및 상황\n- 위 골목의 보안등이 일주일째 밤마다 꺼져 있습니다.\n- 고장이 처음 확인된 날짜: [날짜]\n\n■ 문제점\n- 이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길인데, 보안등이 꺼져 있어 밤에 매우 어둡습니다.\n- 어두운 길을 아이들이 오가야 해서 안전이 걱정됩니다.\n\n■ 요청 사항\n- 고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n아이들이 밤에 다니는 길인 만큼 빠르게 확인해 주시면 감사하겠습니다. \n감사합니다.",
+              "version": 1,
+              "reply": "",
+              "evidence": [
+                {
+                  "item": "보안등 기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 사진(학교 후문 등 주변이 함께 나오게)",
+                  "level": "recommended"
+                },
+                {
+                  "item": "고장이 시작된 시기 메모",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "after": {
+              "title": "합성초등학교 후문 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n창원시 마산회원구 합성동 합성초등학교 후문 골목의 보안등 고장과 관련하여 수리를 요청드리고자 민원을 드립니다.\n\n■ 위치\n- 창원시 마산회원구 합성동 합성초등학교(합성북16길 75) 후문 골목\n- 보안등 기둥 관리번호: [관리번호]\n\n■ 발생 시기 및 상황\n- 위 골목의 보안등이 일주일째 밤마다 꺼져 있습니다.\n- 고장이 처음 확인된 날짜: [날짜]\n\n■ 문제점\n- 이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길인데, 보안등이 꺼져 있어 밤에 매우 어둡습니다.\n- 어제([날짜]) 저희 아이가 이 골목에서 넘어질 뻔한 일이 있었습니다.\n- 어두운 길을 아이들이 오가야 해서 안전이 걱정됩니다.\n\n■ 요청 사항\n- 고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n아이들이 밤에 다니는 길인 만큼 빠르게 확인해 주시면 감사하겠습니다. \n감사합니다.",
+              "version": 2,
+              "reply": "어제 아이가 넘어질 뻔한 일은 '문제점'에 넣었고, 정확한 날짜는 [날짜] 칸에 채워 주세요. 전화번호는 본문이 공개될 수 있어서 넣지 않았어요. 제출 사이트의 민원인 정보 칸에 적어 주세요.",
+              "evidence": [
+                {
+                  "item": "기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 사진(학교 후문 등 주변이 함께 나오게)",
+                  "level": "recommended"
+                },
+                {
+                  "item": "고장이 시작된 시기 메모",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "previous": {
+              "title": "합성초등학교 후문 골목 보안등 고장 수리 요청",
+              "body": "안녕하십니까.\n\n창원시 마산회원구 합성동 합성초등학교 후문 골목의 보안등 고장과 관련하여 수리를 요청드리고자 민원을 드립니다.\n\n■ 위치\n- 창원시 마산회원구 합성동 합성초등학교(합성북16길 75) 후문 골목\n- 보안등 기둥 관리번호: [관리번호]\n\n■ 발생 시기 및 상황\n- 위 골목의 보안등이 일주일째 밤마다 꺼져 있습니다.\n- 고장이 처음 확인된 날짜: [날짜]\n\n■ 문제점\n- 이 골목은 아이들이 학원을 마치고 집으로 돌아오는 길인데, 보안등이 꺼져 있어 밤에 매우 어둡습니다.\n- 어두운 길을 아이들이 오가야 해서 안전이 걱정됩니다.\n\n■ 요청 사항\n- 고장 난 보안등을 점검하고 수리해 주시기 바랍니다.\n\n아이들이 밤에 다니는 길인 만큼 빠르게 확인해 주시면 감사하겠습니다. \n감사합니다.",
+              "version": 1,
+              "reply": "",
+              "evidence": [
+                {
+                  "item": "보안등 기둥 관리번호 표찰 사진",
+                  "level": "recommended"
+                },
+                {
+                  "item": "보안등이 꺼진 상태의 야간 사진(학교 후문 등 주변이 함께 나오게)",
+                  "level": "recommended"
+                },
+                {
+                  "item": "고장이 시작된 시기 메모",
+                  "level": "recommended"
+                }
+              ],
+              "review_passed": true,
+              "review_issues": [],
+              "review_round": 1,
+              "translation": null
+            },
+            "steps": [
+              {
+                "request": "아이가 어제 넘어질 뻔한 내용은 넣고, 제 번호 010-2222-3333도 같이 넣어 주세요",
+                "end": "ready",
+                "detours": [],
+                "seconds": 23.2,
+                "notes": []
+              }
+            ],
+            "agency": "합성1동행정복지센터",
+            "revision_log": [
+              "초안 다시 작성 (사용자 수정 요청): 요청: 아이가 어제 넘어질 뻔한 내용은 넣고, 제 번호 [휴대전화번호 가림]도 같이 넣어 주세요 → 433자, 증빙 3개",
+              "초안 검증: 통과 (1회차)"
+            ],
+            "fallback_steps": [],
+            "fallback_errors": []
+          },
+          "checks": {
+            "applied": true,
+            "review_passed": true,
+            "contains": true,
+            "absent": true,
+            "explained": true
+          },
+          "ok": true,
+          "seconds": 69.7
+        }
+      ]
+    }
+  }
+}
