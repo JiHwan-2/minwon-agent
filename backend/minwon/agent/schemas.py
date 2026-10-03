@@ -25,15 +25,16 @@ class Understanding(BaseModel):
         "not_complaint=생활불편과 관계없는 말(인사·잡담·의미 없는 말·유행어·장난·다른 주제 질문)"
     )
     referral: ReferralCode = Field(description="intent가 referral이면 맞는 창구 코드, 아니면 none")
+    language: str = Field(description="시민 입력의 언어 코드, ISO 639-1 두 글자 (예: ko, vi, zh, th, id, uz, en, ja)")
     reply: str = Field(
-        description="intent가 unclear·not_complaint면 시민에게 보낼 안내 1~2문장(친절하게, 생활불편 예시 하나 포함). "
+        description="intent가 unclear·not_complaint면 시민에게 보낼 안내 1~2문장(시민의 언어로, 친절하게, 생활불편 예시 하나 포함). "
         "complaint·referral이면 빈 문자열"
     )
     category: CategoryCode = Field(description="생활불편 유형 코드 (민원이 아니면 other)")
-    title: str = Field(description="불편을 한 줄로 요약한 제목, 25자 이내")
-    summary: str = Field(description="무엇이 어디서 어떻게 불편한지 2문장 이내로 정리. 입력에 없는 사실은 쓰지 않는다")
+    title: str = Field(description="불편을 한 줄로 요약한 제목, 25자 이내, 시민의 언어로")
+    summary: str = Field(description="무엇이 어디서 어떻게 불편한지 2문장 이내로 정리, 시민의 언어로. 입력에 없는 사실은 쓰지 않는다")
     urgency: Literal["low", "medium", "high"] = Field(description="사람이 다칠 위험이 있으면 high")
-    keywords: list[str] = Field(description="핵심 단어 2~5개")
+    keywords: list[str] = Field(description="핵심 단어 2~5개. 공공데이터 검색에 쓰므로 시민의 언어와 상관없이 항상 한국어 단어")
     location_hint: str = Field(description="입력에 나온 장소 표현 그대로. 없으면 빈 문자열")
 
 
@@ -108,6 +109,27 @@ class InfoCheck(BaseModel):
     facts: list[Fact] = Field(description="지금까지 확인된 정보")
     questions: list[Question] = Field(description="아직 모르는 필수 정보에 대한 질문, 최대 3개. 충분하면 빈 목록")
     location_query: str = Field(description="지도 검색에 넣을 위치 문자열(시·구·동 + 장소명). 모르면 빈 문자열")
+
+
+class EvidenceText(BaseModel):
+    item: str
+    why: str
+    basis: str
+
+
+class Translation(BaseModel):
+    """한국어로 쓴 민원 패키지를 시민의 언어로 옮긴 것 (화면 표시용. 제출용 원문은 한국어 그대로)."""
+    title: str
+    body: str = Field(description="줄바꿈·■ 소제목·[ ] 빈칸 구조를 원문과 똑같이 유지")
+    evidence: list[EvidenceText] = Field(description="원문 evidence와 같은 개수·순서")
+    tips: list[str] = Field(description="원문 tips와 같은 개수·순서")
+    reason: str
+    steps: list[str] = Field(description="원문 steps와 같은 개수·순서")
+    cautions: list[str] = Field(description="원문 cautions와 같은 개수·순서")
+    issues: list[str] = Field(description="원문 issues와 같은 개수·순서")
+    unit: str
+    duty: str
+    period: str
 
 
 TurnKind = Literal["continue", "new_complaint", "off_topic"]

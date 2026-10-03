@@ -2,6 +2,8 @@ import json
 from functools import cache
 from pathlib import Path
 
+from minwon import i18n
+
 _DIR = Path(__file__).resolve().parent
 
 
@@ -47,8 +49,9 @@ def referrals() -> dict[str, dict]:
     return {code: r for code, r in _agencies()["referrals"].items() if not code.startswith("_")}
 
 
-def referral(code: str) -> dict:
-    return {"code": code, **referrals()[code]}
+def referral(code: str, lang: str = "ko") -> dict:
+    """다른 창구 안내 카드. 번역해 둔 언어면 그 언어로 (번호·주소는 원문 그대로)."""
+    return i18n.referral(code, lang, {"code": code, **referrals()[code]})
 
 
 def referral_guide() -> str:

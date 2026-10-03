@@ -17,7 +17,7 @@ from pydantic import BaseModel
 
 from minwon.agent import cancel, prompts
 from minwon.agent.rules import RuleBrain
-from minwon.agent.schemas import Critique, Decision, Draft, InfoCheck, Plan, TopicCheck, Understanding
+from minwon.agent.schemas import Critique, Decision, Draft, InfoCheck, Plan, TopicCheck, Translation, Understanding
 from minwon.settings import settings
 
 log = logging.getLogger(__name__)
@@ -112,6 +112,9 @@ class ClaudeCodeBrain:
 
     def switch(self, ctx: dict) -> TopicCheck:
         return self._ask(settings.claude_effort_fast, TopicCheck, prompts.SWITCH, ctx)
+
+    def translate(self, ctx: dict) -> Translation:
+        return self._ask(settings.claude_effort_fast, Translation, prompts.TRANSLATE, ctx)
 
 
 def _json_in(text: str) -> Any:

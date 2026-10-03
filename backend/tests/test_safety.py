@@ -30,6 +30,15 @@ def test_detects_crisis_but_not_common_exaggeration():
         assert not is_crisis(text), text
 
 
+def test_detects_crisis_and_emergency_in_translated_languages():
+    for text in ("I want to die", "Tôi muốn chết", "我想死", "อยากตาย", "Saya ingin mati", "O'lgim kelyapti", "死にたい"):
+        assert is_crisis(text), text
+    for text in ("There is a house fire", "Nhà bên cạnh đang cháy", "楼下着火了", "บ้านข้างๆไฟไหม้", "Ada kebakaran", "Qo'shni uyda yong'in", "隣で火事です"):
+        assert is_emergency(text), text
+    for text in ("This noise is killing me", "I got fired from my job", "Fireworks are too loud", "被打扰了", "Lampu jalan sudah mati beberapa hari", "街灯が消えています"):
+        assert not is_crisis(text) and not is_emergency(text), text
+
+
 def test_rule_classification_and_location():
     assert classify("학교 앞 횡단보도가 너무 위험해요") == "traffic_safety"
     assert classify("창원 초등학교 정문 앞 차들이 너무 빨라요") == "traffic_safety"

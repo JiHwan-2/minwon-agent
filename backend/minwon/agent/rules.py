@@ -2,7 +2,7 @@
 
 import re
 
-from minwon import knowledge
+from minwon import i18n, knowledge
 from minwon.tools import regions
 from minwon.agent.schemas import (
     Critique,
@@ -15,6 +15,7 @@ from minwon.agent.schemas import (
     PlanStep,
     Question,
     TopicCheck,
+    Translation,
     Understanding,
 )
 
@@ -87,6 +88,7 @@ class RuleBrain:
         return Understanding(
             intent="complaint",  # 민원 여부·다른 창구 판단은 Claude만 한다. 대체 경로에서는 기존처럼 민원으로 진행
             referral="none",
+            language=i18n.detect(text) or "ko",  # 글자 모양으로 알 수 있는 언어만. 모르면 한국어
             reply="",
             category=code,
             title=f"{cat['label']} 불편 신고",
@@ -225,3 +227,7 @@ class RuleBrain:
                   else "지금 민원에 대한 답변이나 수정 요청으로 봄")
         # 관계없는 말(off_topic)은 규칙으로 판단하지 않는다. Claude가 실패하면 지금 민원에 이어지는 말로 받는다
         return TopicCheck(kind="new_complaint" if new else "continue", category=found if new else current, reason=reason)
+
+    def translate(self, ctx: dict) -> Translation:
+        """번역은 규칙으로 할 수 없으니 한국어 원문을 그대로 돌려준다 (화면은 한국어로 보여 줌)."""
+        return Translation.model_validate(ctx["source"])

@@ -3,7 +3,7 @@
 
 import pytest
 
-from minwon import knowledge, safety
+from minwon import i18n, knowledge
 from minwon.agent import brain as brain_module
 from minwon.agent.rules import RuleBrain
 from minwon.agent.schemas import ReferralCode, TopicCheck
@@ -216,9 +216,9 @@ def test_crisis_gets_fixed_109_notice_and_no_complaint_example(monkeypatch: pyte
     _use(monkeypatch, JudgesIntent({"죽고": "not_complaint"}))
     sid = new_session()
     events = send(sid, CRISIS)
-    assert events[0] == {"type": "crisis", "message": safety.CRISIS_NOTICE}  # AI 판단보다 먼저
+    assert events[0] == {"type": "crisis", "message": i18n.t("crisis.notice", "ko")}  # AI 판단보다 먼저
     assert "109" in events[0]["message"]
-    assert events[-1]["type"] == "redirect" and events[-1]["message"] == safety.CRISIS_REPLY["new"]  # Claude 답 대신 정해진 문장
+    assert events[-1]["type"] == "redirect" and events[-1]["message"] == i18n.t("crisis.reply.new", "ko")  # Claude 답 대신 정해진 문장
     assert _state(sid)["safety"]["crisis"] is True
     assert "위기 표현" in _state(sid)["log"][0]["detail"]
 
@@ -243,7 +243,7 @@ def test_crisis_while_answering_pauses_without_reasking(monkeypatch: pytest.Monk
     events = send(sid, CRISIS)
     assert [e["type"] for e in events] == ["crisis", "off_topic"]
     last = events[-1]
-    assert last["crisis"] and last["message"] == safety.CRISIS_REPLY["paused"] and last["questions"] == []
+    assert last["crisis"] and last["message"] == i18n.t("crisis.reply.paused", "ko") and last["questions"] == []
     assert _state(sid)["pending"] == before["pending"]  # 하던 민원은 그대로
 
 

@@ -10,11 +10,7 @@ from minwon.agent.brain import get_brain
 # 완성 후에는 짧은 말도 판단한다. 잘못 받으면 초안을 통째로 다시 쓰게 되기 때문이다.
 SHORT_REPLY = re.compile(r"^\s*(\d+\s*번?|네|예|응|아니요|아니오|모름|몰라요?|모르겠어요|없음|없어요)\s*[.!]?\s*$")
 
-# 관계없는 말에는 그래프를 진행하지 않고 정해진 안내만 한다 (질문 횟수·대화 기록·초안은 그대로)
-OFF_TOPIC_REPLY = {
-    "asking": "질문에 대한 답으로 보기 어려워서 그대로 두었어요. 아래 질문에 이어서 답해 주세요. 모르는 건 '모름'이라고 적어도 돼요.",
-    "ready": "민원 초안은 그대로 두었어요. 고칠 점이 있으면 '더 짧게'처럼 말씀해 주시고, 다른 불편이 있으면 그 내용을 말씀해 주세요.",
-}
+# 관계없는 말에는 그래프를 진행하지 않고 정해진 안내(i18n의 off_topic.*)만 한다 (질문 횟수·대화 기록·초안은 그대로)
 
 
 def worth_checking(text: str, stage: str) -> bool:
@@ -44,5 +40,7 @@ def detect(values: dict, pending: dict | None, text: str) -> dict | None:
         "kind": "new_complaint",
         "from": understanding["category_label"],
         "to": knowledge.category(check.category)["label"],
+        "from_category": understanding["category"],
+        "to_category": check.category,
         **meta,
     }

@@ -4,7 +4,7 @@ from datetime import datetime
 from langgraph.config import get_stream_writer
 from langgraph.types import interrupt
 
-from minwon import knowledge, safety
+from minwon import i18n, knowledge, safety
 from minwon.agent import cancel
 from minwon.agent.brain import get_brain
 from minwon.agent.state import AgentState
@@ -73,10 +73,11 @@ def guard(state: AgentState) -> dict:
 
 
 INTENT_LABEL = {"referral": "다른 창구가 맞는 일", "unclear": "불분명한 입력", "not_complaint": "민원이 아닌 입력"}
-DEFAULT_REPLY = {
-    "unclear": "어떤 점이 불편하신지 조금만 더 알려 주세요. 예를 들어 '집 앞 가로등이 며칠째 꺼져 있어요'처럼 말씀해 주시면 돼요.",
-    "not_complaint": "저는 생활 속 불편을 민원으로 정리해 드리는 도우미예요. '학교 앞 횡단보도가 위험해요'처럼 불편했던 일을 말씀해 주세요.",
-}
+
+
+def _language(state: AgentState) -> str:
+    """시민의 언어 코드 (문제 분석에서 정함)."""
+    return (state.get("understanding") or {}).get("language", "ko")
 
 
 def understand(state: AgentState) -> dict:
@@ -85,6 +86,11 @@ def understand(state: AgentState) -> dict:
     out = get_brain().call("understand", state["user_input"])
     data = out.value.model_dump()
     data["category_label"] = knowledge.category(data["category"])["label"]
+    # 시민의 언어: Claude 판단. Claude가 실패했고 글자 모양으로도 모르면(라틴 문자) 화면에서 고른 언어를 쓴다
+    data["language"] = i18n.normalize(data["language"]) or "ko"
+    if out.source != "llm" and not i18n.detect(state["user_input"]):
+        data["language"] = i18n.normalize(state.get("lang_hint")) or data["language"]
+    lang = data["language"]
     if state["safety"]["emergency"]:
         data |= {"intent": "complaint", "urgency": "high"}  # 긴급상황 표현은 민원 흐름으로 (112·119 안내는 guard가 함)
     if data["intent"] == "referral" and data["referral"] == "none":
@@ -94,18 +100,19 @@ def understand(state: AgentState) -> dict:
 
     if data["intent"] == "referral":
         # 창구 이름·번호·주소는 Claude가 쓰지 않고 지식베이스(공식 안내로 확인한 값)에서 가져온다
-        ref = knowledge.referral(data["referral"])
+        ref = knowledge.referral(data["referral"], lang)
         data["referral_info"] = ref
-        data["reply"] = f"말씀하신 일은 '{ref['label']}'에 해당해서, 시·군·구청 민원보다 {ref['agency']}에서 도와줘요. {ref['first']}"
-        detail = f"{INTENT_LABEL['referral']}({ref['label']}) → {ref['agency']} 안내, 민원 흐름을 시작하지 않음"
+        data["reply"] = i18n.t("referral.reply", lang, label=ref["label"], agency=ref["agency"], first=ref["first"])
+        ko = knowledge.referral(data["referral"])
+        detail = f"{INTENT_LABEL['referral']}({ko['label']}) → {ko['agency']} 안내, 민원 흐름을 시작하지 않음"
         return {"understanding": data, "log": [_log("understand", "입력 확인", detail, out.source, error=out.error)]}
     if data["intent"] != "complaint":
         if state["safety"].get("crisis"):
             # 109 안내(api가 먼저 보냄)에 이어 생활불편 예시를 들지 않고 정해진 문장으로만 답한다
-            data["reply"] = safety.CRISIS_REPLY["new"]
+            data["reply"] = i18n.t("crisis.reply.new", lang)
             detail = f"{INTENT_LABEL[data['intent']]} · 위기 표현 → 상담전화 안내 후 민원 흐름을 시작하지 않음"
         else:
-            data["reply"] = data["reply"].strip() or DEFAULT_REPLY[data["intent"]]
+            data["reply"] = data["reply"].strip() or i18n.t(f"reply.{data['intent']}", lang)
             detail = f"{INTENT_LABEL[data['intent']]} → 민원 흐름을 시작하지 않고 안내"
         return {"understanding": data, "log": [_log("understand", "입력 확인", detail, out.source, error=out.error)]}
 
@@ -166,6 +173,7 @@ def plan(state: AgentState) -> dict:
         "understanding": state["understanding"],
         "유형별 기본 필수 정보": cat["required"],
         "유형별 기본 주변 기관": cat["nearby"],
+        "language": _language(state),
     }
     out = get_brain().call("plan", ctx)
     result, fixes = _normalize_plan(out.value.model_dump(), cat)
@@ -187,6 +195,7 @@ def check(state: AgentState) -> dict:
         "dialogue": state["dialogue"],
         "asked": state.get("asked", []),
         "can_ask": rounds < settings.max_question_rounds,
+        "language": _language(state),
     }
     out = get_brain().call("check", ctx)
     result = out.value.model_dump()
@@ -195,11 +204,13 @@ def check(state: AgentState) -> dict:
     result["questions"] = [q for q in result["questions"] if q["slot"] not in ctx["asked"]][:3]
 
     # 이름 없는 장소('창원 초등학교', '우리 아파트')는 위치가 확인된 것으로 보지 않고 한 번 더 묻는다
-    location_text = next((f["value"] for f in result["facts"] if f["slot"] == "location"), "") or result["location_query"]
+    # 외국어로 말한 장소는 한국어로 옮긴 지도 검색어로 판단한다
+    lang = _language(state)
+    fact_location = next((f["value"] for f in result["facts"] if f["slot"] == "location"), "")
+    location_text = (fact_location or result["location_query"]) if lang == "ko" else (result["location_query"] or fact_location)
     vague = bool(location_text) and not regions.is_specific_place(location_text)
     if vague and ctx["can_ask"] and "location" not in ctx["asked"] and "location" in ctx["required_info"]:
-        question = {"slot": "location", "text": f"말씀하신 '{location_text}'만으로는 정확한 곳을 찾기 어려워요. "
-                    "장소 이름(예: ○○초등학교), 동 이름, 또는 도로명 주소를 알려 주세요."}
+        question = {"slot": "location", "text": i18n.t("location.vague", lang, place=fact_location or location_text)}
         result["questions"] = [question, *[q for q in result["questions"] if q["slot"] != "location"]][:3]
         result["facts"] = [f for f in result["facts"] if f["slot"] != "location"]
     result["location_vague"] = vague
@@ -271,8 +282,7 @@ def confirm_location(state: AgentState) -> dict:
     candidates = state["location"]["candidates"]
     query = state.get("location_query", "")
     options = [{"value": str(i + 1), "label": f"{c['name'] or c['address']} · {c['address']}"} for i, c in enumerate(candidates)]
-    question = {"slot": "location", "text": f"'{query}'에 해당하는 곳이 {len(candidates)}곳 있어요. 어느 곳인가요? "
-                "번호를 고르거나, 더 정확한 장소 이름·주소를 알려 주세요."}
+    question = {"slot": "location", "text": i18n.t("location.choose", _language(state), query=query, count=len(candidates))}
     reply = interrupt({"questions": [question], "options": options})
     text = reply["text"].strip()
     rounds = state.get("confirm_rounds", 0) + 1
@@ -453,7 +463,8 @@ def _rule_checks(state: AgentState, package: dict) -> tuple[dict, list[dict]]:
 
     loc = state.get("location", {})
     fact_loc = next((f["value"] for f in _facts(state) if f["slot"] == "location"), "")
-    terms = [loc.get("place_name"), loc.get("dong"), loc.get("legal_dong"), *(loc.get("sigungu", "").split()[-1:]), *fact_loc.split()[:2]]
+    fact_terms = [w for w in fact_loc.split()[:2] if i18n.detect(w) == "ko"]  # 외국어로 말한 장소는 한국어 초안에 그대로 나오지 않는다
+    terms = [loc.get("place_name"), loc.get("dong"), loc.get("legal_dong"), *(loc.get("sigungu", "").split()[-1:]), *fact_terms]
     terms = [t for t in terms if t]
     if not terms or any(t in package["body"] for t in terms):
         checks.append({"name": "위치", "ok": True, "detail": "본문에 위치가 들어 있음" if terms else "확인된 위치 없음 (빈칸 안내)"})
@@ -530,7 +541,36 @@ def review(state: AgentState) -> dict:
 
 
 def route_after_review(state: AgentState) -> str:
-    return "draft" if state["review"]["retry"] else "deliver"
+    if state["review"]["retry"]:
+        return "draft"
+    return "deliver" if _language(state) == "ko" else "translate"
+
+
+def translate(state: AgentState) -> dict:
+    """시민이 외국인이면 검증을 마친 한국어 민원 패키지를 시민의 언어로 옮긴다 (제출용 원문은 한국어 그대로)."""
+    _started("translate")
+    lang = _language(state)
+    pkg, decision = state["package"], state["decision"]
+    review = state.get("review") or {}
+    source = {
+        "title": pkg["title"], "body": pkg["body"],
+        "evidence": [{k: e[k] for k in ("item", "why", "basis")} for e in pkg["evidence"]],
+        "tips": pkg["tips"], "reason": decision["reason"], "steps": decision["steps"], "cautions": decision["cautions"],
+        "issues": [] if review.get("passed", True) else review.get("issues", []),
+        "unit": decision["agency"]["unit"], "duty": decision["agency"]["duty"], "period": decision["period"],
+    }
+    out = get_brain().call("translate", {"language": lang, "language_name": i18n.LANG_NAMES.get(lang, lang), "source": source})
+    result = out.value.model_dump()
+    # 목록 개수가 원문과 다르면 어느 항목의 번역인지 알 수 없으니 그 목록만 원문으로 둔다
+    mismatched = [k for k in ("evidence", "tips", "steps", "cautions", "issues") if len(result[k]) != len(source[k])]
+    for key in mismatched:
+        result[key] = source[key]
+    translated = out.source == "llm"
+    detail = f"{i18n.LANG_NAMES.get(lang, lang)}로 번역 (제출용 원문은 한국어 그대로)" if translated else "번역 실패 → 한국어로 표시"
+    if mismatched:
+        detail += f" · 개수가 맞지 않아 원문 유지: {', '.join(mismatched)}"
+    return {"translation": {**result, "language": lang, "version": pkg["version"], "translated": translated},
+            "log": [_log("translate", "번역", detail, out.source, error=out.error)]}
 
 
 def deliver(state: AgentState) -> dict:

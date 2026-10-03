@@ -11,7 +11,7 @@ from fastapi.responses import Response, StreamingResponse
 from langgraph.types import Command
 from pydantic import BaseModel, Field
 
-from minwon import safety
+from minwon import i18n, safety
 from minwon.agent import cancel, topic
 from minwon.agent.brain import get_brain
 from minwon.agent.graph import build_graph, revision_input, start_input
@@ -31,13 +31,14 @@ sessions: dict[str, dict] = {}
 
 SNAPSHOT_KEYS = (
     "safety", "understanding", "plan", "info", "dialogue", "location", "nearby", "agencies", "cases",
-    "tool_calls", "decision", "package", "review", "files", "location_confirmed", "log",
+    "tool_calls", "decision", "package", "review", "translation", "files", "location_confirmed", "log",
 )
-RESULT_KEYS = ("info", "location", "location_confirmed", "agencies", "cases", "decision", "package", "review", "files")
+RESULT_KEYS = ("info", "location", "location_confirmed", "agencies", "cases", "decision", "package", "review", "translation", "files")
 
 
 class MessageIn(BaseModel):
     text: str = Field(min_length=1, max_length=2000)
+    lang: str = Field(default="", max_length=10, description="화면에서 고른 언어 (언어를 판단하지 못할 때 대체)")
 
 
 class DraftEdits(BaseModel):
@@ -110,20 +111,25 @@ def get_session(session_id: str):
     return {"status": status, "pending": pending, **{k: snapshot.values.get(k) for k in SNAPSHOT_KEYS}}
 
 
-def _run(session_id: str, text: str) -> Iterator[str]:
+def _run(session_id: str, text: str, lang_hint: str = "") -> Iterator[str]:
     _session(session_id)
     masked = safety.mask_pii(text)
     if masked.findings:
         yield _event(type="masked", text=masked.text, findings=masked.findings)
-    # 위기 표현은 대화 어느 단계에서든 AI 판단보다 먼저, 정해진 문장으로 안내한다
-    crisis = safety.is_crisis(masked.text)
-    if crisis:
-        yield _event(type="crisis", message=safety.CRISIS_NOTICE)
 
     previous = dict(sessions[session_id])
     config = _config(session_id)
     before = snapshot = graph.get_state(config)
     pending = _pending(snapshot)
+    # 정해진 안내문의 언어: 지금 대화의 언어(Claude 판단) → 이번 말의 글자 모양 → 화면에서 고른 언어
+    hint = i18n.normalize(lang_hint)
+    talk_lang = (snapshot.values.get("understanding") or {}).get("language")
+    lang = talk_lang or i18n.detect(masked.text) or hint or "ko"
+
+    # 위기 표현은 대화 어느 단계에서든 AI 판단보다 먼저, 정해진 문장으로 안내한다 (이번 말의 언어로)
+    crisis = safety.is_crisis(masked.text)
+    if crisis:
+        yield _event(type="crisis", message=i18n.t("crisis.notice", i18n.detect(masked.text) or lang))
     cancel.begin(session_id)
     stopped = failed = False
     try:
@@ -138,7 +144,7 @@ def _run(session_id: str, text: str) -> Iterator[str]:
             # 위기 표현이면 질문을 다시 들이밀지 않고, 하던 민원은 그대로 둔 채 쉬어 가게 한다
             reask = pending and not crisis
             yield _event(type="off_topic", stage=stage, crisis=crisis,
-                         message=safety.CRISIS_REPLY["paused"] if crisis else topic.OFF_TOPIC_REPLY[stage],
+                         message=i18n.t("crisis.reply.paused" if crisis else f"off_topic.{stage}", lang),
                          reason=turn["reason"], source=turn["source"], error=turn["error"],
                          questions=pending["questions"] if reask else [],
                          options=pending.get("options", []) if reask else [])
@@ -159,12 +165,12 @@ def _run(session_id: str, text: str) -> Iterator[str]:
             text = f"{snapshot.values['user_input']}\n{masked.text}" if intent == "unclear" else masked.text
             sessions[session_id] = {"thread": uuid.uuid4().hex, "rollback": None}  # 중단하면 previous·before로 되돌아감
             config = _config(session_id)
-            graph_input = start_input(text, masked.findings)
+            graph_input = start_input(text, masked.findings, hint)
         elif snapshot.values:
-            yield _event(type="error", code="session_busy", message="이전 처리가 끝나지 않았어요. '새 민원'으로 다시 시작해 주세요.")
+            yield _event(type="error", code="session_busy", message=i18n.t("error.busy", lang))
             return
         else:
-            graph_input = start_input(masked.text, masked.findings)
+            graph_input = start_input(masked.text, masked.findings, hint)
 
         for mode, chunk in graph.stream(graph_input, config, stream_mode=["custom", "updates"]):
             if mode == "custom":
@@ -183,14 +189,14 @@ def _run(session_id: str, text: str) -> Iterator[str]:
     except Exception as e:
         log.exception("Agent 실행 실패")
         failed = True
-        yield _event(type="error", code="agent_failed", message=f"처리 중 문제가 생겼어요. 같은 내용으로 다시 보내 주세요. ({type(e).__name__})")
+        yield _event(type="error", code="agent_failed", message=i18n.t("error.agent", lang, error=type(e).__name__))
     finally:
         cancel.finish(session_id)
 
     if stopped or failed:
         _restore(session_id, previous, before)
         if stopped:
-            yield _event(type="cancelled", message="처리를 멈췄어요. 내용을 고쳐서 다시 보내 주세요.",
+            yield _event(type="cancelled", message=i18n.t("cancelled", lang),
                          restored="asking" if _pending(before) else "ready" if before.values.get("package") else "new")
         return
 
@@ -209,7 +215,7 @@ def _run(session_id: str, text: str) -> Iterator[str]:
 @app.post("/api/sessions/{session_id}/messages")
 def post_message(session_id: str, body: MessageIn):
     _session(session_id)
-    return StreamingResponse(_run(session_id, body.text), media_type="application/x-ndjson")
+    return StreamingResponse(_run(session_id, body.text, body.lang), media_type="application/x-ndjson")
 
 
 @app.post("/api/sessions/{session_id}/cancel")

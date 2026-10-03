@@ -5,6 +5,7 @@ from typing import Annotated, TypedDict
 class AgentState(TypedDict, total=False):
     user_input: str                                   # 개인정보를 가린 첫 입력
     pii_findings: list[dict]                          # API 경계에서 가린 개인정보 종류·건수
+    lang_hint: str                                    # 화면에서 고른 언어 (Claude가 언어를 판단하지 못할 때 대체)
     safety: dict                                      # 긴급상황·지시주입 판단
     understanding: dict                               # 유형·요약·긴급도
     plan: dict                                        # 처리 계획 (화면 표시용)
@@ -24,6 +25,7 @@ class AgentState(TypedDict, total=False):
     decision: dict                                    # 주 담당 기관·제출 창구·할 일
     package: dict                                     # 민원 초안·증빙 체크리스트 (최신본)
     review: dict                                      # 최근 검증 결과
+    translation: dict                                 # 시민이 외국인일 때 민원 패키지 번역본 (화면 표시용, 제출은 한국어 원문)
     review_rounds: int                                # 이번 작성 주기의 검증 횟수
     revision_request: str                             # 완성 후 사용자의 수정 요청
     log: Annotated[list[dict], operator.add]          # 실행 로그

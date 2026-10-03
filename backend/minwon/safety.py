@@ -14,26 +14,36 @@ PII_PATTERNS: list[tuple[str, str, re.Pattern]] = [
 
 EMERGENCY_PATTERNS = re.compile(
     r"(불이 ?났|화재|연기가 ?(?:나|많이)|쓰러졌|의식이 ?없|피를 ?많이|숨을 ?안|가스 ?냄새|폭발|"
-    r"칼을|흉기|폭행|맞고 ?있|납치|물에 ?빠졌|지금 ?무너|붕괴)"
+    r"칼을|흉기|폭행|맞고 ?있|납치|물에 ?빠졌|지금 ?무너|붕괴|"
+    # 번역해 둔 외국어 (영어·베트남어·중국어·태국어·인도네시아어·우즈베크어·일본어)
+    r"\bon fire\b|\bhouse fire\b|\bfire (?:broke out|in)\b|\bunconscious\b|\bgas leak|\bexplosion\b|\bstabbed\b|\bbeing attacked\b|\bkidnapp|"
+    r"đang cháy|cháy nhà|bất tỉnh|rò rỉ (?:gas|khí)|phát nổ|vụ nổ|bị đâm|bắt cóc|"
+    r"着火|失火|火灾|昏迷|晕倒|煤气泄漏|燃气泄漏|爆炸|被刺|绑架|"
+    r"ไฟไหม้|หมดสติ|แก๊สรั่ว|ระเบิด|ถูกแทง|ลักพาตัว|"
+    r"kebakaran|pingsan|tidak sadarkan diri|kebocoran gas|ledakan|ditusuk|penculikan|"
+    r"yong'in|hushidan ketdi|gaz siz|portla|pichoqla|o'g'irlab ket|"
+    r"火事|火災|意識がない|ガス漏れ|爆発|刺され|誘拐)",
+    re.IGNORECASE,
 )
 
 # 스스로를 해치려는 위기 표현. 놓치는 것보다 한 번 더 안내하는 편이 나으므로 넓게 잡는다.
 # '짜증나 죽겠어요'처럼 흔한 과장 표현(죽겠다)은 넣지 않는다.
 CRISIS_PATTERNS = re.compile(
     r"(죽고\s*싶|자살|목숨을?\s*끊|스스로\s*목숨|살기\s*싫|살고\s*싶지\s*않|사라지고\s*싶|극단적\s*(?:인\s*)?선택|"
-    r"뛰어내리고\s*싶|자해|삶을\s*끝내)"
+    r"뛰어내리고\s*싶|자해|삶을\s*끝내|"
+    # 번역해 둔 외국어
+    r"\bwant to die\b|\bkill myself\b|\bsuicid|\bend my life\b|\bdon'?t want to live\b|\bhurt myself\b|"
+    r"muốn chết|tự tử|tự sát|không muốn sống|"
+    r"想死|自杀|轻生|不想活|"
+    r"อยากตาย|ฆ่าตัวตาย|"
+    r"ingin mati|mau mati|bunuh diri|tidak ingin hidup|"
+    r"o'lgim kel|o'zimni o'ldir|joniga qasd|yashagim kelmay|"
+    r"死にたい|自殺|消えたい|生きていたくない)",
+    re.IGNORECASE,
 )
 
-# 위기 표현이 있으면 AI 판단과 관계없이 정해진 문장으로 안내한다.
+# 위기 표현이 있으면 AI 판단과 관계없이 정해진 문장(i18n의 crisis.*)으로 안내한다.
 # 자살예방 상담전화 109: 보건복지부가 1393·1577-0199·1388 등을 2024-01-01부터 통합한 24시간 번호
-CRISIS_NOTICE = (
-    "많이 힘드시다면 혼자 견디지 마세요. 자살예방 상담전화 109(24시간)에 전화하면 언제든 이야기를 들어 드려요. "
-    "지금 위험한 상황이라면 112·119에 바로 연락해 주세요."
-)
-CRISIS_REPLY = {
-    "new": "말씀해 주셔서 고마워요. 위의 상담전화는 언제든 연결돼요. 생활 속 불편한 일이 생기면 그때 편하게 말씀해 주세요.",
-    "paused": "말씀해 주셔서 고마워요. 위의 상담전화는 언제든 연결돼요. 하던 민원은 그대로 두었으니 원하실 때 이어서 말씀해 주세요.",
-}
 
 INJECTION_PATTERNS = re.compile(
     r"(이전\s*(?:지시|명령|규칙).{0,6}무시|시스템\s*프롬프트|프롬프트를?\s*(?:보여|출력|알려)|"
