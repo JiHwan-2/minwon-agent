@@ -29,7 +29,7 @@ function GuardBody({ safety }) {
   );
 }
 
-function UnderstandBody({ u }) {
+function UnderstandBody({ u, chatted }) {
   const { t } = useI18n();
   if (u.intent && u.intent !== "complaint") {
     return (
@@ -38,7 +38,8 @@ function UnderstandBody({ u }) {
           <span className="tag urgency-medium">{t(`intent.${u.intent}`)}</span>
         </div>
         <p className="small">{t("log.notStarted")}</p>
-        <p className="muted small">{t("log.reply", { reply: u.reply })}</p>
+        {/* 다음 '대화' 단계가 실제로 보낸 답을 보여 주므로, 여기서는 대화로 넘기지 않은 경우(다른 창구·위기)만 안내를 보인다 */}
+        {!chatted && <p className="muted small">{t("log.reply", { reply: u.reply })}</p>}
       </div>
     );
   }
@@ -251,13 +252,25 @@ function NoteBody({ log }) {
         {text}
         {log?.reason ? ` · ${log.reason}` : ""}
       </p>
+      {log?.guarded && <p className="small warn">{t("log.contactGuarded")}</p>}
     </div>
   );
 }
 
-function Body({ entry }) {
+function ChatBody({ chat, reply }) {
+  const { t } = useI18n();
+  return (
+    <div className="body">
+      <p className="small">{chat.turns > 1 ? t("log.chatTurn", { turns: chat.turns }) : t("log.chatFirst")}</p>
+      {chat.guarded && <p className="small warn">{t("log.contactGuarded")}</p>}
+      <p className="muted small">{t("log.reply", { reply })}</p>
+    </div>
+  );
+}
+
+function Body({ entry, next }) {
   const d = entry.data ?? {};
-  if (entry.node === "switch" || entry.node === "stop" || entry.node === "off_topic") return <NoteBody log={entry.log} />;
+  if (["switch", "stop", "off_topic", "answer"].includes(entry.node)) return <NoteBody log={entry.log} />;
   if (entry.node === "ask") return <AskBody entry={entry} />;
   if (entry.node === "confirm_location") return <ConfirmBody entry={entry} />;
   if (entry.node === "act" || entry.node === "locate" || entry.node === "deliver") return <ActBody entry={entry} />;
@@ -266,8 +279,9 @@ function Body({ entry }) {
   if (entry.node === "draft") return <DraftBody entry={entry} />;
   if (entry.node === "review") return <ReviewBody review={d.review} />;
   if (entry.node === "translate") return <TranslateBody translation={d.translation} />;
+  if (entry.node === "chat") return <ChatBody chat={d.chat} reply={d.understanding?.reply} />;
   if (entry.node === "guard") return <GuardBody safety={d.safety} />;
-  if (entry.node === "understand") return <UnderstandBody u={d.understanding} />;
+  if (entry.node === "understand") return <UnderstandBody u={d.understanding} chatted={next?.node === "chat"} />;
   if (entry.node === "plan") return <PlanBody plan={d.plan} />;
   if (entry.node === "check") return <CheckBody info={d.info} />;
   return null;
@@ -311,7 +325,7 @@ export default function AgentLog({ timeline, running }) {
                     {entry.log?.at && <span className="muted small">{entry.log.at}</span>}
                   </div>
                 </div>
-                <Body entry={entry} />
+                <Body entry={entry} next={timeline[i + 1]} />
               </div>
             </li>
           ))}

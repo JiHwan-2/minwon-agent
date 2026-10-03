@@ -22,6 +22,10 @@ def agency_rules(code: str) -> dict:
     return cats.get(code, cats["other"])
 
 
+def all_channels() -> dict[str, dict]:
+    return _agencies()["channels"]
+
+
 def channels(ids: list[str]) -> list[dict]:
     all_channels = _agencies()["channels"]
     return [{"id": cid, **all_channels[cid]} for cid in ids]

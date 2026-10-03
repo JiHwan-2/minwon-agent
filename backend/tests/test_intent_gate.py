@@ -81,6 +81,7 @@ def _use(monkeypatch, primary):
     brain = brain_module.Brain(primary)
     monkeypatch.setattr("minwon.agent.nodes.get_brain", lambda: brain)
     monkeypatch.setattr("minwon.agent.topic.get_brain", lambda: brain)
+    monkeypatch.setattr("minwon.agent.conversation.get_brain", lambda: brain)
     return primary
 
 
@@ -92,11 +93,13 @@ def test_not_a_complaint_is_answered_without_starting_the_flow(monkeypatch: pyte
     _use(monkeypatch, JudgesIntent({"기모띠": "not_complaint"}))
     sid = new_session()
     events = send(sid, "기모띠")
-    assert ended_nodes(events) == ["guard", "understand"]
+    assert ended_nodes(events) == ["guard", "understand", "chat"]  # 민원 처리로 가지 않고 대화로 답함
     last = events[-1]
     assert last == {"type": "redirect", "intent": "not_complaint", "message": REPLY["not_complaint"], "referral": None}
     log = _state(sid)["log"]
-    assert log[-1]["title"] == "입력 확인" and "민원이 아닌 입력" in log[-1]["detail"]
+    understand_log = next(x for x in log if x["node"] == "understand")
+    assert understand_log["title"] == "입력 확인" and "민원이 아닌 입력" in understand_log["detail"]
+    assert log[-1]["node"] == "chat"
     assert _state(sid)["plan"] is None
 
 

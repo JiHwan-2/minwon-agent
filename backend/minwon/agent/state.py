@@ -6,6 +6,9 @@ class AgentState(TypedDict, total=False):
     user_input: str                                   # 개인정보를 가린 첫 입력
     pii_findings: list[dict]                          # API 경계에서 가린 개인정보 종류·건수
     lang_hint: str                                    # 화면에서 고른 언어 (Claude가 언어를 판단하지 못할 때 대체)
+    latest: str                                       # 이번에 시민이 보낸 말 (불분명한 말을 합친 user_input과 구분)
+    chat_history: list[dict]                          # 민원이 아닌 대화 기록 (대화 단계가 앞 대화를 기억하도록)
+    chat: dict                                        # 대화 단계 결과 (몇 번째 대화인지, 연락처를 걸렀는지)
     safety: dict                                      # 긴급상황·지시주입 판단
     understanding: dict                               # 유형·요약·긴급도
     plan: dict                                        # 처리 계획 (화면 표시용)

@@ -32,8 +32,8 @@ def detect(values: dict, pending: dict | None, text: str) -> dict | None:
     out = get_brain().call("switch", ctx)
     check = out.value
     meta = {"reason": check.reason, "source": out.source, "error": out.error}
-    if check.kind == "off_topic":
-        return {"kind": "off_topic", **meta}
+    if check.kind in ("off_topic", "question"):
+        return {"kind": check.kind, **meta}
     if check.kind != "new_complaint" or check.category == understanding["category"]:
         return None
     return {

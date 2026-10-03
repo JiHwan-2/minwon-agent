@@ -5,7 +5,7 @@ from langgraph.config import get_stream_writer
 from langgraph.types import interrupt
 
 from minwon import i18n, knowledge, safety
-from minwon.agent import cancel
+from minwon.agent import cancel, conversation
 from minwon.agent.brain import get_brain
 from minwon.agent.state import AgentState
 from minwon.settings import settings
@@ -123,7 +123,31 @@ def understand(state: AgentState) -> dict:
 
 
 def route_after_understand(state: AgentState) -> str:
-    return "plan" if state["understanding"]["intent"] == "complaint" else "end"
+    u = state["understanding"]
+    if u["intent"] == "complaint":
+        return "plan"
+    # 민원이 아닌 말은 Claude와 바로 대화하듯 답한다. 위기 표현·다른 창구는 정해진 안내 그대로
+    if u["intent"] in ("unclear", "not_complaint") and not state["safety"].get("crisis"):
+        return "chat"
+    return "end"
+
+
+def chat(state: AgentState) -> dict:
+    """민원이 아닌 첫 메시지(인사·잡담·사용법 질문·불분명한 말): 앞 대화를 기억해 자연스럽게 답한다. 민원 처리로는 가지 않는다."""
+    _started("chat")
+    u = state["understanding"]
+    message = state.get("latest") or state["user_input"]
+    history = state.get("chat_history", [])
+    result = conversation.small_talk(u["language"], history, message, u["intent"], fallback=u["reply"])
+    detail = f"앞 대화 {len(history) // 2}번을 기억해 답함" if history else "대화로 답함"
+    if result["guarded"]:
+        detail += " · 확인되지 않은 연락처가 있어 정해진 안내로 바꿈"
+    return {
+        "understanding": {**u, "reply": result["reply"]},
+        "chat_history": [*history, {"role": "user", "text": message}, {"role": "agent", "text": result["reply"]}][-12:],
+        "chat": {"turns": len(history) // 2 + 1, "guarded": result["guarded"]},
+        "log": [_log("chat", "대화", detail, result["source"], error=result["error"])],
+    }
 
 
 def _normalize_plan(plan: dict, cat: dict) -> tuple[dict, list[str]]:

@@ -1,0 +1,1136 @@
+{
+  "run_at": "2026-10-03 15:00",
+  "model": "claude-opus-5-5 (Claude Code)",
+  "note": "대화 도중 판단에 '질문' 추가 후 전체 61문항",
+  "parts": {
+    "turn": {
+      "summary": {
+        "cases": 61,
+        "all_ok": 61,
+        "missed_answers": [
+          0,
+          26
+        ],
+        "off_topic": [
+          18,
+          18
+        ],
+        "new_complaint": [
+          5,
+          5
+        ],
+        "skipped": 1,
+        "fallback": 0,
+        "seconds_avg": 4.5
+      },
+      "rows": [
+        {
+          "id": "T01",
+          "stage": "asking",
+          "text": "어제부터",
+          "kind": "continue",
+          "got": {
+            "kind": "continue",
+            "reason": "'어제부터'는 가로등이 언제부터 꺼져 있었는지 묻는 질문에 대한 답입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.8
+        },
+        {
+          "id": "T02",
+          "stage": "asking",
+          "text": "시장 앞",
+          "kind": "continue",
+          "got": {
+            "kind": "continue",
+            "reason": "위치를 묻는 질문에 '시장 앞'이라고 꺼진 가로등의 위치를 답한 것입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.7
+        },
+        {
+          "id": "T03",
+          "stage": "asking",
+          "text": "몰라",
+          "kind": "continue",
+          "got": {
+            "kind": "continue",
+            "reason": "짧은 답이라 판단 없이 답변으로 받음"
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "skip",
+          "error": "",
+          "seconds": 0.0
+        },
+        {
+          "id": "T04",
+          "stage": "asking",
+          "text": "깜빡거려요",
+          "kind": "continue",
+          "got": {
+            "kind": "continue",
+            "reason": "가로등이 아예 안 켜지는지 깜빡이는지 묻는 질문에 '깜빡거려요'라고 답한 것이므로 지금 민원에 이어지는 답변입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.9
+        },
+        {
+          "id": "T05",
+          "stage": "asking",
+          "text": "아까 말했잖아요",
+          "kind": "continue",
+          "got": {
+            "kind": "continue",
+            "reason": "질문에 대해 이미 답했다는 반응이라 지금 민원에 이어지는 말이고, asking 단계에서 애매하면 continue로 처리합니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 5.0
+        },
+        {
+          "id": "T06",
+          "stage": "asking",
+          "text": "ㄴㄴ 그냥 꺼짐",
+          "kind": "continue",
+          "got": {
+            "kind": "continue",
+            "reason": "'깜빡이나요?'라는 질문에 깜빡이지 않고 아예 꺼져 있다고 답한 것입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.9
+        },
+        {
+          "id": "T07",
+          "stage": "asking",
+          "text": "창원시 성산구 상남동 상남시장 앞 골목이고 일주일 전부터 밤새 꺼져 있어요",
+          "kind": "continue",
+          "got": {
+            "kind": "continue",
+            "reason": "시민이 질문받은 가로등 위치(상남시장 앞 골목), 꺼진 시점(일주일 전), 상태(밤새 꺼짐)를 답한 것이므로 지금 민원에 이어지는 답변입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 4.0
+        },
+        {
+          "id": "T08",
+          "stage": "asking",
+          "text": "상가 앞 주차장 옆 공사장이에요",
+          "kind": "continue",
+          "current": {
+            "category": "noise",
+            "category_label": "소음",
+            "title": "공사장 소음",
+            "summary": "새벽마다 옆 공사장 소음 때문에 잠을 못 잠"
+          },
+          "questions": [
+            "공사장이 정확히 어디인가요? (예: 창원시 성산구 상남동 ○○빌딩 옆)"
+          ],
+          "got": {
+            "kind": "continue",
+            "reason": "공사장 위치를 물은 질문에 '상가 앞 주차장 옆'이라고 답한 것으로, 주차장은 새 불편이 아니라 위치를 설명하는 말입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 4.8
+        },
+        {
+          "id": "T09",
+          "stage": "asking",
+          "text": "기모띠",
+          "kind": "off_topic",
+          "got": {
+            "kind": "off_topic",
+            "reason": "'기모띠'는 의미 없는 유행어로, 가로등 위치·시기·상태 질문에 대한 답으로 볼 수 없습니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 4.1
+        },
+        {
+          "id": "T10",
+          "stage": "asking",
+          "text": "ㅋㅋㅋㅋ",
+          "kind": "off_topic",
+          "got": {
+            "kind": "off_topic",
+            "reason": "'ㅋㅋㅋㅋ'는 웃음을 나타내는 의미 없는 말로, 질문에 대한 답이나 새 불편, 민원 질문이 아님."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.8
+        },
+        {
+          "id": "T11",
+          "stage": "asking",
+          "text": "점심 뭐 먹지",
+          "kind": "off_topic",
+          "got": {
+            "kind": "off_topic",
+            "reason": "점심 메뉴 이야기는 가로등 질문에 대한 답도, 새 불편도, 민원에 대한 질문도 아닌 잡담이라 off_topic입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 4.1
+        },
+        {
+          "id": "T12",
+          "stage": "asking",
+          "text": "그리고 집 앞에 쓰레기가 산더미처럼 쌓여 있어요",
+          "kind": "new_complaint",
+          "got": {
+            "kind": "new_complaint",
+            "reason": "가로등 질문에 답하지 않고 집 앞 쓰레기 더미라는 다른 종류의 불편을 새로 말했습니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 7.2
+        },
+        {
+          "id": "T13",
+          "stage": "ready",
+          "text": "더 짧게",
+          "kind": "continue",
+          "got": {
+            "kind": "continue",
+            "reason": "ready 단계에서 민원 초안을 더 짧게 고쳐 달라는 수정 요청입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.4
+        },
+        {
+          "id": "T14",
+          "stage": "ready",
+          "text": "좀 더 공손하게 써 줘",
+          "kind": "continue",
+          "got": {
+            "kind": "continue",
+            "reason": "ready 단계에서 초안의 말투를 더 공손하게 고쳐 달라는 수정 요청이므로 지금 민원에 이어지는 말입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.5
+        },
+        {
+          "id": "T15",
+          "stage": "ready",
+          "text": "CCTV도 넣어줘",
+          "kind": "continue",
+          "got": {
+            "kind": "continue",
+            "reason": "ready 단계에서 '~도 넣어줘'라고 CCTV 내용을 지금 가로등 민원 초안에 넣어 달라고 했으므로 초안 수정 요청입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 11.1
+        },
+        {
+          "id": "T16",
+          "stage": "ready",
+          "text": "제목 바꿔줘",
+          "kind": "continue",
+          "got": {
+            "kind": "continue",
+            "reason": "완성된 초안의 제목을 바꿔 달라는 수정 요청이므로 지금 민원에 이어지는 말입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.5
+        },
+        {
+          "id": "T17",
+          "stage": "ready",
+          "text": "너무 길어요",
+          "kind": "continue",
+          "got": {
+            "kind": "continue",
+            "reason": "ready 단계에서 '너무 길어요'는 초안을 줄여 달라는 수정 요청이므로 지금 민원에 이어지는 말입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.6
+        },
+        {
+          "id": "T18",
+          "stage": "ready",
+          "text": "날짜는 10월 1일이에요",
+          "kind": "continue",
+          "got": {
+            "kind": "continue",
+            "reason": "완성된 가로등 민원 초안에 발생 날짜(10월 1일)를 보태는 정보이므로 지금 민원에 이어지는 말입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.5
+        },
+        {
+          "id": "T19",
+          "stage": "ready",
+          "text": "좋아요 근데 좀 더 짧게",
+          "kind": "continue",
+          "got": {
+            "kind": "continue",
+            "reason": "ready 단계에서 '좋아요'로 받아들이면서도 '좀 더 짧게'라는 초안 수정 요청이 들어 있어 continue입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.4
+        },
+        {
+          "id": "T20",
+          "stage": "ready",
+          "text": "괜찮은데 위치를 상남시장 정문으로 바꿔 줘",
+          "kind": "continue",
+          "got": {
+            "kind": "continue",
+            "reason": "완성된 초안의 위치를 상남시장 정문으로 바꿔 달라는 수정 요청이므로 지금 민원에 이어지는 말입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 4.1
+        },
+        {
+          "id": "T21",
+          "stage": "ready",
+          "text": "좋아요",
+          "kind": "off_topic",
+          "got": {
+            "kind": "off_topic",
+            "reason": "ready 단계에서 '좋아요'는 초안을 받아들이는 맞장구일 뿐이고, 고칠 점이나 보탤 내용이 없습니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 11.1
+        },
+        {
+          "id": "T22",
+          "stage": "ready",
+          "text": "ㅇㅋ",
+          "kind": "off_topic",
+          "got": {
+            "kind": "off_topic",
+            "reason": "ready 단계에서 'ㅇㅋ'는 고칠 점이나 보탤 내용이 없는 받아들이는 말이라 off_topic으로 봤습니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.7
+        },
+        {
+          "id": "T23",
+          "stage": "ready",
+          "text": "네",
+          "kind": "off_topic",
+          "got": {
+            "kind": "off_topic",
+            "reason": "ready 단계에서 '네'는 고칠 점이나 보탤 내용이 없는 받아들이는 말이므로 off_topic입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.5
+        },
+        {
+          "id": "T24",
+          "stage": "ready",
+          "text": "감사합니다",
+          "kind": "off_topic",
+          "got": {
+            "kind": "off_topic",
+            "reason": "ready 단계에서 고칠 점이나 더할 내용 없이 고맙다는 인사만 했으므로 off_topic입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 4.4
+        },
+        {
+          "id": "T25",
+          "stage": "ready",
+          "text": "확인했어요 고마워요",
+          "kind": "off_topic",
+          "got": {
+            "kind": "off_topic",
+            "reason": "ready 단계에서 고칠 점이나 보탤 내용 없이 확인하고 고맙다고 한 말이라 off_topic입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.7
+        },
+        {
+          "id": "T26",
+          "stage": "ready",
+          "text": "기모띠",
+          "kind": "off_topic",
+          "got": {
+            "kind": "off_topic",
+            "reason": "'기모띠'는 뜻 없는 유행어라서 초안 수정 요청도, 새 민원도, 민원에 대한 질문도 아닙니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.8
+        },
+        {
+          "id": "T27",
+          "stage": "ready",
+          "text": "이번엔 놀이터 그네가 부서져서 아이들이 다칠 것 같아요",
+          "kind": "new_complaint",
+          "got": {
+            "kind": "new_complaint",
+            "reason": "가로등 민원을 처리하던 중에 놀이터 그네가 부서졌다는 다른 종류의 불편을 새로 말했으므로 공원·놀이터 시설 새 민원입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 4.4
+        },
+        {
+          "id": "TE01",
+          "stage": "asking",
+          "text": "Since yesterday",
+          "kind": "continue",
+          "questions": [
+            "Where exactly is the streetlight? (e.g. next to ○○ Apartment, Sangnam-dong, Seongsan-gu, Changwon)",
+            "Since when has it been off? (e.g. since 3 days ago)"
+          ],
+          "got": {
+            "kind": "continue",
+            "reason": "가로등이 언제부터 꺼졌는지 묻는 질문에 시민이 '어제부터'라고 답했습니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 4.3
+        },
+        {
+          "id": "TE02",
+          "stage": "asking",
+          "text": "I don't know",
+          "kind": "continue",
+          "questions": [
+            "Where exactly is the streetlight? (e.g. next to ○○ Apartment, Sangnam-dong, Seongsan-gu, Changwon)",
+            "Since when has it been off? (e.g. since 3 days ago)"
+          ],
+          "got": {
+            "kind": "continue",
+            "reason": "질문 단계에서 'I don't know(모름)'라고 답한 것은 지금 가로등 민원 질문에 대한 답이므로 continue입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.6
+        },
+        {
+          "id": "TE03",
+          "stage": "asking",
+          "text": "lol what",
+          "kind": "off_topic",
+          "questions": [
+            "Where exactly is the streetlight? (e.g. next to ○○ Apartment, Sangnam-dong, Seongsan-gu, Changwon)",
+            "Since when has it been off? (e.g. since 3 days ago)"
+          ],
+          "got": {
+            "kind": "off_topic",
+            "reason": "'lol what'은 위치나 꺼진 시점에 대한 답도 아니고, 새 불편이나 민원에 대한 구체적인 질문도 아닌 감탄·의미 없는 말입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 6.0
+        },
+        {
+          "id": "TE04",
+          "stage": "asking",
+          "text": "what should I eat for lunch",
+          "kind": "off_topic",
+          "questions": [
+            "Where exactly is the streetlight? (e.g. next to ○○ Apartment, Sangnam-dong, Seongsan-gu, Changwon)",
+            "Since when has it been off? (e.g. since 3 days ago)"
+          ],
+          "got": {
+            "kind": "off_topic",
+            "reason": "점심 메뉴를 묻는 말은 가로등 위치·시점 질문에 대한 답이 아니고, 새 불편이나 민원에 대한 질문도 아닌 다른 주제의 잡담입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.9
+        },
+        {
+          "id": "TE05",
+          "stage": "ready",
+          "text": "make it shorter",
+          "kind": "continue",
+          "got": {
+            "kind": "continue",
+            "reason": "ready 단계에서 시민이 영어로 민원 초안을 더 짧게 줄여 달라고 요청했으므로 초안 수정 요청에 해당합니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.6
+        },
+        {
+          "id": "TE06",
+          "stage": "ready",
+          "text": "thanks!",
+          "kind": "off_topic",
+          "got": {
+            "kind": "off_topic",
+            "reason": "ready 단계에서 고칠 점이나 보탤 내용 없이 감사 인사('thanks!')만 했으므로 off_topic입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 10.8
+        },
+        {
+          "id": "TE07",
+          "stage": "ready",
+          "text": "Also, trash is piled up in front of my house",
+          "kind": "new_complaint",
+          "got": {
+            "kind": "new_complaint",
+            "reason": "가로등 민원을 처리하던 중 시민이 집 앞에 쓰레기가 쌓여 있다는, 종류가 다른 불편을 새로 말했습니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.4
+        },
+        {
+          "id": "TQ01",
+          "stage": "asking",
+          "text": "왜 그런 걸 물어봐요?",
+          "kind": "question",
+          "got": {
+            "kind": "question",
+            "reason": "시민이 질문하는 이유만 묻고 있고, 답이나 수정 요청은 들어 있지 않습니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 4.9
+        },
+        {
+          "id": "TQ02",
+          "stage": "ready",
+          "text": "이 기관이 맞는 거예요?",
+          "kind": "question",
+          "got": {
+            "kind": "question",
+            "reason": "시민이 수정 요청이나 추가 정보 없이 담당 기관이 맞는지만 물었습니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.5
+        },
+        {
+          "id": "TQ03",
+          "stage": "ready",
+          "text": "처리는 얼마나 걸려요?",
+          "kind": "question",
+          "got": {
+            "kind": "question",
+            "reason": "지금 가로등 민원의 처리 기간을 묻기만 했고, 답변이나 고칠 내용은 없습니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 10.5
+        },
+        {
+          "id": "TQ04",
+          "stage": "asking",
+          "text": "왜 물어봐요? 어제부터예요",
+          "kind": "continue",
+          "got": {
+            "kind": "continue",
+            "reason": "이유를 묻는 말과 함께 '어제부터'라고 가로등이 꺼진 시점에 답했으므로 지금 민원에 이어지는 말입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.6
+        },
+        {
+          "id": "TQE1",
+          "stage": "asking",
+          "text": "Why do you need to know that?",
+          "kind": "question",
+          "questions": [
+            "Where exactly is the streetlight? (e.g. next to ○○ Apartment, Sangnam-dong, Seongsan-gu, Changwon)",
+            "Since when has it been off? (e.g. since 3 days ago)"
+          ],
+          "got": {
+            "kind": "question",
+            "reason": "시민이 질문에 답하거나 정보를 보태지 않고, 왜 위치와 시점을 물어보는지만 묻고 있습니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 4.6
+        },
+        {
+          "id": "TQE2",
+          "stage": "ready",
+          "text": "Is this the right office?",
+          "kind": "question",
+          "got": {
+            "kind": "question",
+            "reason": "시민이 수정 요청이나 추가 정보 없이 지금 민원의 담당 기관이 맞는지만 묻고 있습니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.5
+        },
+        {
+          "id": "TQE3",
+          "stage": "ready",
+          "text": "How long will it take to be processed?",
+          "kind": "question",
+          "got": {
+            "kind": "question",
+            "reason": "시민이 지금 민원의 처리 기간만 묻고 있고, 답변이나 수정 요청은 들어 있지 않습니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 4.4
+        },
+        {
+          "id": "TQV1",
+          "stage": "asking",
+          "text": "Sao phải hỏi cái đó?",
+          "kind": "question",
+          "questions": [
+            "Đèn đường ở chính xác chỗ nào? (VD: cạnh chung cư ○○, Sangnam-dong, Seongsan-gu, Changwon)",
+            "Đèn tắt từ khi nào? (VD: từ 3 ngày trước)"
+          ],
+          "got": {
+            "kind": "question",
+            "reason": "시민이 '왜 그걸 물어봐요?'라고 질문 이유만 묻고 있으며, 답변이나 보충 정보가 들어 있지 않으므로 지금 민원에 대한 질문입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.8
+        },
+        {
+          "id": "TQV2",
+          "stage": "ready",
+          "text": "Cơ quan này có đúng không?",
+          "kind": "question",
+          "got": {
+            "kind": "question",
+            "reason": "베트남어로 \"이 기관이 맞아요?\"라고 담당 기관이 맞는지만 물었고, 답변이나 수정 요청은 없음."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.6
+        },
+        {
+          "id": "TQV3",
+          "stage": "ready",
+          "text": "Mất bao lâu để xử lý?",
+          "kind": "question",
+          "got": {
+            "kind": "question",
+            "reason": "베트남어로 '처리하는 데 얼마나 걸려요?'라고 묻는 말로, 수정 요청이나 정보 보충 없이 지금 민원의 처리 기간만 묻고 있음."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.6
+        },
+        {
+          "id": "TQZ1",
+          "stage": "asking",
+          "text": "为什么要问这个？",
+          "kind": "question",
+          "questions": [
+            "路灯具体在哪里？（例：昌原市城山区上南洞○○公寓旁边）",
+            "从什么时候开始不亮的？（例：三天前开始）"
+          ],
+          "got": {
+            "kind": "question",
+            "reason": "시민이 '왜 이걸 물어보나요?'라고 질문의 이유만 묻고 있고, 위치나 시작 시점에 대한 답은 들어 있지 않아 민원 진행 과정에 대한 질문입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 4.8
+        },
+        {
+          "id": "TQZ2",
+          "stage": "ready",
+          "text": "这个机关对吗？",
+          "kind": "question",
+          "got": {
+            "kind": "question",
+            "reason": "중국어로 '이 기관이 맞아요?'라고 담당 기관이 맞는지 묻기만 했고, 답변이나 수정 요청은 없습니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.5
+        },
+        {
+          "id": "TQZ3",
+          "stage": "ready",
+          "text": "处理要多久？",
+          "kind": "question",
+          "got": {
+            "kind": "question",
+            "reason": "중국어로 '처리는 얼마나 걸려요?'라고 묻는 말이며, 지금 가로등 민원의 처리 기간만 물을 뿐 답변이나 수정 요청은 없습니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.7
+        },
+        {
+          "id": "TV01",
+          "stage": "asking",
+          "text": "Từ hôm qua",
+          "kind": "continue",
+          "questions": [
+            "Đèn đường ở chính xác chỗ nào? (VD: cạnh chung cư ○○, Sangnam-dong, Seongsan-gu, Changwon)",
+            "Đèn tắt từ khi nào? (VD: từ 3 ngày trước)"
+          ],
+          "got": {
+            "kind": "continue",
+            "reason": "'Từ hôm qua(어제부터)'는 가로등이 언제부터 꺼졌는지 묻는 질문에 대한 답이므로 지금 민원에 이어지는 말입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.4
+        },
+        {
+          "id": "TV02",
+          "stage": "asking",
+          "text": "Không biết",
+          "kind": "continue",
+          "questions": [
+            "Đèn đường ở chính xác chỗ nào? (VD: cạnh chung cư ○○, Sangnam-dong, Seongsan-gu, Changwon)",
+            "Đèn tắt từ khi nào? (VD: từ 3 ngày trước)"
+          ],
+          "got": {
+            "kind": "continue",
+            "reason": "질문을 받는 단계에서 시민이 베트남어로 '모름'이라고 답했으므로, 지금 민원에 대한 답으로 봅니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.5
+        },
+        {
+          "id": "TV03",
+          "stage": "asking",
+          "text": "hihi vui ghê",
+          "kind": "off_topic",
+          "questions": [
+            "Đèn đường ở chính xác chỗ nào? (VD: cạnh chung cư ○○, Sangnam-dong, Seongsan-gu, Changwon)",
+            "Đèn tắt từ khi nào? (VD: từ 3 ngày trước)"
+          ],
+          "got": {
+            "kind": "off_topic",
+            "reason": "'hihi vui ghê'(히히 재밌다)는 위치나 시점 질문에 대한 답이 아니고, 의미 없는 감탄과 잡담입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 4.7
+        },
+        {
+          "id": "TV04",
+          "stage": "asking",
+          "text": "trưa nay ăn gì nhỉ",
+          "kind": "off_topic",
+          "questions": [
+            "Đèn đường ở chính xác chỗ nào? (VD: cạnh chung cư ○○, Sangnam-dong, Seongsan-gu, Changwon)",
+            "Đèn tắt từ khi nào? (VD: từ 3 ngày trước)"
+          ],
+          "got": {
+            "kind": "off_topic",
+            "reason": "\"점심 뭐 먹지\"라는 잡담으로, 가로등 위치·시점 질문에 대한 답이나 새 민원, 민원 관련 질문이 아님."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.6
+        },
+        {
+          "id": "TV05",
+          "stage": "ready",
+          "text": "viết ngắn hơn",
+          "kind": "continue",
+          "got": {
+            "kind": "continue",
+            "reason": "베트남어 'viết ngắn hơn'은 '더 짧게 써 줘'라는 뜻으로, 완성된 초안을 고쳐 달라는 요청입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.6
+        },
+        {
+          "id": "TV06",
+          "stage": "ready",
+          "text": "cảm ơn nhiều",
+          "kind": "off_topic",
+          "got": {
+            "kind": "off_topic",
+            "reason": "베트남어 'cảm ơn nhiều'(정말 감사합니다)는 감사 인사일 뿐 수정 요청·새 민원·질문이 아니므로 off_topic입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.6
+        },
+        {
+          "id": "TV07",
+          "stage": "ready",
+          "text": "Còn nữa, trước nhà tôi rác chất thành đống",
+          "kind": "new_complaint",
+          "got": {
+            "kind": "new_complaint",
+            "reason": "가로등 민원 중에 시민이 베트남어로 '그리고 집 앞에 쓰레기가 쌓여 있다'고 해서 다른 종류의 새 불편을 말한 것이다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.7
+        },
+        {
+          "id": "TZ01",
+          "stage": "asking",
+          "text": "从昨天开始",
+          "kind": "continue",
+          "questions": [
+            "路灯具体在哪里？（例：昌原市城山区上南洞○○公寓旁边）",
+            "从什么时候开始不亮的？（例：三天前开始）"
+          ],
+          "got": {
+            "kind": "continue",
+            "reason": "'어제부터'라는 말은 가로등이 언제부터 꺼졌는지 묻는 질문에 대한 답이어서 지금 민원에 이어지는 말입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 10.6
+        },
+        {
+          "id": "TZ02",
+          "stage": "asking",
+          "text": "不知道",
+          "kind": "continue",
+          "questions": [
+            "路灯具体在哪里？（例：昌原市城山区上南洞○○公寓旁边）",
+            "从什么时候开始不亮的？（例：三天前开始）"
+          ],
+          "got": {
+            "kind": "continue",
+            "reason": "시민이 질문에 '모름(不知道)'으로 답한 것이므로 지금 가로등 민원에 이어지는 답변입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.6
+        },
+        {
+          "id": "TZ03",
+          "stage": "asking",
+          "text": "哈哈哈",
+          "kind": "off_topic",
+          "questions": [
+            "路灯具体在哪里？（例：昌原市城山区上南洞○○公寓旁边）",
+            "从什么时候开始不亮的？（例：三天前开始）"
+          ],
+          "got": {
+            "kind": "off_topic",
+            "reason": "'哈哈哈'는 웃음소리일 뿐이라 위치나 시점 질문에 대한 답, 새 불편, 민원에 대한 질문이 아닙니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 4.7
+        },
+        {
+          "id": "TZ04",
+          "stage": "asking",
+          "text": "中午吃什么好",
+          "kind": "off_topic",
+          "questions": [
+            "路灯具体在哪里？（例：昌原市城山区上南洞○○公寓旁边）",
+            "从什么时候开始不亮的？（例：三天前开始）"
+          ],
+          "got": {
+            "kind": "off_topic",
+            "reason": "'中午吃什么好(점심 뭐 먹지)'는 가로등 위치·시점 질문에 대한 답이 아니고, 새 불편이나 민원 질문도 아닌 잡담입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 4.4
+        },
+        {
+          "id": "TZ05",
+          "stage": "ready",
+          "text": "写短一点",
+          "kind": "continue",
+          "got": {
+            "kind": "continue",
+            "reason": "중국어로 '더 짧게 써 달라'고 한 것으로, ready 단계의 초안 수정 요청이므로 continue입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.6
+        },
+        {
+          "id": "TZ06",
+          "stage": "ready",
+          "text": "谢谢",
+          "kind": "off_topic",
+          "got": {
+            "kind": "off_topic",
+            "reason": "'谢谢'는 중국어로 '감사합니다'라는 인사여서 고칠 점이나 보탤 내용이 없으므로 off_topic입니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.7
+        },
+        {
+          "id": "TZ07",
+          "stage": "ready",
+          "text": "还有，我家门口垃圾堆成山了",
+          "kind": "new_complaint",
+          "got": {
+            "kind": "new_complaint",
+            "reason": "가로등 민원 초안이 완성된 단계에서 시민이 '그리고 우리 집 앞에 쓰레기가 산처럼 쌓였다'며 다른 종류의 불편인 쓰레기 문제를 새로 말했습니다."
+          },
+          "checks": {
+            "kind": true
+          },
+          "ok": true,
+          "source": "llm",
+          "error": "",
+          "seconds": 3.7
+        }
+      ]
+    }
+  }
+}

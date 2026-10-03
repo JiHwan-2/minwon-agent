@@ -175,6 +175,22 @@ export default function App() {
         setPhase(ev.stage);
         break;
       }
+      case "answer": {
+        // 진행 중인 민원에 대한 질문: Claude가 확인된 정보로 답하고, 진행은 그대로 둔다 (질문 중이면 같은 질문을 다시 보여 줌)
+        const entry = {
+          id: nextId(),
+          node: "answer",
+          status: "done",
+          log: { detailKey: "log.answered", guarded: ev.guarded, reason: ev.reason, source: ev.source, error: ev.error, at: now() },
+        };
+        setTimeline((t) => {
+          const waiting = t.findLastIndex((e) => e.status === "waiting");
+          return waiting === -1 ? [...t, entry] : [...t.slice(0, waiting), entry, ...t.slice(waiting)];
+        });
+        addMessage("agent", ev.message, ev.questions.length > 0 ? { questions: ev.questions, options: ev.options } : {});
+        setPhase(ev.stage);
+        break;
+      }
       case "topic_changed": {
         // 대화 중 다른 종류의 민원 → 새 민원으로 처음부터 (작업 기록도 새로 시작)
         revisingRef.current = false;

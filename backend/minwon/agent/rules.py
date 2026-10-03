@@ -5,6 +5,7 @@ import re
 from minwon import i18n, knowledge
 from minwon.tools import regions
 from minwon.agent.schemas import (
+    ChatReply,
     Critique,
     Decision,
     Draft,
@@ -231,3 +232,7 @@ class RuleBrain:
     def translate(self, ctx: dict) -> Translation:
         """번역은 규칙으로 할 수 없으니 한국어 원문을 그대로 돌려준다 (화면은 한국어로 보여 줌)."""
         return Translation.model_validate(ctx["source"])
+
+    def chat(self, ctx: dict) -> ChatReply:
+        """자유 대화는 규칙으로 할 수 없으니 정해 둔 대체 문장을 돌려준다."""
+        return ChatReply(reply=ctx["fallback"])

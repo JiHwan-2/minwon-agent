@@ -12,7 +12,7 @@ from langgraph.types import Command
 from pydantic import BaseModel, Field
 
 from minwon import i18n, safety
-from minwon.agent import cancel, topic
+from minwon.agent import cancel, conversation, topic
 from minwon.agent.brain import get_brain
 from minwon.agent.graph import build_graph, revision_input, start_input
 from minwon.settings import settings
@@ -31,7 +31,7 @@ sessions: dict[str, dict] = {}
 
 SNAPSHOT_KEYS = (
     "safety", "understanding", "plan", "info", "dialogue", "location", "nearby", "agencies", "cases",
-    "tool_calls", "decision", "package", "review", "translation", "files", "location_confirmed", "log",
+    "tool_calls", "decision", "package", "review", "translation", "files", "location_confirmed", "chat_history", "log",
 )
 RESULT_KEYS = ("info", "location", "location_confirmed", "agencies", "cases", "decision", "package", "review", "translation", "files")
 
@@ -140,6 +140,15 @@ def _run(session_id: str, text: str, lang_hint: str = "") -> Iterator[str]:
         if stage and topic.worth_checking(masked.text, stage):
             with cancel.scope(session_id):
                 turn = topic.detect(snapshot.values, pending, masked.text)
+        if turn and turn["kind"] == "question":
+            # 진행 중인 민원에 대한 질문: 지금까지 확인된 정보로 Claude가 답하고, 흐름은 그대로 둔다
+            with cancel.scope(session_id):
+                reply = conversation.answer(snapshot.values, pending, masked.text)
+            yield _event(type="answer", stage=stage, message=reply["reply"], guarded=reply["guarded"],
+                         reason=turn["reason"], source=reply["source"], error=reply["error"],
+                         questions=pending["questions"] if pending else [],
+                         options=pending.get("options", []) if pending else [])
+            return
         if turn and turn["kind"] == "off_topic":
             # 위기 표현이면 질문을 다시 들이밀지 않고, 하던 민원은 그대로 둔 채 쉬어 가게 한다
             reask = pending and not crisis
@@ -165,7 +174,7 @@ def _run(session_id: str, text: str, lang_hint: str = "") -> Iterator[str]:
             text = f"{snapshot.values['user_input']}\n{masked.text}" if intent == "unclear" else masked.text
             sessions[session_id] = {"thread": uuid.uuid4().hex, "rollback": None}  # 중단하면 previous·before로 되돌아감
             config = _config(session_id)
-            graph_input = start_input(text, masked.findings, hint)
+            graph_input = start_input(text, masked.findings, hint, snapshot.values.get("chat_history"), masked.text)
         elif snapshot.values:
             yield _event(type="error", code="session_busy", message=i18n.t("error.busy", lang))
             return

@@ -271,7 +271,7 @@ def report(result: dict) -> str:
     if "turn" in parts:
         s = parts["turn"]["summary"]
         lines += [
-            f"| 대화 도중 판단 정확도 | {pct(s['all_ok'], s['cases'])} | 이어지는 말·다른 민원·관계없는 말 |",
+            f"| 대화 도중 판단 정확도 | {pct(s['all_ok'], s['cases'])} | 이어지는 말·다른 민원·질문·관계없는 말 |",
             f"| 답·수정 요청을 관계없는 말로 오해 | {pct(*s['missed_answers'])} | 낮을수록 좋음 |",
             f"| 관계없는 말을 거른 비율 | {pct(*s['off_topic'])} | |",
             f"| 대화 도중 판단 시간 | 평균 {s['seconds_avg']}초 | 짧은 답 {s['skipped']}건은 판단 없이 바로 처리 |",

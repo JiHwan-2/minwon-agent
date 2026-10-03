@@ -135,6 +135,13 @@ TEXT: dict[str, dict[str, str]] = {
         "zh": "上一个处理尚未结束。请点击“新的投诉”重新开始。",
         "en": "The previous request isn't finished. Please start again with 'New request'.",
     },
+    # 진행 중 질문에 대한 Claude의 답에 확인되지 않은 연락처가 섞였을 때 대신 보내는 문장
+    "answer.fallback": {
+        "ko": "그 내용은 지금 확인된 정보만으로는 정확히 안내하기 어려워요. 제출 사이트나 담당 기관에서 확인해 주세요.",
+        "vi": "Với thông tin đã xác nhận hiện tại, tôi khó hướng dẫn chính xác nội dung đó. Vui lòng kiểm tra trên trang nộp đơn hoặc hỏi cơ quan phụ trách.",
+        "zh": "仅凭目前确认的信息，很难准确告知这一内容。请在提交网站或向负责机关确认。",
+        "en": "I can't answer that accurately with the information confirmed so far. Please check on the submission site or with the responsible office.",
+    },
 }
 
 # 다른 창구 안내 카드 번역 (원문·번호·주소는 knowledge/agencies.json의 referrals). 기관 이름은 한국어 원문을 괄호로 남겨 찾을 수 있게 한다.

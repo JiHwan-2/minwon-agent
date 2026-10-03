@@ -46,6 +46,7 @@ def _use(monkeypatch, primary):
     brain = brain_module.Brain(primary)
     monkeypatch.setattr("minwon.agent.nodes.get_brain", lambda: brain)
     monkeypatch.setattr("minwon.agent.topic.get_brain", lambda: brain)
+    monkeypatch.setattr("minwon.agent.conversation.get_brain", lambda: brain)
 
 
 def _state(sid: str) -> dict:

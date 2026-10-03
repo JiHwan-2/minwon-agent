@@ -4,7 +4,7 @@ from langgraph.graph import END, START, StateGraph
 from minwon.agent import nodes
 from minwon.agent.state import AgentState
 
-NODE_ORDER = ["guard", "understand", "plan", "check", "ask", "locate", "confirm_location", "act", "decide", "draft", "review", "translate", "deliver"]
+NODE_ORDER = ["guard", "understand", "chat", "plan", "check", "ask", "locate", "confirm_location", "act", "decide", "draft", "review", "translate", "deliver"]
 
 
 def build_graph(checkpointer=None):
@@ -14,7 +14,8 @@ def build_graph(checkpointer=None):
 
     g.add_conditional_edges(START, nodes.route_entry, {"guard": "guard", "draft": "draft"})
     g.add_edge("guard", "understand")
-    g.add_conditional_edges("understand", nodes.route_after_understand, {"plan": "plan", "end": END})
+    g.add_conditional_edges("understand", nodes.route_after_understand, {"plan": "plan", "chat": "chat", "end": END})
+    g.add_edge("chat", END)
     g.add_edge("plan", "check")
     g.add_conditional_edges("check", nodes.route_after_check, {"ask": "ask", "locate": "locate", "act": "act"})
     g.add_edge("ask", "check")
@@ -29,9 +30,12 @@ def build_graph(checkpointer=None):
     return g.compile(checkpointer=checkpointer or InMemorySaver())
 
 
-def start_input(masked_text: str, pii_findings: list[dict], lang_hint: str = "") -> dict:
+def start_input(masked_text: str, pii_findings: list[dict], lang_hint: str = "",
+                chat_history: list[dict] | None = None, latest: str = "") -> dict:
     return {
         "user_input": masked_text,
+        "latest": latest or masked_text,
+        "chat_history": chat_history or [],
         "pii_findings": pii_findings,
         "lang_hint": lang_hint,
         "dialogue": [{"role": "user", "text": masked_text}],

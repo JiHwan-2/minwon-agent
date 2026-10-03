@@ -166,7 +166,21 @@
     {"id": "TV04", "stage": "asking", "text": "trưa nay ăn gì nhỉ", "kind": "off_topic", "questions": ["Đèn đường ở chính xác chỗ nào? (VD: cạnh chung cư ○○, Sangnam-dong, Seongsan-gu, Changwon)", "Đèn tắt từ khi nào? (VD: từ 3 ngày trước)"]},
     {"id": "TV05", "stage": "ready", "text": "viết ngắn hơn", "kind": "continue"},
     {"id": "TV06", "stage": "ready", "text": "cảm ơn nhiều", "kind": "off_topic"},
-    {"id": "TV07", "stage": "ready", "text": "Còn nữa, trước nhà tôi rác chất thành đống", "kind": "new_complaint"}
+    {"id": "TV07", "stage": "ready", "text": "Còn nữa, trước nhà tôi rác chất thành đống", "kind": "new_complaint"},
+
+    {"id": "TQ01", "stage": "asking", "text": "왜 그런 걸 물어봐요?", "kind": "question"},
+    {"id": "TQ02", "stage": "ready", "text": "이 기관이 맞는 거예요?", "kind": "question"},
+    {"id": "TQ03", "stage": "ready", "text": "처리는 얼마나 걸려요?", "kind": "question"},
+    {"id": "TQ04", "stage": "asking", "text": "왜 물어봐요? 어제부터예요", "kind": "continue"},
+    {"id": "TQE1", "stage": "asking", "text": "Why do you need to know that?", "kind": "question", "questions": ["Where exactly is the streetlight? (e.g. next to ○○ Apartment, Sangnam-dong, Seongsan-gu, Changwon)", "Since when has it been off? (e.g. since 3 days ago)"]},
+    {"id": "TQE2", "stage": "ready", "text": "Is this the right office?", "kind": "question"},
+    {"id": "TQE3", "stage": "ready", "text": "How long will it take to be processed?", "kind": "question"},
+    {"id": "TQZ1", "stage": "asking", "text": "为什么要问这个？", "kind": "question", "questions": ["路灯具体在哪里？（例：昌原市城山区上南洞○○公寓旁边）", "从什么时候开始不亮的？（例：三天前开始）"]},
+    {"id": "TQZ2", "stage": "ready", "text": "这个机关对吗？", "kind": "question"},
+    {"id": "TQZ3", "stage": "ready", "text": "处理要多久？", "kind": "question"},
+    {"id": "TQV1", "stage": "asking", "text": "Sao phải hỏi cái đó?", "kind": "question", "questions": ["Đèn đường ở chính xác chỗ nào? (VD: cạnh chung cư ○○, Sangnam-dong, Seongsan-gu, Changwon)", "Đèn tắt từ khi nào? (VD: từ 3 ngày trước)"]},
+    {"id": "TQV2", "stage": "ready", "text": "Cơ quan này có đúng không?", "kind": "question"},
+    {"id": "TQV3", "stage": "ready", "text": "Mất bao lâu để xử lý?", "kind": "question"}
   ],
   "e2e": [
     {"id": "A01", "text": "창원시 마산회원구 합성동 합성초등학교 후문 골목 보안등이 일주일째 밤마다 꺼져 있어요",
