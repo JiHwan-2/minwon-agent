@@ -62,7 +62,8 @@ def run_understand(case: dict) -> dict:
     out = get_brain().call("understand", masked.text)
     seconds = round(time.perf_counter() - started, 1)
     u = out.value
-    got = {"intent": u.intent, "category": u.category, "referral": u.referral, "language": u.language, "title": u.title, "reply": u.reply}
+    got = {"intent": u.intent, "category": u.category, "service": u.service, "referral": u.referral, "language": u.language,
+           "title": u.title, "reply": u.reply}
     detected = {
         "pii": sorted(f["kind"] for f in masked.findings),
         "emergency": safety.is_emergency(masked.text),
@@ -82,6 +83,8 @@ def score_understand(case: dict, got: dict, detected: dict) -> dict:
         checks["category"] = got["intent"] == "complaint" and accepts(case["category"], got["category"])
     if "referral" in case:
         checks["referral"] = got["intent"] == "referral" and got["referral"] == case["referral"]
+    if "service" in case:
+        checks["service"] = got["intent"] == "service" and got.get("service") == case["service"]
     for key, want in case.get("safety", {}).items():
         checks[f"safety.{key}"] = detected[key] == (sorted(want) if key == "pii" else want)
     if "language" in case:
@@ -121,6 +124,7 @@ def summarize_understand(rows: list[dict]) -> dict:
     complaints = [r for r in rows if expected(r) == "complaint"]
     to_filter = [r for r in rows if expected(r) and all(i in FILTERED for i in (expected(r) if isinstance(expected(r), list) else [expected(r)]))]
     referrals = [r for r in rows if "referral" in r["checks"]]
+    services = [r for r in rows if "service" in r["checks"]]
     categories = [r for r in rows if "category" in r["checks"]]
     safety_rows = [r for r in rows if any(k.startswith("safety.") for k in r["checks"])]
     groups: dict[str, list[int]] = {}
@@ -136,6 +140,7 @@ def summarize_understand(rows: list[dict]) -> dict:
         "blocked_complaints": [sum(r["got"]["intent"] != "complaint" for r in complaints), len(complaints)],
         "filtered": [sum(r["got"]["intent"] in FILTERED for r in to_filter), len(to_filter)],
         "referral": [sum(r["checks"]["referral"] for r in referrals), len(referrals)],
+        "service": [sum(r["checks"]["service"] for r in services), len(services)],
         "category": [sum(r["checks"]["category"] for r in categories), len(categories)],
         "safety": [sum(all(v for k, v in r["checks"].items() if k.startswith("safety.")) for r in safety_rows), len(safety_rows)],
         "groups": groups,
@@ -402,6 +407,7 @@ def report(result: dict) -> str:
             f"| 진짜 민원을 막은 비율 | {pct(*s['blocked_complaints'])} | 낮을수록 좋음. 민원인데 흐름을 시작하지 않은 경우 |",
             f"| 걸러야 할 입력을 거른 비율 | {pct(*s['filtered'])} | 잡담·의미 없는 말·불분명한 말을 민원 흐름에 넣지 않음 |",
             f"| 다른 창구 정확도 | {pct(*s['referral'])} | 소비자 피해·임금체불·사기·개인 간 분쟁 → 맞는 창구 |",
+            f"| 민원 서비스 분류 | {pct(*s.get('service', [0, 0]))} | 서류 발급·신고·신청 질문 → 맞는 민원 서비스 |",
             f"| 생활불편 유형 정확도 | {pct(*s['category'])} | 유형이 맞아야 담당 부서가 맞음 |",
             f"| 안전 감지 | {pct(*s['safety'])} | 개인정보·긴급상황·위기 표현·지시 주입 (규칙, AI 판단과 무관) |",
             f"| 문제 분석 판단 시간 | 평균 {s['seconds_avg']}초 · 최대 {s['seconds_max']}초 | Claude 호출 1회 |",
@@ -453,8 +459,8 @@ def report(result: dict) -> str:
                 continue
             failed = ", ".join(k for k, v in r["checks"].items() if not v)
             if name == "understand":
-                want = " · ".join(x for x in (show(r.get("intent", "")), show(r.get("category", "")), r.get("referral", "")) if x)
-                got = f"{r['got']['intent']} · {r['got']['category']}" + (f" · {r['got']['referral']}" if r["got"]["intent"] == "referral" else "")
+                want = " · ".join(x for x in (show(r.get("intent", "")), show(r.get("category", "")), r.get("referral", ""), r.get("service", "")) if x)
+                got = f"{r['got']['intent']} · {r['got']['category']}" + (f" · {r['got']['referral']}" if r["got"]["intent"] == "referral" else "")                     + (f" · {r['got'].get('service')}" if r["got"]["intent"] == "service" else "")
             elif name == "turn":
                 want, got = f"{r['stage']} · {r['kind']}", f"{r['got']['kind']} ({r['got']['reason']})"
             elif name == "revision":
@@ -485,6 +491,7 @@ METRICS = [
     ("understand", "입력 확인 판단", lambda s: s["intent"]),
     ("understand", "진짜 민원을 막은 경우 (낮을수록 좋음)", lambda s: s["blocked_complaints"]),
     ("understand", "다른 창구", lambda s: s["referral"]),
+    ("understand", "민원 서비스", lambda s: s.get("service", [0, 0])),
     ("understand", "생활불편 유형", lambda s: s["category"]),
     ("turn", "대화 도중 판단", lambda s: (s["all_ok"], s["cases"])),
     ("turn", "답·수정 요청을 관계없는 말로 오해 (낮을수록 좋음)", lambda s: s["missed_answers"]),
@@ -499,6 +506,8 @@ METRICS = [
 def answer_of(part: str, got: dict) -> str:
     """회차마다 같은 답을 냈는지 비교할 핵심 답."""
     if part == "understand":
+        if got["intent"] == "service":
+            return f"service·{got.get('service')}"
         return f"{got['intent']}·{got['referral'] if got['intent'] == 'referral' else got['category']}"
     if part == "turn":
         return got["kind"]

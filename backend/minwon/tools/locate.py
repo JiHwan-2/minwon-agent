@@ -31,6 +31,7 @@ def _with_region(candidate: dict, query: str) -> tuple[dict, int]:
         loc |= {"sido": admin["region_1depth_name"], "sigungu": admin["region_2depth_name"], "dong": admin["region_3depth_name"]}
     if legal:
         loc["legal_dong"] = legal["region_3depth_name"]
+        loc["region_code"] = legal.get("code", "")  # 법정동 코드 (앞 두 자리가 시·도, 무인민원발급기 공공데이터 조회에 씀)
     return loc, n - 1
 
 

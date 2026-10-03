@@ -46,14 +46,17 @@ backend/minwon/
   safety.py     개인정보 가림, 긴급상황·위기 표현·지시 주입 감지
   i18n.py       다국어(한국어·영어·중국어·베트남어): 언어 감지, 정해진 안내문·다른 창구 카드 번역
   agent/        LangGraph 워크플로 (graph.py), 단계(nodes.py), 판단 엔진(brain.py: Claude Code `claude -p` → 실패 시 rules.py)
-  tools/        카카오 로컬 API, 위치 확인·후보, 주변 기관, 지식베이스 조회, 비슷한 민원 사례(공공데이터), 민원 패키지 PDF
-  knowledge/    생활불편 유형·필수 정보(categories.json), 담당 부서·창구·절차·증빙(agencies.json)
+  tools/        카카오 로컬 API, 위치 확인·후보, 주변 기관, 지식베이스 조회, 비슷한 민원 사례(공공데이터), 민원 패키지 PDF,
+                현장 사진(photo.py), 민원 서비스 기관·발급기·운영 여부(offices.py, kiosk.py)
+  knowledge/    생활불편 유형·필수 정보(categories.json), 담당 부서·창구·절차·증빙(agencies.json),
+                민원 서비스 17종·기관 9종·공휴일(services.json)
 frontend/src/
   App.jsx       스트리밍 이벤트 → 화면 상태, 화면 언어(시민의 언어로 자동 전환)
   i18n.js       화면 글자 번역 (서버 i18n.py와 같은 4개 언어, 키를 추가하면 4개 언어 모두에 넣기)
   components/   Chat(대화) · AgentLog(작업 기록) · PackageCard(민원 패키지)
 ```
 Workflow: guard → (사진이면 look → confirm_photo ⇄) → understand → plan → check ⇄ ask → locate ⇄ confirm_location → act → decide → draft ⇄ review → deliver (완성 후 수정 요청 → draft)
+민원 서비스(서류 발급·신고·신청 17종, knowledge/services.json): understand가 intent=service → svc_plan(템플릿) → svc_check ⇄ ask(지금 위치, 전입신고·복지·대형폐기물은 주소지) → locate ⇄ confirm_location → svc_act(tools/offices.py: 지식베이스·가까운 기관 9종·무인민원발급기(카카오 + tools/kiosk.py 공공데이터 운영시간)·지금 운영 여부) → svc_answer. 이어서 묻는 말은 확정한 위치를 그대로 씀. 수수료·운영시간은 지자체마다 다를 수 있어 근거·확인일을 함께 보여 준다
 현장 사진: tools/photo.py가 줄인 사본(메타데이터 제거)만 메모리에 두고 EXIF에서 GPS·촬영 시각을 읽음. look이 GPS→주소(카카오)·Claude 이미지 분석(`claude -p` stream-json 입력)으로 확인 질문을 만들고, confirm_photo가 예/아니요 답을 판단. 사진 위치가 있으면 check는 위치를 묻지 않고 locate를 건너뜀
 understand에서 Claude가 입력 확인: 민원 아님·불분명이면 chat 단계(agent/conversation.py)에서 앞 대화를 기억해 자유롭게 답하고 끝, 다른 창구(소비자 피해·임금체불·사기·개인 간 분쟁 → agencies.json의 referrals)면 정해진 카드로 안내하고 끝. 위기 표현은 safety.py가 AI보다 먼저 109 안내
 외국어 시민: 대화·질문은 시민의 언어로, 민원 초안·PDF는 한국어로 쓰고 검증 통과 후 translate 단계에서 번역본을 만든다 (화면에서 한국어 원문으로 전환해 제출)

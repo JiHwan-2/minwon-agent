@@ -19,7 +19,7 @@ GIMHAE_SCHOOL = {"place_name": "김해초등학교", "address_name": "경남 김
 
 def _region(gu: str, admin: str, legal: str) -> list[dict]:
     return [
-        {"region_type": "B", "region_1depth_name": "경상남도", "region_2depth_name": gu, "region_3depth_name": legal},
+        {"region_type": "B", "region_1depth_name": "경상남도", "region_2depth_name": gu, "region_3depth_name": legal, "code": "4812710100"},
         {"region_type": "H", "region_1depth_name": "경상남도", "region_2depth_name": gu, "region_3depth_name": admin},
     ]
 

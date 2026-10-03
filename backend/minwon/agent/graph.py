@@ -5,7 +5,7 @@ from minwon.agent import nodes
 from minwon.agent.state import AgentState
 
 NODE_ORDER = ["guard", "look", "confirm_photo", "understand", "chat", "plan", "check", "ask", "locate", "confirm_location", "act",
-              "decide", "draft", "review", "translate", "deliver"]
+              "decide", "draft", "review", "translate", "deliver", "svc_plan", "svc_check", "svc_act", "svc_answer"]
 
 
 def build_graph(checkpointer=None):
@@ -18,13 +18,20 @@ def build_graph(checkpointer=None):
     g.add_conditional_edges("guard", nodes.route_after_guard, {"look": "look", "understand": "understand"})
     g.add_conditional_edges("look", nodes.route_after_look, {"confirm_photo": "confirm_photo", "understand": "understand"})
     g.add_conditional_edges("confirm_photo", nodes.route_after_confirm_photo, {"confirm_photo": "confirm_photo", "understand": "understand"})
-    g.add_conditional_edges("understand", nodes.route_after_understand, {"plan": "plan", "chat": "chat", "end": END})
+    g.add_conditional_edges("understand", nodes.route_after_understand,
+                            {"plan": "plan", "svc_plan": "svc_plan", "chat": "chat", "end": END})
     g.add_edge("chat", END)
     g.add_edge("plan", "check")
     g.add_conditional_edges("check", nodes.route_after_check, {"ask": "ask", "locate": "locate", "act": "act"})
-    g.add_edge("ask", "check")
-    g.add_conditional_edges("locate", nodes.route_after_locate, {"confirm_location": "confirm_location", "act": "act"})
-    g.add_conditional_edges("confirm_location", nodes.route_after_confirm, {"locate": "locate", "act": "act"})
+    g.add_conditional_edges("ask", nodes.route_after_ask, {"check": "check", "svc_check": "svc_check"})
+    after_location = {"act": "act", "svc_act": "svc_act"}
+    g.add_conditional_edges("locate", nodes.route_after_locate, {"confirm_location": "confirm_location", **after_location})
+    g.add_conditional_edges("confirm_location", nodes.route_after_confirm, {"locate": "locate", **after_location})
+    # 민원 서비스 안내 (서류 발급·신고·신청): 계획 → 필요한 정보 ⇄ 질문 → 위치 → 기관·발급기·운영 여부 → 안내
+    g.add_edge("svc_plan", "svc_check")
+    g.add_conditional_edges("svc_check", nodes.route_after_svc_check, {"ask": "ask", "locate": "locate", "svc_act": "svc_act"})
+    g.add_edge("svc_act", "svc_answer")
+    g.add_edge("svc_answer", END)
     g.add_edge("act", "decide")
     g.add_edge("decide", "draft")
     g.add_edge("draft", "review")
@@ -35,8 +42,12 @@ def build_graph(checkpointer=None):
 
 
 def start_input(masked_text: str, pii_findings: list[dict], lang_hint: str = "",
-                chat_history: list[dict] | None = None, latest: str = "", photo: dict | None = None) -> dict:
+                chat_history: list[dict] | None = None, latest: str = "", photo: dict | None = None,
+                location: dict | None = None) -> dict:
+    """location: 민원 서비스 안내에 이어서 묻는 말이면 앞에서 확정한 위치 (다시 묻지 않게)."""
+    kept = {"location": location, "location_confirmed": True} if location else {"location": {}, "location_confirmed": False}
     return {
+        **kept,
         "user_input": masked_text,
         "latest": latest or masked_text,
         "chat_history": chat_history or [],

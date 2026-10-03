@@ -31,6 +31,18 @@ function GuardBody({ safety }) {
 
 function UnderstandBody({ u, chatted }) {
   const { t } = useI18n();
+  if (u.intent === "service") {
+    return (
+      <div className="body">
+        <div className="row">
+          <span className="tag">{t("intent.service")}</span>
+          <span className="tag">{t(`group.${u.service_group}`)}</span>
+        </div>
+        <p className="strong">{t(`service.${u.service}`)}</p>
+        <p>{u.summary}</p>
+      </div>
+    );
+  }
   if (u.intent && u.intent !== "complaint") {
     return (
       <div className="body">
@@ -122,7 +134,9 @@ function AskBody({ entry }) {
 
 function toolTitle(tool, t) {
   const [name, kind] = tool.split(":");
-  return name === "find_nearby" ? t("tool.find_nearby", { kind: t(`nearby.${kind}`) }) : t(`tool.${name}`);
+  if (name === "find_nearby") return t("tool.find_nearby", { kind: t(`nearby.${kind}`) });
+  if (name === "find_offices") return t("tool.find_offices", { kind: t(`office.${kind}`) });
+  return t(`tool.${name}`);
 }
 
 function ToolCall({ call }) {
@@ -241,6 +255,19 @@ function ConfirmBody({ entry }) {
   );
 }
 
+// 민원 서비스 안내 정리: Claude가 쓴 바로 답과 지금 추천
+function GuideLogBody({ guide }) {
+  const { t } = useI18n();
+  return (
+    <div className="body">
+      <p className="strong">{t(`service.${guide.code}`)}</p>
+      <p className="small">{guide.summary}</p>
+      {guide.recommendation && <p className="small muted">→ {guide.recommendation}</p>}
+      {guide.guarded && <p className="small warn">{t("guide.guarded")}</p>}
+    </div>
+  );
+}
+
 // 사진 분석: Tool(사진 정보 읽기·좌표→주소)과 Claude가 사진에서 찾은 장면·불편
 function LookBody({ entry }) {
   const { t } = useI18n();
@@ -312,8 +339,11 @@ function Body({ entry, next }) {
   if (entry.node === "confirm_location") return <ConfirmBody entry={entry} />;
   if (entry.node === "look") return <LookBody entry={entry} />;
   if (entry.node === "confirm_photo") return <PhotoAnswerBody entry={entry} />;
-  if (entry.node === "act" || entry.node === "locate" || entry.node === "deliver") return <ActBody entry={entry} />;
+  if (["act", "locate", "deliver", "svc_act"].includes(entry.node)) return <ActBody entry={entry} />;
   if (entry.status !== "done") return null;
+  if (entry.node === "svc_plan") return <PlanBody plan={d.plan} />;
+  if (entry.node === "svc_check") return <CheckBody info={d.info} />;
+  if (entry.node === "svc_answer") return <GuideLogBody guide={d.guide} />;
   if (entry.node === "decide") return <DecideBody decision={d.decision} />;
   if (entry.node === "draft") return <DraftBody entry={entry} />;
   if (entry.node === "review") return <ReviewBody review={d.review} />;
@@ -327,7 +357,7 @@ function Body({ entry, next }) {
 }
 
 function entryTitle(entry, t) {
-  if (entry.node === "understand" && entry.log && entry.data?.understanding?.intent !== "complaint") return t("log.inputCheck");
+  if (entry.node === "understand" && entry.log && !["complaint", "service"].includes(entry.data?.understanding?.intent)) return t("log.inputCheck");
   if (entry.node === "draft" && entry.log?.title?.includes("사용자")) return t("log.draftRevision");
   if (entry.node === "draft" && entry.log?.title?.includes("검증")) return t("log.draftReview");
   return t(`node.${entry.node}`);

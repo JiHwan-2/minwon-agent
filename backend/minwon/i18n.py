@@ -50,6 +50,27 @@ def t(key: str, lang: str | None, **values) -> str:
     return texts.get(ui_lang(lang), texts["ko"]).format(**values)
 
 
+OFFICES = {  # 찾아갈 기관 이름 (한국어는 knowledge/services.json의 label)
+    "en": {"community_center": "community service center (행정복지센터)", "sigungu_office": "city/county/district office (시·군·구청)",
+           "police": "police station (경찰서)", "license_center": "driver's license test center (운전면허시험장)",
+           "nhis": "National Health Insurance Service branch (국민건강보험공단)", "tax_office": "tax office (세무서)",
+           "registry_office": "registry office (등기소)", "military_office": "Military Manpower office (병무청)",
+           "car_registry": "vehicle registration office (차량등록사업소)"},
+    "zh": {"community_center": "行政福利中心（행정복지센터）", "sigungu_office": "市·郡·区厅（시·군·구청）", "police": "警察署（경찰서）",
+           "license_center": "驾驶执照考场（운전면허시험장）", "nhis": "国民健康保险公团分社（국민건강보험공단）", "tax_office": "税务署（세무서）",
+           "registry_office": "登记所（등기소）", "military_office": "兵务厅（병무청）", "car_registry": "车辆登记事务所（차량등록사업소）"},
+    "vi": {"community_center": "trung tâm hành chính phúc lợi (행정복지센터)", "sigungu_office": "ủy ban thành phố/huyện/quận (시·군·구청)",
+           "police": "đồn cảnh sát (경찰서)", "license_center": "trung tâm sát hạch lái xe (운전면허시험장)",
+           "nhis": "chi nhánh Bảo hiểm Y tế Quốc gia (국민건강보험공단)", "tax_office": "cục thuế (세무서)",
+           "registry_office": "văn phòng đăng ký (등기소)", "military_office": "cục nghĩa vụ quân sự (병무청)",
+           "car_registry": "văn phòng đăng ký xe (차량등록사업소)"},
+}
+
+
+def office(kind: str, lang: str | None, korean: str) -> str:
+    return OFFICES.get(ui_lang(lang), {}).get(kind, korean)
+
+
 def referral(code: str, lang: str | None, base: dict) -> dict:
     """다른 창구 안내 카드: 지식베이스(한국어) 위에 그 언어 번역을 덮는다."""
     lang = ui_lang(lang)
@@ -117,6 +138,40 @@ TEXT: dict[str, dict[str, str]] = {
         "zh": "与“{query}”相符的地点有{count}处。是哪一处？请选择编号，或告诉我更准确的地点名称或地址。",
         "en": "There are {count} places matching '{query}'. Which one is it? Pick a number, or tell me a more exact place name or address.",
     },
+    "svc.ask.here": {
+        "ko": "가까운 기관과 무인민원발급기를 찾아 드릴게요. 지금 계신 곳이나 가실 동네를 알려 주세요. (예: 창원시 성산구 상남동)",
+        "vi": "Tôi sẽ tìm cơ quan và máy cấp giấy tờ tự động gần bạn. Hãy cho biết bạn đang ở đâu hoặc khu phố bạn sẽ đến. (VD: 창원시 성산구 상남동)",
+        "zh": "我来帮您查找附近的机关和无人民愿发证机。请告诉我您现在所在的地方或要去的街区。（例：창원시 성산구 상남동）",
+        "en": "I'll find nearby offices and self-service kiosks. Please tell me where you are now or which neighborhood you'll go to. (e.g., 창원시 성산구 상남동)",
+    },
+    "svc.ask.residence": {
+        "ko": "주민등록 주소지(이사했다면 새 주소)를 알려 주세요. 그 주소지 관할 기관에서 처리해요. (예: 창원시 의창구 팔용동)",
+        "vi": "Hãy cho biết địa chỉ đăng ký cư trú (nếu đã chuyển nhà thì địa chỉ mới). Việc này do cơ quan quản lý địa chỉ đó xử lý. (VD: 창원시 의창구 팔용동)",
+        "zh": "请告诉我您的居民登记地址（如已搬家，请告诉新地址）。由该地址的管辖机关办理。（例：창원시 의창구 팔용동）",
+        "en": "Please tell me your registered address (your new address if you've moved). The office in charge of that address handles it. (e.g., 창원시 의창구 팔용동)",
+    },
+    "svc.ask.vague": {
+        "ko": "'{place}'만으로는 가까운 기관을 찾기 어려워요. 동 이름이나 도로명 주소를 알려 주세요. (예: 상남동, 중앙대로 151)",
+        "vi": "Chỉ với '{place}' thì khó tìm cơ quan gần nhất. Hãy cho biết tên phường (dong) hoặc địa chỉ đường. (VD: 상남동, 중앙대로 151)",
+        "zh": "仅凭“{place}”很难找到附近的机关。请告诉我洞名或道路名地址。（例：상남동、중앙대로 151）",
+        "en": "It's hard to find nearby offices from '{place}' alone. Please tell me the neighborhood (dong) or street address. (e.g., 상남동, 중앙대로 151)",
+    },
+    "svc.goal": {
+        "ko": "{label}: 지금 갈 수 있는 가까운 곳과 가장 편한 방법을 안내합니다.",
+        "vi": "{label}: Hướng dẫn nơi gần bạn có thể đến ngay và cách thuận tiện nhất.",
+        "zh": "{label}：为您介绍现在可以去的附近地点和最方便的办理方式。",
+        "en": "{label}: Find nearby places you can go now and the easiest way to get it done.",
+    },
+    "svc.step.service_kb": {"ko": "받는 방법·수수료 확인", "vi": "Kiểm tra cách làm và lệ phí", "zh": "确认办理方式和费用", "en": "Check how to get it and the fees"},
+    "svc.step.ask.here": {"ko": "지금 계신 곳 확인", "vi": "Hỏi vị trí hiện tại", "zh": "确认您现在的位置", "en": "Ask where you are"},
+    "svc.step.ask.residence": {"ko": "주민등록 주소지 확인", "vi": "Hỏi địa chỉ đăng ký cư trú", "zh": "确认居民登记地址", "en": "Ask your registered address"},
+    "svc.step.geocode": {"ko": "지도에서 위치 확인", "vi": "Xác định vị trí trên bản đồ", "zh": "在地图上确认位置", "en": "Find the location on the map"},
+    "svc.step.find_offices": {"ko": "가까운 {office} 찾기", "vi": "Tìm {office} gần đó", "zh": "查找附近的{office}", "en": "Find a nearby {office}"},
+    "svc.step.find_kiosks": {"ko": "가까운 무인민원발급기 찾기", "vi": "Tìm máy cấp giấy tờ tự động (무인민원발급기) gần đó",
+                             "zh": "查找附近的无人民愿发证机（무인민원발급기）", "en": "Find nearby self-service kiosks (무인민원발급기)"},
+    "svc.step.check_hours": {"ko": "지금 운영 중인지 확인", "vi": "Kiểm tra nơi nào đang mở cửa", "zh": "确认现在是否在办公", "en": "Check what's open right now"},
+    "svc.step.guide": {"ko": "가장 좋은 방법·준비물 정리", "vi": "Tóm tắt cách tốt nhất và giấy tờ cần mang", "zh": "整理最佳方式和所需材料",
+                       "en": "Summarize the best way and what to bring"},
     "photo.yes": {"ko": "예", "vi": "Có", "zh": "是", "en": "Yes"},
     "photo.no": {"ko": "아니요", "vi": "Không", "zh": "不是", "en": "No"},
     "photo.reask": {

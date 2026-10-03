@@ -19,7 +19,8 @@ from pydantic import BaseModel
 from minwon.agent import cancel, prompts
 from minwon.agent.rules import RuleBrain
 from minwon.agent.schemas import (
-    ChatReply, Critique, Decision, Draft, InfoCheck, PhotoAnalysis, PhotoAnswer, Plan, TopicCheck, Translation, Understanding,
+    ChatReply, Critique, Decision, Draft, InfoCheck, PhotoAnalysis, PhotoAnswer, Plan, ServiceCheck, ServiceGuide, TopicCheck,
+    Translation, Understanding,
 )
 from minwon.settings import settings
 
@@ -130,6 +131,12 @@ class ClaudeCodeBrain:
 
     def chat(self, ctx: dict) -> ChatReply:
         return self._ask(settings.claude_effort_fast, ChatReply, prompts.CHAT, ctx)
+
+    def service_check(self, ctx: dict) -> ServiceCheck:
+        return self._ask(settings.claude_effort_fast, ServiceCheck, prompts.SERVICE_CHECK, ctx)
+
+    def service_guide(self, ctx: dict) -> ServiceGuide:
+        return self._ask(settings.claude_effort, ServiceGuide, prompts.SERVICE_GUIDE, ctx)
 
     def look(self, ctx: dict, image: bytes | None) -> PhotoAnalysis:
         if not image:
