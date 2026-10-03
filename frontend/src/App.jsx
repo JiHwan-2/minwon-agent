@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { cancelRun, createSession, getHealth, sendMessage } from "./api.js";
+import { cancelRun, createSession, getHealth, readPhoto, sendMessage } from "./api.js";
 import { I18nContext, LANGS, makeT, uiLang } from "./i18n.js";
 import Chat from "./components/Chat.jsx";
 import AgentLog from "./components/AgentLog.jsx";
@@ -32,6 +32,7 @@ export default function App() {
   const sessionRef = useRef(null);
   const revisingRef = useRef(false);
   const abortRef = useRef(null);
+  const photoNoteRef = useRef(null); // 사진 촬영 위치 안내 (민원으로 확인된 뒤에 보여 줌)
   const langRef = useRef(lang);
   const i18n = useMemo(() => ({ lang, t: makeT(lang) }), [lang]);
   const { t } = i18n;
@@ -104,16 +105,38 @@ export default function App() {
         const { log = [], ...data } = ev.data;
         finishEntry(ev.node, { data, log: log[0], logs: log });
         if (ev.node === "guard" && data.safety?.emergency) addKey("alert", "msg.emergency");
+        if (ev.node === "look") {
+          // 사진에 긴급상황이 보이면 바로 112·119 안내. 촬영 위치 안내는 민원으로 확인된 뒤(문제 분석 다음)에 보여 준다
+          if (data.safety?.emergency) addKey("alert", "msg.emergency");
+          photoNoteRef.current = data.location?.from_photo
+            ? { key: "msg.photoLocation", vars: { address: data.location.address } }
+            : { key: "msg.photoNoLocation", vars: {} };
+        }
         if (ev.node === "understand") {
           const u = data.understanding;
           setLang(u.language); // 시민이 쓴 언어로 화면을 바꾼다 (지원하지 않는 언어면 영어)
-          if (u.intent === "complaint") addKey("agent", "msg.understood", { title: u.title, category: { key: `category.${u.category}` } });
+          if (u.intent === "complaint") {
+            addKey("agent", "msg.understood", { title: u.title, category: { key: `category.${u.category}` } });
+            if (photoNoteRef.current) addKey("agent", photoNoteRef.current.key, photoNoteRef.current.vars);
+          }
+          photoNoteRef.current = null;
         }
         if (ev.node === "plan") addKey("agent", "msg.planned", {}, { plan: data.plan });
         break;
       }
       case "ask": {
         setPhase("asking");
+        if (ev.kind === "photo") {
+          // 사진으로 짐작한 불편이 맞는지 예/아니요로 묻는다 (설명을 부탁할 때는 버튼 없이)
+          setTimeline((t) => [...t, { id: nextId(), node: "confirm_photo", status: "waiting", data: { questions: ev.questions } }]);
+          // 촬영 위치를 찾았으면 질문과 함께 바로 알려 준다 (문제 분석 뒤에 다시 보여 주지 않음)
+          const at = photoNoteRef.current?.key === "msg.photoLocation" ? photoNoteRef.current.vars : null;
+          if (at) photoNoteRef.current = null;
+          const extra = { questions: ev.questions, options: ev.options, optionKind: "photo" };
+          if (at) addKey("agent", "msg.askPhotoAt", at, extra);
+          else addKey("agent", "msg.askPhoto", {}, extra);
+          break;
+        }
         const choosing = ev.options.length > 0;
         const node = choosing ? "confirm_location" : "ask";
         setTimeline((t) => [...t, { id: nextId(), node, status: "waiting", data: { questions: ev.questions, options: ev.options } }]);
@@ -228,20 +251,28 @@ export default function App() {
     }
   };
 
-  const send = async (text) => {
+  // file: 새 민원을 시작할 때 함께 올린 현장 사진 (File)
+  const send = async (text, file = null) => {
     const continuing = phase === "asking" || phase === "ready" || phase === "clarify";
     revisingRef.current = phase === "ready";
-    if (!continuing) setTimeline([]);
+    if (!continuing) {
+      setTimeline([]);
+      photoNoteRef.current = null;
+    }
     setCrisis(false);
-    addMessage("user", text);
+    addMessage("user", text, file ? { photoUrl: URL.createObjectURL(file) } : {});
     setPhase("running");
     const controller = new AbortController();
     abortRef.current = controller;
     try {
+      const photo = file ? await readPhoto(file) : null;
       if (!continuing || !sessionRef.current) sessionRef.current = await createSession();
-      await sendMessage(sessionRef.current, text, onEvent, controller.signal, langRef.current);
+      await sendMessage(sessionRef.current, text, onEvent, controller.signal, langRef.current, photo);
     } catch (e) {
-      if (e.name === "AbortError") {
+      if (e.status === 400) {
+        // 서버가 사진을 받지 않음 (사진이 아니거나 너무 큼): 서버가 화면 언어로 쓴 안내를 그대로 보여 준다
+        addMessage("error", e.message);
+      } else if (e.name === "AbortError") {
         // 서버가 중단 응답을 못 보낸 경우: 연결만 끊고 처음부터 다시 시작하게 한다
         sessionRef.current = null;
         revisingRef.current = false;
@@ -275,6 +306,7 @@ export default function App() {
   const reset = () => {
     sessionRef.current = null;
     revisingRef.current = false;
+    photoNoteRef.current = null;
     setMessages([greeting()]);
     setTimeline([]);
     setCrisis(false);
@@ -319,6 +351,7 @@ export default function App() {
             onStop={stop}
             stopping={stopping}
             calm={crisis}
+            canAttach={phase === "idle" || phase === "clarify"}
             latestId={messages[messages.length - 1]?.id}
           />
           <AgentLog timeline={timeline} running={phase === "running"} />

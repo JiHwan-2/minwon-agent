@@ -12,6 +12,8 @@ from minwon.agent.schemas import (
     EvidenceItem,
     Fact,
     InfoCheck,
+    PhotoAnalysis,
+    PhotoAnswer,
     Plan,
     PlanStep,
     Question,
@@ -45,6 +47,10 @@ UNKNOWN = re.compile(r"^(모름|몰라요|모르겠어요|잘 모르겠|없음|�
 # 규칙 엔진은 '그리고·이번엔·그게 아니라'처럼 화제를 바꾸는 말이 있을 때만 새 민원으로 본다 (답변 속 시설 이름 오인 방지)
 SWITCH_CUE = re.compile(r"(그리고|그런데|근데|이번엔|이번에는|다른|또 |또한|추가로|새로|말고|아니라|아니고)")
 SHORTER = re.compile(r"(짧|간단|줄여|요약)")
+# 사진 확인 질문에 대한 예/아니요 (화면 버튼 4개 언어 + 흔한 말투). '아니'를 '예·응'보다 먼저 본다
+PHOTO_NO = re.compile(r"^\s*(아니|아뇨|아님|노\b|틀려|no\b|nope|not\b|không|ko\b|不|没|沒)", re.I)
+PHOTO_YES = re.compile(r"^\s*(예|네|넵|넹|응|어+\b|맞|그래|그렇|yes|yeah|yep|yup|right|correct|ok|có|đúng|vâng|ừ|是|对|對|好)", re.I)
+PHOTO_LEAD = re.compile(r"^\s*(예|네|넵|넹|응|아니요|아니오|아뇨|아니|맞아요|맞습니다|맞아|yes|no|có|không|是的|是|不是|对|不)[\s,.!·~]*", re.I)
 
 
 def classify(text: str) -> str:
@@ -237,3 +243,13 @@ class RuleBrain:
     def chat(self, ctx: dict) -> ChatReply:
         """자유 대화는 규칙으로 할 수 없으니 정해 둔 대체 문장을 돌려준다."""
         return ChatReply(reply=ctx["fallback"])
+
+    def look(self, ctx: dict, image: bytes | None) -> PhotoAnalysis:
+        """사진은 규칙으로 볼 수 없다. 불편을 찾지 못한 것으로 돌려주면 시민에게 직접 설명을 부탁한다."""
+        return PhotoAnalysis(relevant=False, scene="", issue="", question="", category="other", emergency=False, location_clues="")
+
+    def photo_answer(self, ctx: dict) -> PhotoAnswer:
+        reply = ctx["reply"].strip()
+        answer = "no" if PHOTO_NO.match(reply) else "yes" if PHOTO_YES.match(reply) else "unclear"
+        rest = PHOTO_LEAD.sub("", reply, count=1).strip() if answer != "unclear" else ""
+        return PhotoAnswer(answer=answer, issue=rest if len(rest) >= 4 else "", reason="답의 첫머리 표현으로 판단")

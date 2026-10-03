@@ -18,6 +18,9 @@ class Settings:
     claude_model: str = os.getenv("CLAUDE_MODEL", "claude-opus-5-5")
     claude_effort: str = os.getenv("CLAUDE_EFFORT", "medium")
     claude_effort_fast: str = os.getenv("CLAUDE_EFFORT_FAST", "low")
+    # 사진 분석: 비우면 CLAUDE_MODEL과 같은 모델. 상황 판단 정확도를 위해 추론 깊이는 기본 high
+    claude_vision_model: str = os.getenv("CLAUDE_VISION_MODEL", "") or os.getenv("CLAUDE_MODEL", "claude-opus-5-5")
+    claude_effort_vision: str = os.getenv("CLAUDE_EFFORT_VISION", "high")
     claude_timeout: int = int(os.getenv("CLAUDE_TIMEOUT", "120"))
     kakao_rest_api_key: str = os.getenv("KAKAO_REST_API_KEY", "")
     data_go_kr_service_key: str = os.getenv("DATA_GO_KR_SERVICE_KEY", "")

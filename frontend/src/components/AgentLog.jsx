@@ -241,6 +241,42 @@ function ConfirmBody({ entry }) {
   );
 }
 
+// 사진 분석: Tool(사진 정보 읽기·좌표→주소)과 Claude가 사진에서 찾은 장면·불편
+function LookBody({ entry }) {
+  const { t } = useI18n();
+  const a = entry.data?.photo?.analysis;
+  return (
+    <div className="body">
+      <ActBody entry={entry} />
+      {entry.status === "done" && a && (
+        <>
+          {a.scene && <p className="small">{t("log.photoScene", { scene: a.scene })}</p>}
+          {a.relevant && a.issue ? <p className="strong">{t("log.photoIssue", { issue: a.issue })}</p> : <p className="small muted">{t("log.photoNone")}</p>}
+          {a.location_clues && <p className="small muted">{t("log.photoClues", { clues: a.location_clues })}</p>}
+          {entry.data?.safety?.emergency && <p className="alert small">{t("log.emergency")}</p>}
+        </>
+      )}
+    </div>
+  );
+}
+
+function PhotoAnswerBody({ entry }) {
+  const { t } = useI18n();
+  if (entry.status === "waiting") {
+    return (
+      <div className="body">
+        <p className="small">{entry.data?.questions?.[0]?.text}</p>
+        <p className="muted small">{t("log.photoWaiting")}</p>
+      </div>
+    );
+  }
+  return (
+    <div className="body">
+      <p className="small">{entry.log?.detail}</p>
+    </div>
+  );
+}
+
 // 화면에서 만든 기록(민원 종류 변경·중단·관계없는 말)은 번역 키로 저장해 두고 지금 화면 언어로 그린다
 function NoteBody({ log }) {
   const { t } = useI18n();
@@ -274,6 +310,8 @@ function Body({ entry, next }) {
   if (["switch", "stop", "off_topic", "answer"].includes(entry.node)) return <NoteBody log={entry.log} />;
   if (entry.node === "ask") return <AskBody entry={entry} />;
   if (entry.node === "confirm_location") return <ConfirmBody entry={entry} />;
+  if (entry.node === "look") return <LookBody entry={entry} />;
+  if (entry.node === "confirm_photo") return <PhotoAnswerBody entry={entry} />;
   if (entry.node === "act" || entry.node === "locate" || entry.node === "deliver") return <ActBody entry={entry} />;
   if (entry.status !== "done") return null;
   if (entry.node === "decide") return <DecideBody decision={d.decision} />;

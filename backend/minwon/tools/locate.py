@@ -116,6 +116,29 @@ def geocode(query: str, context_text: str = "") -> dict:
     return tool_result("geocode", False, "text_fallback", "위치를 특정하지 못함", loc, retries, reason)
 
 
+def from_coords(lat: float, lon: float) -> dict:
+    """Tool: 사진 촬영 위치(GPS 좌표) → 주소·행정구역. 찾은 위치는 지도 검색 없이 바로 확정한다."""
+    x, y = str(lon), str(lat)
+    query = "사진 촬영 위치"
+    try:
+        docs, n = kakao.coord_address(x, y)
+        retries = n - 1
+        doc = docs[0] if docs else {}
+        road = (doc.get("road_address") or {}).get("address_name", "")
+        lot = (doc.get("address") or {}).get("address_name", "")
+        if not (road or lot):
+            return tool_result("reverse_geocode", False, "kakao", "이 좌표의 국내 주소를 찾지 못함 → 대화로 위치 확인", None, retries)
+        loc, more = _with_region({"name": "", "address": road or lot, "lot_address": lot, "x": x, "y": y}, query)
+    except kakao.KakaoError as e:
+        return tool_result("reverse_geocode", False, "error", "사진 위치를 주소로 바꾸지 못함 → 대화로 위치 확인", None,
+                           max(e.attempts - 1, 0), str(e))
+    loc |= {"ambiguous": False, "candidates": [], "from_photo": True}
+    if lot and lot != loc["address"]:
+        loc["lot_address"] = lot
+    where = " ".join(v for v in (loc["sigungu"], loc["dong"]) if v)
+    return tool_result("reverse_geocode", True, "kakao", f"사진 촬영 위치: {loc['address']} 부근 ({where})", loc, retries + more)
+
+
 def _places(docs: list[dict]) -> list[dict]:
     return [
         {

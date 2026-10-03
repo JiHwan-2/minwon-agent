@@ -9,14 +9,17 @@ from minwon.agent import cancel, conversation
 from minwon.agent.brain import get_brain
 from minwon.agent.state import AgentState
 from minwon.settings import settings
-from minwon.tools import cases, export, regions
+from minwon.tools import cases, export, photo as photos, regions
 from minwon.tools.export import export_pdf
 from minwon.tools.kb import kb_lookup
-from minwon.tools.locate import NEARBY_LABEL, find_nearby, geocode, resolve_candidate
+from minwon.tools.locate import NEARBY_LABEL, find_nearby, from_coords, geocode, resolve_candidate
 
 MAX_CONFIRM_ROUNDS = 2
+MAX_PHOTO_ROUNDS = 2  # 사진 확인 질문에 예/아니요를 알 수 없는 답이 오면 한 번 더 묻는다
 
 TOOL_TITLE = {
+    "photo_meta": "사진 정보 읽기 (EXIF)",
+    "reverse_geocode": "사진 위치 → 주소 확인",
     "geocode": "위치 확인",
     "kb_lookup": "담당 부서·절차 조회",
     "case_search": "비슷한 민원 사례 조회",
@@ -24,6 +27,7 @@ TOOL_TITLE = {
 }
 SOURCE_DETAIL = {
     "kakao": "카카오 로컬 API",
+    "exif": "사진 정보(EXIF)",
     "text_fallback": "대체 경로: 문장에서 지역 추출",
     "kb": "지식베이스",
     "kb+region": "지식베이스 + 지역 정보",
@@ -72,7 +76,147 @@ def guard(state: AgentState) -> dict:
     return {"safety": result, "log": [_log("guard", "입력 안전 점검", " / ".join(notes) or "이상 없음")]}
 
 
-INTENT_LABEL = {"referral": "다른 창구가 맞는 일", "unclear": "불분명한 입력", "not_complaint": "민원이 아닌 입력"}
+def route_after_guard(state: AgentState) -> str:
+    return "look" if state.get("photo") else "understand"
+
+
+PHOTO_NOTE = "(현장 사진 있음"
+
+
+def _citizen_text(text: str) -> str:
+    """앞 턴에 붙인 사진 메모 줄을 뺀 시민의 말 (사진을 다시 볼 때 메모가 겹치지 않게)."""
+    return "\n".join(line for line in text.split("\n") if not line.startswith(PHOTO_NOTE)).strip()
+
+
+def _photo_text(state: AgentState, photo: dict, location: dict | None, *issues: str, scene: bool = False) -> dict:
+    """사진으로 확인한 내용을 시민의 말과 합쳐 민원 흐름(문제 분석부터)이 읽을 첫 입력으로 만든다.
+    scene: AI가 불편을 찾지 못했거나 시민의 답이 분명하지 않을 때, 뒤 단계(문제 분석·대화)가 사진에 무엇이 있었는지 알도록
+    AI가 본 장면을 남긴다. 시민이 '예'로 확인했으면 확인한 불편만, '아니요'면 시민의 말만 쓴다."""
+    lines = list(dict.fromkeys(s.strip() for s in (_citizen_text(state["user_input"]), *issues) if s and s.strip()))
+    notes = ["현장 사진 있음"]
+    if scene and (seen := photo.get("analysis", {}).get("scene", "").strip()):
+        notes.append(f"AI가 본 사진 속 장면: {seen}")
+    if location:
+        notes.append(f"사진 촬영 위치: {location['address']} 부근")
+    elif clues := photo.get("analysis", {}).get("location_clues", "").strip():
+        notes.append(f"사진 속 위치 단서: {clues}")
+    if when := photos.korean_time(photo.get("meta", {}).get("taken_at", "")):
+        notes.append(f"사진 촬영 시각: {when}")
+    text = "\n".join([*lines, f"({' · '.join(notes)})"])
+    return {"user_input": text, "latest": text, "dialogue": [{"role": "user", "text": text, "kind": "photo"}]}
+
+
+def look(state: AgentState) -> dict:
+    """Perception: 현장 사진에서 촬영 위치·시각을 읽고(Tool), Claude가 사진 속 생활불편을 찾아 확인 질문을 만든다."""
+    _started("look")
+    photo = state["photo"]
+    calls: list[dict] = []
+    meta = _run_tool("look", calls, "photo_meta", photo.get("name") or "사진", photos.read_exif, photo["id"])["data"]
+
+    update: dict = {}
+    location = None
+    if meta["gps"]:
+        lat, lon = meta["gps"]["lat"], meta["gps"]["lon"]
+        found = _run_tool("look", calls, "reverse_geocode", f"위도 {lat:.5f}, 경도 {lon:.5f}", from_coords, lat, lon)
+        if found["ok"]:
+            location = found["data"]
+            update |= {"location": location, "location_query": location["address"], "location_confirmed": True}
+
+    text = _citizen_text(state["user_input"])
+    out = get_brain().call("look", {"text": text, "language": photo["language"]}, photos.image(photo["id"]))
+    analysis = out.value.model_dump()
+    if out.source == "llm" and analysis["relevant"] and analysis["question"].strip():
+        mode, prompt = "confirm", ""
+    elif text:
+        mode, prompt = "done", ""  # 사진에서 불편을 찾지 못했지만 시민이 쓴 말이 있으면 그 말로 진행
+    else:
+        mode, prompt = "describe", "photo.describe.failed" if out.source != "llm" else "photo.describe.irrelevant"
+    photo = {**photo, "meta": meta, "analysis": analysis, "mode": mode, "prompt": prompt, "rounds": 0}
+    if mode == "done":
+        update |= _photo_text(state, photo, location, scene=True)
+
+    if out.source == "llm" and analysis["emergency"] and not state["safety"]["emergency"]:
+        update["safety"] = {**state["safety"], "emergency": True, "photo_emergency": True}
+
+    if out.source != "llm":
+        detail = "사진을 분석하지 못함 → " + ("시민이 쓴 말로 진행" if text else "시민에게 설명을 부탁함")
+    elif not analysis["relevant"]:
+        detail = "사진에서 생활불편을 찾지 못함 → " + ("시민이 쓴 말로 진행" if text else "시민에게 설명을 부탁함")
+    else:
+        detail = f"{analysis['issue']} → 예/아니요로 확인"
+    if location:
+        detail += f" · 위치: 사진 촬영 위치({location['address']})"
+    elif meta["gps"]:
+        detail += " · 위치: 사진 좌표를 주소로 바꾸지 못해 대화로 확인"
+    else:
+        detail += " · 위치: 사진에 GPS 정보 없음 → 대화로 확인"
+    if update.get("safety"):
+        detail += " · 긴급상황으로 보이는 장면 → 112·119 신고 안내"
+    # 판단 기록을 먼저 둔다 (화면의 작업 기록은 첫 기록으로 이 단계의 판단 주체를 표시)
+    return {"photo": photo, **update, "tool_calls": calls,
+            "log": [_log("look", "사진 분석", detail, out.source, error=out.error), *_tool_logs("look", calls)]}
+
+
+def route_after_look(state: AgentState) -> str:
+    return "understand" if state["photo"]["mode"] == "done" else "confirm_photo"
+
+
+def _photo_buttons(lang: str) -> dict[str, str]:
+    """화면의 예/아니요 버튼으로 보낸 답 (4개 언어 모두 받는다. 화면 언어를 바꿨을 수 있음)."""
+    return {i18n.t(f"photo.{a}", code).lower(): a for a in ("yes", "no") for code in i18n.LANGS}
+
+
+def confirm_photo(state: AgentState) -> dict:
+    """Feedback: 사진으로 짐작한 불편이 맞는지 시민에게 묻고, 답이 '예'인지 '아니요'인지 판단해 민원으로 이어 간다."""
+    photo = state["photo"]
+    lang, analysis = photo["language"], photo["analysis"]
+    if photo["mode"] == "confirm":
+        question = analysis["question"] if photo["rounds"] == 0 else i18n.t("photo.reask", lang, question=analysis["question"])
+        options = [{"value": i18n.t(f"photo.{a}", lang), "label": i18n.t(f"photo.{a}", lang)} for a in ("yes", "no")]
+    else:
+        question, options = i18n.t(photo["prompt"], lang), []
+    reply = interrupt({"kind": "photo", "questions": [{"slot": "detail", "text": question}], "options": options})
+    text = reply["text"].strip()
+    photo = {**photo, "rounds": photo["rounds"] + 1}
+    location = state.get("location") if (state.get("location") or {}).get("from_photo") else None
+
+    if photo["mode"] == "describe":
+        rejected = photo.get("answer") == "no"  # 시민이 아니라고 한 짐작의 장면은 남기지 않는다 (문제 분석이 끌려가지 않게)
+        photo |= {"mode": "done", "answer": "described"}
+        return {"photo": photo, **_photo_text(state, photo, location, text, scene=not rejected),
+                "log": [_log("confirm_photo", "사진 설명 받음", f"시민이 설명한 불편: {text}")]}
+
+    if (button := _photo_buttons(lang).get(text.lower())) is not None:
+        answer, issue, reason, source, error = button, "", "화면의 버튼으로 답함", "rule", ""
+    else:
+        out = get_brain().call("photo_answer", {"question": analysis["question"], "scene": analysis["scene"],
+                                                "reply": text, "language": lang})
+        answer, issue, reason, source, error = out.value.answer, out.value.issue, out.value.reason, out.source, out.error
+
+    said = f"'{text}' → {dict(yes='예', no='아니요', unclear='알 수 없음')[answer]} ({reason})"
+    if answer == "yes":
+        photo |= {"mode": "done", "answer": "yes"}
+        return {"photo": photo, **_photo_text(state, photo, location, analysis["issue"], issue),
+                "log": [_log("confirm_photo", "사진 확인 답변", f"{said} → 사진 속 불편으로 민원 진행", source, error=error)]}
+    if answer == "no" and issue:
+        photo |= {"mode": "done", "answer": "no"}
+        return {"photo": photo, **_photo_text(state, photo, location, issue),
+                "log": [_log("confirm_photo", "사진 확인 답변", f"{said} → 시민이 말한 불편으로 진행", source, error=error)]}
+    if answer == "no":
+        photo |= {"mode": "describe", "prompt": "photo.describe.no", "answer": "no"}
+        return {"photo": photo, "log": [_log("confirm_photo", "사진 확인 답변", f"{said} → 어떤 점이 불편한지 다시 묻기", source, error=error)]}
+    if photo["rounds"] < MAX_PHOTO_ROUNDS:
+        return {"photo": photo, "log": [_log("confirm_photo", "사진 확인 답변", f"{said} → 한 번 더 묻기", source, error=error)]}
+    photo |= {"mode": "done", "answer": "unclear"}
+    return {"photo": photo, **_photo_text(state, photo, location, text, scene=True),
+            "log": [_log("confirm_photo", "사진 확인 답변", f"{said} → 답한 말 그대로 민원 흐름에서 판단", source, error=error)]}
+
+
+def route_after_confirm_photo(state: AgentState) -> str:
+    return "understand" if state["photo"]["mode"] == "done" else "confirm_photo"
+
+
+INTENT_LABEL ={"referral": "다른 창구가 맞는 일", "unclear": "불분명한 입력", "not_complaint": "민원이 아닌 입력"}
 
 
 def _language(state: AgentState) -> str:
@@ -227,12 +371,20 @@ def check(state: AgentState) -> dict:
         result["questions"] = []
     result["questions"] = [q for q in result["questions"] if q["slot"] not in ctx["asked"]][:3]
 
+    # 사진 촬영 위치(GPS)로 이미 확정한 위치는 다시 묻지 않는다
+    photo_location = state.get("location") if (state.get("location") or {}).get("from_photo") else None
+    if photo_location:
+        result["facts"] = [f for f in result["facts"] if f["slot"] != "location"]
+        result["facts"].insert(0, {"slot": "location", "value": f"{photo_location['address']} 부근 (사진 촬영 위치)"})
+        result["questions"] = [q for q in result["questions"] if q["slot"] != "location"]
+        result["location_query"] = photo_location["address"]
+
     # 이름 없는 장소('창원 초등학교', '우리 아파트')는 위치가 확인된 것으로 보지 않고 한 번 더 묻는다
     # 외국어로 말한 장소는 한국어로 옮긴 지도 검색어로 판단한다
     lang = _language(state)
     fact_location = next((f["value"] for f in result["facts"] if f["slot"] == "location"), "")
     location_text = (fact_location or result["location_query"]) if lang == "ko" else (result["location_query"] or fact_location)
-    vague = bool(location_text) and not regions.is_specific_place(location_text)
+    vague = not photo_location and bool(location_text) and not regions.is_specific_place(location_text)
     if vague and ctx["can_ask"] and "location" not in ctx["asked"] and "location" in ctx["required_info"]:
         question = {"slot": "location", "text": i18n.t("location.vague", lang, place=fact_location or location_text)}
         result["questions"] = [question, *[q for q in result["questions"] if q["slot"] != "location"]][:3]
@@ -253,6 +405,8 @@ def check(state: AgentState) -> dict:
 def route_after_check(state: AgentState) -> str:
     if state["info"]["questions"]:
         return "ask"
+    if (state.get("location") or {}).get("from_photo"):
+        return "act"  # 사진 촬영 위치로 이미 확정 → 지도 검색 없이 바로 관할 기관 검색
     actions = {s["action"] for s in state["plan"]["steps"]}
     return "locate" if "geocode" in actions else "act"
 

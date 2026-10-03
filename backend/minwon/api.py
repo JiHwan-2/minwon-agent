@@ -1,3 +1,5 @@
+import base64
+import binascii
 import json
 import logging
 import uuid
@@ -9,14 +11,14 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, StreamingResponse
 from langgraph.types import Command
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from minwon import i18n, safety
 from minwon.agent import cancel, conversation, topic
 from minwon.agent.brain import get_brain
 from minwon.agent.graph import build_graph, revision_input, start_input
 from minwon.settings import settings
-from minwon.tools import export
+from minwon.tools import export, photo as photos
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger("minwon")
@@ -30,15 +32,27 @@ graph = build_graph()
 sessions: dict[str, dict] = {}
 
 SNAPSHOT_KEYS = (
-    "safety", "understanding", "plan", "info", "dialogue", "location", "nearby", "agencies", "cases",
+    "photo", "safety", "understanding", "plan", "info", "dialogue", "location", "nearby", "agencies", "cases",
     "tool_calls", "decision", "package", "review", "translation", "files", "location_confirmed", "chat_history", "log",
 )
 RESULT_KEYS = ("info", "location", "location_confirmed", "agencies", "cases", "decision", "package", "review", "translation", "files")
 
 
+class PhotoIn(BaseModel):
+    name: str = Field(default="", max_length=200)
+    data: str = Field(min_length=1, max_length=21_000_000, description="사진 파일 원본을 base64로 (data: URL도 받음). 원본이어야 촬영 위치(EXIF)를 읽을 수 있다")
+
+
 class MessageIn(BaseModel):
-    text: str = Field(min_length=1, max_length=2000)
+    text: str = Field(default="", max_length=2000)
     lang: str = Field(default="", max_length=10, description="화면에서 고른 언어 (언어를 판단하지 못할 때 대체)")
+    photo: PhotoIn | None = Field(default=None, description="새 민원을 시작할 때 함께 올린 현장 사진")
+
+    @model_validator(mode="after")
+    def _not_empty(self):
+        if not self.text.strip() and self.photo is None:
+            raise ValueError("글이나 사진 중 하나는 있어야 합니다")
+        return self
 
 
 class DraftEdits(BaseModel):
@@ -111,7 +125,7 @@ def get_session(session_id: str):
     return {"status": status, "pending": pending, **{k: snapshot.values.get(k) for k in SNAPSHOT_KEYS}}
 
 
-def _run(session_id: str, text: str, lang_hint: str = "") -> Iterator[str]:
+def _run(session_id: str, text: str, lang_hint: str = "", photo: dict | None = None) -> Iterator[str]:
     _session(session_id)
     masked = safety.mask_pii(text)
     if masked.findings:
@@ -125,6 +139,15 @@ def _run(session_id: str, text: str, lang_hint: str = "") -> Iterator[str]:
     hint = i18n.normalize(lang_hint)
     talk_lang = (snapshot.values.get("understanding") or {}).get("language")
     lang = talk_lang or i18n.detect(masked.text) or hint or "ko"
+
+    # 사진은 새 민원을 시작할 때만 받는다 (질문에 답하는 중·완성 후에는 글만 이어서 처리)
+    if photo and (pending or snapshot.values.get("package")):
+        yield _event(type="error", code="photo_later", message=i18n.t("photo.later", lang))
+        photo = None
+        if not masked.text.strip():
+            return
+    if photo:
+        photo = photo | {"language": i18n.ui_lang(lang)}  # 사진 확인 질문의 언어 (문제 분석 전이라 이번 말·화면 언어로)
 
     # 위기 표현은 대화 어느 단계에서든 AI 판단보다 먼저, 정해진 문장으로 안내한다 (이번 말의 언어로)
     crisis = safety.is_crisis(masked.text)
@@ -172,14 +195,20 @@ def _run(session_id: str, text: str, lang_hint: str = "") -> Iterator[str]:
         elif snapshot.values and intent != "complaint":
             # 직전 입력이 민원이 아니었으면 새로 시작. 불분명했던 말은 이어서 말한 내용과 합쳐서 판단한다
             text = f"{snapshot.values['user_input']}\n{masked.text}" if intent == "unclear" else masked.text
+            earlier = snapshot.values.get("photo") or {}
+            if (not photo and intent in ("unclear", "not_complaint") and earlier.get("id") and not earlier.get("answer")
+                    and earlier.get("looks", 1) < 2 and photos.image(earlier["id"])):
+                # 앞에서 올린 사진으로 아직 묻지 못했으면, 이어서 한 말("사진 보고 찾아 줘")과 함께 사진을 한 번 더 본다
+                photo = {k: earlier[k] for k in ("id", "name", "width", "height")} | {
+                    "language": i18n.ui_lang(lang), "looks": earlier.get("looks", 1) + 1}
             sessions[session_id] = {"thread": uuid.uuid4().hex, "rollback": None}  # 중단하면 previous·before로 되돌아감
             config = _config(session_id)
-            graph_input = start_input(text, masked.findings, hint, snapshot.values.get("chat_history"), masked.text)
+            graph_input = start_input(text, masked.findings, hint, snapshot.values.get("chat_history"), masked.text, photo)
         elif snapshot.values:
             yield _event(type="error", code="session_busy", message=i18n.t("error.busy", lang))
             return
         else:
-            graph_input = start_input(masked.text, masked.findings, hint)
+            graph_input = start_input(masked.text, masked.findings, hint, photo=photo)
 
         for mode, chunk in graph.stream(graph_input, config, stream_mode=["custom", "updates"]):
             if mode == "custom":
@@ -213,7 +242,7 @@ def _run(session_id: str, text: str, lang_hint: str = "") -> Iterator[str]:
     snapshot = graph.get_state(_latest(session_id))
     understanding = snapshot.values.get("understanding") or {}
     if pending := _pending(snapshot):
-        yield _event(type="ask", questions=pending["questions"], options=pending.get("options", []))
+        yield _event(type="ask", kind=pending.get("kind", ""), questions=pending["questions"], options=pending.get("options", []))
     elif understanding.get("intent", "complaint") != "complaint":
         yield _event(type="redirect", intent=understanding["intent"], message=understanding["reply"],
                      referral=understanding.get("referral_info"))
@@ -221,10 +250,25 @@ def _run(session_id: str, text: str, lang_hint: str = "") -> Iterator[str]:
         yield _event(type="ready", **{k: snapshot.values.get(k) for k in RESULT_KEYS})
 
 
+def _photo(body: MessageIn) -> dict | None:
+    """올린 사진을 확인해 줄여 두고 id만 돌려준다. 사진이 아니면 400 (화면 언어로 안내)."""
+    if body.photo is None:
+        return None
+    data = body.photo.data
+    if data.startswith("data:"):
+        data = data.split(",", 1)[-1]
+    try:
+        return photos.prepare(base64.b64decode(data), body.photo.name)
+    except (binascii.Error, ValueError) as e:
+        code = e.code if isinstance(e, photos.PhotoError) else "photo.unreadable"
+        raise HTTPException(400, i18n.t(code, i18n.normalize(body.lang) or "ko")) from e
+
+
 @app.post("/api/sessions/{session_id}/messages")
 def post_message(session_id: str, body: MessageIn):
     _session(session_id)
-    return StreamingResponse(_run(session_id, body.text, body.lang), media_type="application/x-ndjson")
+    photo = _photo(body)
+    return StreamingResponse(_run(session_id, body.text, body.lang, photo), media_type="application/x-ndjson")
 
 
 @app.post("/api/sessions/{session_id}/cancel")

@@ -42,6 +42,12 @@ def request(path: str, params: dict, retries: int = 1):
     query = params.get("query", "")
     if path == "geo/coord2regioncode.json":
         return {"documents": REGIONS_BY_X.get(params["x"], REGIONS)}, 1
+    if path == "geo/coord2address.json":
+        # 사진 촬영 위치: 합성초등학교 앞 좌표만 국내 주소가 있다 (그 밖의 좌표는 바다·외국으로 봄)
+        if params["x"] == SCHOOL["x"] and params["y"] == SCHOOL["y"]:
+            return {"documents": [{"road_address": {"address_name": SCHOOL["road_address_name"]},
+                                   "address": {"address_name": SCHOOL["address_name"]}}]}, 1
+        return {"documents": []}, 1
     if path == "search/keyword.json":
         if "합성초등학교" in query:
             return {"documents": [SCHOOL]}, 1

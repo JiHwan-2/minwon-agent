@@ -65,3 +65,9 @@ def address(query: str) -> tuple[list[dict], int]:
 def region(x: str, y: str) -> tuple[list[dict], int]:
     data, attempts = request("geo/coord2regioncode.json", {"x": x, "y": y})
     return data.get("documents", []), attempts
+
+
+def coord_address(x: str, y: str) -> tuple[list[dict], int]:
+    """좌표 → 도로명·지번 주소 (사진 촬영 위치를 주소로 바꿀 때)."""
+    data, attempts = request("geo/coord2address.json", {"x": x, "y": y})
+    return data.get("documents", []), attempts
