@@ -42,16 +42,19 @@ npm run dev
 ```
 backend/minwon/
   api.py        세션·메시지(NDJSON 스트리밍) API
-  safety.py     개인정보 가림, 긴급상황·지시 주입 감지
+  safety.py     개인정보 가림, 긴급상황·위기 표현·지시 주입 감지
+  i18n.py       다국어(한국어·영어·중국어·베트남어): 언어 감지, 정해진 안내문·다른 창구 카드 번역
   agent/        LangGraph 워크플로 (graph.py), 단계(nodes.py), 판단 엔진(brain.py: Claude Code `claude -p` → 실패 시 rules.py)
   tools/        카카오 로컬 API, 위치 확인·후보, 주변 기관, 지식베이스 조회, 비슷한 민원 사례(공공데이터), 민원 패키지 PDF
   knowledge/    생활불편 유형·필수 정보(categories.json), 담당 부서·창구·절차·증빙(agencies.json)
 frontend/src/
-  App.jsx       스트리밍 이벤트 → 화면 상태
+  App.jsx       스트리밍 이벤트 → 화면 상태, 화면 언어(시민의 언어로 자동 전환)
+  i18n.js       화면 글자 번역 (서버 i18n.py와 같은 4개 언어, 키를 추가하면 4개 언어 모두에 넣기)
   components/   Chat(대화) · AgentLog(작업 기록) · PackageCard(민원 패키지)
 ```
 Workflow: guard → understand → plan → check ⇄ ask → locate ⇄ confirm_location → act → decide → draft ⇄ review → deliver (완성 후 수정 요청 → draft)
 understand에서 Claude가 입력 확인: 민원 아님·불분명·다른 창구(소비자 피해·임금체불·사기·개인 간 분쟁 → agencies.json의 referrals)면 안내만 하고 끝. 위기 표현은 safety.py가 AI보다 먼저 109 안내
+외국어 시민: 대화·질문은 시민의 언어로, 민원 초안·PDF는 한국어로 쓰고 검증 통과 후 translate 단계에서 번역본을 만든다 (화면에서 한국어 원문으로 전환해 제출)
 대화 도중 말은 agent/topic.py가 판단: 다른 종류의 민원이면 새 thread로 처음부터, 관계없는 말이면 진행하지 않고 안내. 중단 버튼은 agent/cancel.py(claude 프로세스 종료) → 그 턴 직전 체크포인트로 되돌림
 
 ## 작업 흐름

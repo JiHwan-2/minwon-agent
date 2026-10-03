@@ -29,11 +29,11 @@ export async function downloadPdf(sessionId, edits, filename) {
 export const cancelRun = (sessionId) =>
   fetch(`/api/sessions/${sessionId}/cancel`, { method: "POST" }).then(readJson);
 
-export async function sendMessage(sessionId, text, onEvent, signal) {
+export async function sendMessage(sessionId, text, onEvent, signal, lang = "") {
   const res = await fetch(`/api/sessions/${sessionId}/messages`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, lang }), // lang: 화면 언어 (서버가 시민의 언어를 판단하지 못할 때 대체)
     signal,
   });
   if (!res.ok) await readJson(res);

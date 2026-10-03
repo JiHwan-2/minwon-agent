@@ -1,15 +1,23 @@
 import { useEffect, useRef, useState } from "react";
-import { EXAMPLES } from "../labels.js";
+import { useI18n } from "../i18n.js";
 import PackageCard from "./PackageCard.jsx";
 
+// 번역 키로 저장한 메시지는 지금 화면 언어로 그린다. vars 안의 {key}도 번역한다 (예: 생활불편 유형 이름)
+function messageText(m, t) {
+  if (!m.key) return m.text;
+  const vars = Object.fromEntries(Object.entries(m.vars ?? {}).map(([k, v]) => [k, v && typeof v === "object" ? t(v.key, v.vars) : v]));
+  return t(m.key, vars);
+}
+
 function Bubble({ m, canChoose, onSend }) {
+  const { t } = useI18n();
   return (
     <div className={`bubble bubble-${m.role}${m.pkg ? " bubble-wide" : ""}`}>
-      <p>{m.text}</p>
-      {m.stopped && <p className="bubble-note">⏹ 처리를 멈춘 메시지예요</p>}
+      <p>{messageText(m, t)}</p>
+      {m.stopped && <p className="bubble-note">{t("chat.stopped")}</p>}
       {m.masked && (
         <p className="bubble-note">
-          🔒 {m.masked.map((f) => `${f.label} ${f.count}건`).join(", ")}을 가린 뒤 처리했어요.
+          {t("chat.masked", { items: m.masked.map((f) => t("chat.count", { label: t(`pii.${f.kind}`), count: f.count })).join(", ") })}
         </p>
       )}
       {m.plan && (
@@ -42,7 +50,7 @@ function Bubble({ m, canChoose, onSend }) {
           <span className="small muted">{m.referral.operator}</span>
           <div className="row">
             <a className="btn btn-primary btn-sm" href={m.referral.url} target="_blank" rel="noopener noreferrer">
-              홈페이지 바로가기 ↗
+              {t("chat.homepage")}
             </a>
             <span className="small">☎ {m.referral.phone}</span>
             <span className="small muted">{m.referral.hours}</span>
@@ -52,9 +60,11 @@ function Bubble({ m, canChoose, onSend }) {
       {m.facts && (
         <ul className="facts-mini">
           {m.facts.map((f) => (
-            <li key={f}>{f}</li>
+            <li key={f.slot}>
+              {t(`slot.${f.slot}`)}: {f.value}
+            </li>
           ))}
-          {m.unknown?.length > 0 && <li className="muted">확인 못 한 정보: {m.unknown.join(", ")}</li>}
+          {m.unknown?.length > 0 && <li className="muted">{t("chat.unknown", { items: m.unknown.map((s) => t(`slot.${s}`)).join(", ") })}</li>}
         </ul>
       )}
       {m.pkg && (
@@ -63,12 +73,13 @@ function Bubble({ m, canChoose, onSend }) {
             pkg={m.pkg}
             decision={m.decision}
             review={m.review}
+            translation={m.translation}
             locationConfirmed={m.locationConfirmed}
             cases={m.cases}
             files={m.files}
             sessionId={m.sessionId}
           />
-          <p className="bubble-note">안내 정보는 참고용이에요. 부서 이름은 지자체마다 조금 다를 수 있어요.</p>
+          <p className="bubble-note">{t("chat.disclaimer")}</p>
         </>
       )}
     </div>
@@ -76,6 +87,7 @@ function Bubble({ m, canChoose, onSend }) {
 }
 
 export default function Chat({ messages, phase, onSend, onStop, stopping, latestId, calm }) {
+  const { t } = useI18n();
   const [text, setText] = useState("");
   const endRef = useRef(null);
   const busy = phase === "running";
@@ -93,18 +105,12 @@ export default function Chat({ messages, phase, onSend, onStop, stopping, latest
     onSend(value);
   };
 
-  const placeholder = done
-    ? "고칠 점이나 다른 불편을 말해 주세요. 예) 더 짧게 / 요청사항에 CCTV 설치도 넣어 줘"
-    : phase === "asking"
-      ? "질문에 이어서 답해 주세요. 모르는 건 '모름'이라고 적어도 돼요."
-      : phase === "clarify"
-        ? calm
-          ? "생활 속 불편한 일이 있으면 언제든 말씀해 주세요."
-          : "불편했던 일을 말씀해 주세요. 예) 집 앞 가로등이 며칠째 꺼져 있어요"
-        : "예) 학교 앞 횡단보도가 너무 위험해요.";
+  const placeholder = t(
+    done ? "chat.ph.ready" : phase === "asking" ? "chat.ph.asking" : phase === "clarify" ? (calm ? "chat.ph.calm" : "chat.ph.clarify") : "chat.ph.idle",
+  );
 
   return (
-    <section className="panel chat" aria-label="대화">
+    <section className="panel chat" aria-label={t("chat.region")}>
       <div className="chat-log" aria-live="polite">
         {messages.map((m) => (
           <Bubble key={m.id} m={m} onSend={onSend} canChoose={phase === "asking" && m.id === latestId} />
@@ -112,7 +118,7 @@ export default function Chat({ messages, phase, onSend, onStop, stopping, latest
         {busy && (
           <div className="bubble bubble-agent bubble-busy">
             <span className="spinner" aria-hidden="true" />
-            <p>{stopping ? "멈추는 중이에요…" : "Agent가 작업하고 있어요… 멈추려면 '중단'을 누르세요."}</p>
+            <p>{stopping ? t("chat.stopping") : t("chat.working")}</p>
           </div>
         )}
         <div ref={endRef} />
@@ -120,7 +126,7 @@ export default function Chat({ messages, phase, onSend, onStop, stopping, latest
 
       {((phase === "idle" && messages.length === 1) || (phase === "clarify" && !calm)) && (
         <div className="examples">
-          {EXAMPLES.map((ex) => (
+          {t("examples").map((ex) => (
             <button key={ex} className="chip-btn" onClick={() => onSend(ex)}>
               {ex}
             </button>
@@ -139,15 +145,15 @@ export default function Chat({ messages, phase, onSend, onStop, stopping, latest
           rows={2}
           maxLength={2000}
           disabled={busy}
-          aria-label="메시지 입력"
+          aria-label={t("chat.input")}
         />
         {busy ? (
-          <button className="btn btn-stop" type="button" onClick={onStop} disabled={stopping} aria-label="처리 중단">
-            {stopping ? "멈추는 중…" : "■ 중단"}
+          <button className="btn btn-stop" type="button" onClick={onStop} disabled={stopping} aria-label={t("chat.stopLabel")}>
+            {stopping ? t("chat.stoppingBtn") : t("chat.stopBtn")}
           </button>
         ) : (
           <button className="btn btn-primary" type="submit" disabled={!text.trim()}>
-            보내기
+            {t("chat.send")}
           </button>
         )}
       </form>

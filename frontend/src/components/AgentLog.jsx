@@ -1,65 +1,69 @@
-import { ACTION_LABEL, NODE_LABEL, SLOT_LABEL, SOURCE_LABEL, TOOL_SOURCE_LABEL, URGENCY_LABEL } from "../labels.js";
+import { languageName, useI18n } from "../i18n.js";
+
+// 화면 글자(제목·표시·안내)는 화면 언어로, AI가 쓴 판단 내용과 Tool 결과 요약은 받은 그대로 보여 준다
 
 function SourceBadge({ log }) {
+  const { t } = useI18n();
   if (!log) return null;
   const cls = log.source === "rule_fallback" ? "badge badge-warn" : "badge";
   return (
     <span className={cls} title={log.error || undefined}>
-      {SOURCE_LABEL[log.source] ?? log.source}
+      {t(`source.${log.source}`)}
     </span>
   );
 }
 
 function GuardBody({ safety }) {
+  const { t } = useI18n();
   return (
     <div className="body">
       {safety.pii.length > 0 ? (
-        <p>🔒 {safety.pii.map((f) => `${f.label} ${f.count}건`).join(", ")} 가림 (원문은 저장하지 않음)</p>
+        <p>{t("log.pii", { items: safety.pii.map((f) => t("chat.count", { label: t(`pii.${f.kind}`), count: f.count })).join(", ") })}</p>
       ) : (
-        <p className="muted">개인정보 없음</p>
+        <p className="muted">{t("log.noPii")}</p>
       )}
-      {safety.emergency && <p className="alert">긴급상황 표현 감지 → 112·119 신고 안내</p>}
-      {safety.crisis && <p className="alert">위기 표현 감지 → 자살예방 상담전화 109 안내</p>}
-      {safety.injection && <p className="alert">AI 지시 변경 시도 감지 → 자료로만 처리</p>}
+      {safety.emergency && <p className="alert">{t("log.emergency")}</p>}
+      {safety.crisis && <p className="alert">{t("log.crisis")}</p>}
+      {safety.injection && <p className="alert">{t("log.injection")}</p>}
     </div>
   );
 }
 
-const INTENT_TAG = { referral: "다른 창구 안내", unclear: "불분명한 입력", not_complaint: "민원이 아닌 입력" };
-
 function UnderstandBody({ u }) {
+  const { t } = useI18n();
   if (u.intent && u.intent !== "complaint") {
     return (
       <div className="body">
         <div className="row">
-          <span className="tag urgency-medium">{INTENT_TAG[u.intent]}</span>
+          <span className="tag urgency-medium">{t(`intent.${u.intent}`)}</span>
         </div>
-        <p className="small">민원 흐름을 시작하지 않고 안내했어요.</p>
-        <p className="muted small">안내: {u.reply}</p>
+        <p className="small">{t("log.notStarted")}</p>
+        <p className="muted small">{t("log.reply", { reply: u.reply })}</p>
       </div>
     );
   }
   return (
     <div className="body">
       <div className="row">
-        <span className="tag">{u.category_label}</span>
-        <span className={`tag urgency-${u.urgency}`}>긴급도 {URGENCY_LABEL[u.urgency]}</span>
+        <span className="tag">{t(`category.${u.category}`)}</span>
+        <span className={`tag urgency-${u.urgency}`}>{t("log.urgency", { level: t(`urgency.${u.urgency}`) })}</span>
       </div>
       <p className="strong">{u.title}</p>
       <p>{u.summary}</p>
-      <p className="muted small">핵심어: {u.keywords.join(", ")}</p>
+      <p className="muted small">{t("log.keywords", { items: u.keywords.join(", ") })}</p>
     </div>
   );
 }
 
 function PlanBody({ plan }) {
+  const { t } = useI18n();
   return (
     <div className="body">
       <p className="strong">🎯 {plan.goal}</p>
       <ol className="plan-steps">
         {plan.steps.map((s, i) => (
           <li key={i}>
-            <span className="chip">{ACTION_LABEL[s.action] ?? s.action}</span>
+            <span className="chip">{t(`action.${s.action}`)}</span>
             <div>
               <strong>{s.title}</strong>
               <p className="muted small">{s.reason}</p>
@@ -67,41 +71,44 @@ function PlanBody({ plan }) {
           </li>
         ))}
       </ol>
-      <p className="small">
-        필수 정보: {plan.required_info.map((s) => SLOT_LABEL[s] ?? s).join(", ")}
-      </p>
-      {plan.fixes?.length > 0 && <p className="small warn">계획 보정: {plan.fixes.join(", ")}</p>}
+      <p className="small">{t("log.required", { items: plan.required_info.map((s) => t(`slot.${s}`)).join(", ") })}</p>
+      {plan.fixes?.length > 0 && <p className="small warn">{t("log.planFixes", { items: plan.fixes.join(", ") })}</p>}
     </div>
   );
 }
 
 function CheckBody({ info }) {
+  const { t } = useI18n();
   return (
     <div className="body">
       {info.facts.length > 0 && (
         <dl className="facts">
           {info.facts.map((f) => (
             <div key={f.slot}>
-              <dt>{SLOT_LABEL[f.slot] ?? f.slot}</dt>
+              <dt>{t(`slot.${f.slot}`)}</dt>
               <dd>{f.value}</dd>
             </div>
           ))}
         </dl>
       )}
       {info.questions.length > 0 ? (
-        <p className="small">→ 부족한 정보 {info.questions.length}개를 질문합니다.</p>
+        <p className="small">{t("log.askCount", { count: info.questions.length })}</p>
       ) : (
-        <p className="small ok">→ 다음 단계로 진행합니다.{info.location_query && ` (위치 검색어: ${info.location_query})`}</p>
+        <p className="small ok">
+          {t("log.proceed")}
+          {info.location_query && t("log.query", { query: info.location_query })}
+        </p>
       )}
     </div>
   );
 }
 
 function AskBody({ entry }) {
+  const { t } = useI18n();
   if (entry.status === "waiting") {
     return (
       <div className="body">
-        <p className="muted">사용자 답변을 기다리는 중 (대화 상태 저장됨)</p>
+        <p className="muted">{t("log.waiting")}</p>
       </div>
     );
   }
@@ -112,7 +119,13 @@ function AskBody({ entry }) {
   );
 }
 
+function toolTitle(tool, t) {
+  const [name, kind] = tool.split(":");
+  return name === "find_nearby" ? t("tool.find_nearby", { kind: t(`nearby.${kind}`) }) : t(`tool.${name}`);
+}
+
 function ToolCall({ call }) {
+  const { t } = useI18n();
   const r = call.result;
   const state = call.status === "running" ? "running" : r.ok ? (r.source === "text_fallback" ? "fallback" : "ok") : "fail";
   const icon = { running: null, ok: "✓", fallback: "↪", fail: "!" }[state];
@@ -121,12 +134,12 @@ function ToolCall({ call }) {
       <span className="tool-icon">{icon ?? <span className="spinner" />}</span>
       <div className="tool-main">
         <div className="row">
-          <strong>{call.title}</strong>
-          {r && <span className={`badge ${state === "ok" ? "" : "badge-warn"}`}>{TOOL_SOURCE_LABEL[r.source] ?? r.source}</span>}
-          {r?.retries > 0 && <span className="small warn">재시도 {r.retries}회</span>}
+          <strong>{call.tool ? toolTitle(call.tool, t) : call.title}</strong>
+          {r && <span className={`badge ${state === "ok" ? "" : "badge-warn"}`}>{t(`toolsrc.${r.source}`)}</span>}
+          {r?.retries > 0 && <span className="small warn">{t("log.retries", { count: r.retries })}</span>}
         </div>
-        <p className="small muted">입력: {call.input || "-"}</p>
-        {r ? <p className="small">→ {r.summary}</p> : <p className="small muted">호출 중…</p>}
+        <p className="small muted">{t("log.input", { input: call.input || "-" })}</p>
+        {r ? <p className="small">→ {r.summary}</p> : <p className="small muted">{t("log.calling")}</p>}
         {r?.error && <p className="small warn">{r.error}</p>}
       </div>
     </li>
@@ -134,7 +147,8 @@ function ToolCall({ call }) {
 }
 
 function ActBody({ entry }) {
-  const tools = entry.tools ?? (entry.data?.tool_calls ?? []).map((result, i) => ({ id: i, title: result.title, input: result.input, status: "done", result }));
+  const tools =
+    entry.tools ?? (entry.data?.tool_calls ?? []).map((result, i) => ({ id: i, tool: result.tool, title: result.title, input: result.input, status: "done", result }));
   return (
     <div className="body">
       <ol className="tools">
@@ -147,32 +161,33 @@ function ActBody({ entry }) {
 }
 
 function DecideBody({ decision }) {
+  const { t } = useI18n();
   return (
     <div className="body">
       <p>
         <strong>{decision.agency.agency}</strong> {decision.agency.unit}
       </p>
-      <p className="small">제출 창구: {decision.channel.name}</p>
+      <p className="small">{t("log.channel", { name: decision.channel.name })}</p>
       <p className="small muted">{decision.reason}</p>
-      {decision.fixes?.length > 0 && <p className="small warn">판단 보정: {decision.fixes.join(", ")}</p>}
+      {decision.fixes?.length > 0 && <p className="small warn">{t("log.decideFixes", { items: decision.fixes.join(", ") })}</p>}
     </div>
   );
 }
 
 function DraftBody({ entry }) {
+  const { t } = useI18n();
   const pkg = entry.data.package;
   return (
     <div className="body">
       <p className="strong">{pkg.title}</p>
-      <p className="small muted">
-        {pkg.version}번째 초안 · 본문 {pkg.body.length}자 · 증빙 {pkg.evidence.length}개
-      </p>
+      <p className="small muted">{t("log.draftMeta", { version: pkg.version, chars: pkg.body.length, count: pkg.evidence.length })}</p>
       {entry.log?.title?.includes("다시") && <p className="small warn">{entry.log.detail.split(" → ")[0]}</p>}
     </div>
   );
 }
 
 function ReviewBody({ review }) {
+  const { t } = useI18n();
   return (
     <div className="body">
       <ul className="checks">
@@ -185,21 +200,34 @@ function ReviewBody({ review }) {
         ))}
       </ul>
       {review.passed ? (
-        <p className="small ok">→ 검증 통과. 사용자에게 전달합니다.</p>
+        <p className="small ok">{t("log.reviewPassed")}</p>
       ) : review.retry ? (
-        <p className="small warn">→ 문제 {review.issues.length}건을 고치도록 다시 작성합니다.</p>
+        <p className="small warn">{t("log.reviewRetry", { count: review.issues.length })}</p>
       ) : (
-        <p className="small alert">→ 최대 횟수에 도달해 남은 문제를 사용자에게 알립니다.</p>
+        <p className="small alert">{t("log.reviewMax")}</p>
       )}
     </div>
   );
 }
 
+function TranslateBody({ translation }) {
+  const { t, lang } = useI18n();
+  return (
+    <div className="body">
+      <p className="small">
+        {translation.translated ? t("log.translated", { language: languageName(translation.language, lang) }) : t("log.translateFailed")}
+      </p>
+      <p className="muted small">{translation.title}</p>
+    </div>
+  );
+}
+
 function ConfirmBody({ entry }) {
+  const { t } = useI18n();
   if (entry.status === "waiting") {
     return (
       <div className="body">
-        <p className="muted">후보 {entry.data?.options?.length ?? 0}곳 중 사용자가 고르기를 기다리는 중</p>
+        <p className="muted">{t("log.confirmWaiting", { count: entry.data?.options?.length ?? 0 })}</p>
       </div>
     );
   }
@@ -211,15 +239,25 @@ function ConfirmBody({ entry }) {
   );
 }
 
+// 화면에서 만든 기록(민원 종류 변경·중단·관계없는 말)은 번역 키로 저장해 두고 지금 화면 언어로 그린다
+function NoteBody({ log }) {
+  const { t } = useI18n();
+  let text = log?.detail ?? "";
+  if (log?.from && log?.to) text = `${t(log.from.key)} → ${t(log.to.key)}`;
+  else if (log?.detailKey) text = t(log.detailKey);
+  return (
+    <div className="body">
+      <p className="small">
+        {text}
+        {log?.reason ? ` · ${log.reason}` : ""}
+      </p>
+    </div>
+  );
+}
+
 function Body({ entry }) {
   const d = entry.data ?? {};
-  if (entry.node === "switch" || entry.node === "stop" || entry.node === "off_topic") {
-    return (
-      <div className="body">
-        <p className="small">{entry.log?.detail}</p>
-      </div>
-    );
-  }
+  if (entry.node === "switch" || entry.node === "stop" || entry.node === "off_topic") return <NoteBody log={entry.log} />;
   if (entry.node === "ask") return <AskBody entry={entry} />;
   if (entry.node === "confirm_location") return <ConfirmBody entry={entry} />;
   if (entry.node === "act" || entry.node === "locate" || entry.node === "deliver") return <ActBody entry={entry} />;
@@ -227,7 +265,7 @@ function Body({ entry }) {
   if (entry.node === "decide") return <DecideBody decision={d.decision} />;
   if (entry.node === "draft") return <DraftBody entry={entry} />;
   if (entry.node === "review") return <ReviewBody review={d.review} />;
-  if (entry.status !== "done") return null;
+  if (entry.node === "translate") return <TranslateBody translation={d.translation} />;
   if (entry.node === "guard") return <GuardBody safety={d.safety} />;
   if (entry.node === "understand") return <UnderstandBody u={d.understanding} />;
   if (entry.node === "plan") return <PlanBody plan={d.plan} />;
@@ -235,27 +273,28 @@ function Body({ entry }) {
   return null;
 }
 
-const STATUS_TEXT = { running: "실행 중", waiting: "대기", done: "완료", error: "오류", cancelled: "중단" };
+function entryTitle(entry, t) {
+  if (entry.node === "understand" && entry.log && entry.data?.understanding?.intent !== "complaint") return t("log.inputCheck");
+  if (entry.node === "draft" && entry.log?.title?.includes("사용자")) return t("log.draftRevision");
+  if (entry.node === "draft" && entry.log?.title?.includes("검증")) return t("log.draftReview");
+  return t(`node.${entry.node}`);
+}
 
 export default function AgentLog({ timeline, running }) {
+  const { t } = useI18n();
   return (
-    <section className="panel log" aria-label="Agent 작업 기록">
+    <section className="panel log" aria-label={t("log.title")}>
       <header className="log-head">
-        <h2>Agent 작업 기록</h2>
-        <span className="muted small">각 단계의 판단과 근거가 순서대로 남아요</span>
+        <h2>{t("log.title")}</h2>
+        <span className="muted small">{t("log.sub")}</span>
       </header>
       {timeline.length === 0 ? (
         <div className="empty">
-          <p>민원을 입력하면 Agent가 일하는 과정이 여기에 표시돼요.</p>
+          <p>{t("log.empty")}</p>
           <ol className="flow">
-            <li>입력 안전 점검</li>
-            <li>문제 분석</li>
-            <li>처리 계획</li>
-            <li>정보 판단 · 추가 질문</li>
-            <li>Tool 실행: 위치 확인 · 관할 기관 검색 · 담당 부서 조회 · 비슷한 민원 사례 조회(공공데이터)</li>
-            <li>담당 기관 판단</li>
-            <li>민원 초안 작성 ⇄ 초안 검증 (문제가 있으면 다시 작성)</li>
-            <li>결과물 만들기: 민원 패키지 PDF</li>
+            {t("log.flow").map((step) => (
+              <li key={step}>{step}</li>
+            ))}
           </ol>
         </div>
       ) : (
@@ -265,10 +304,10 @@ export default function AgentLog({ timeline, running }) {
               <div className="entry-marker">{entry.status === "running" ? <span className="spinner" /> : i + 1}</div>
               <div className="entry-card">
                 <div className="entry-head">
-                  <strong>{(entry.node === "draft" || entry.node === "understand") && entry.log ? entry.log.title : (NODE_LABEL[entry.node] ?? entry.node)}</strong>
+                  <strong>{entryTitle(entry, t)}</strong>
                   <div className="row">
                     <SourceBadge log={entry.log} />
-                    <span className={`status status-${entry.status}`}>{STATUS_TEXT[entry.status]}</span>
+                    <span className={`status status-${entry.status}`}>{t(`status.${entry.status}`)}</span>
                     {entry.log?.at && <span className="muted small">{entry.log.at}</span>}
                   </div>
                 </div>
@@ -281,7 +320,7 @@ export default function AgentLog({ timeline, running }) {
               <div className="entry-marker">
                 <span className="spinner" />
               </div>
-              <div className="entry-card muted">다음 단계 준비 중…</div>
+              <div className="entry-card muted">{t("log.next")}</div>
             </li>
           )}
         </ol>

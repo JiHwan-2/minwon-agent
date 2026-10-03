@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { downloadPdf } from "../api.js";
+import { languageName, useI18n } from "../i18n.js";
 
 const EVIDENCE_GROUPS = [
-  { level: "required", label: "필수", desc: "지키지 않으면 처리되지 않는 공식 요건이에요.", tone: "danger" },
-  { level: "recommended", label: "권장", desc: "있으면 처리에 도움이 돼요. 대부분의 민원은 증빙 없이도 접수할 수 있어요.", tone: "primary" },
-  { level: "separate", label: "별도 절차", desc: "민원과 따로 신청할 때 필요해요 (예: 피해 보상).", tone: "warn" },
+  { level: "required", tone: "danger" },
+  { level: "recommended", tone: "primary" },
+  { level: "separate", tone: "warn" },
 ];
 
-function FilesSection({ files, sessionId, title, body }) {
+function FilesSection({ files, sessionId, title, body, korean }) {
+  const { t } = useI18n();
   const [state, setState] = useState("idle"); // idle | saving | error
   const [error, setError] = useState("");
   const { pdf } = files;
@@ -26,29 +28,32 @@ function FilesSection({ files, sessionId, title, body }) {
   return (
     <section className="pk-section files">
       <h3>
-        완성된 결과물 <span className="small muted">Agent가 만든 파일</span>
+        {t("pkg.files")} <span className="small muted">{t("pkg.filesSub")}</span>
       </h3>
       <div className="file-row">
         {pdf?.name ? (
           <button className="btn btn-primary btn-sm" onClick={savePdf} disabled={state === "saving"}>
-            {state === "saving" ? "PDF 만드는 중…" : `📄 민원 패키지 PDF 받기 (${pdf.pages}쪽)`}
+            {state === "saving" ? t("pkg.pdfMaking") : t("pkg.pdfGet", { pages: pdf.pages })}
           </button>
         ) : (
-          <span className="small warn">PDF를 만들지 못했어요. 아래 복사 버튼을 이용해 주세요.</span>
+          <span className="small warn">{t("pkg.pdfFail")}</span>
         )}
       </div>
-      {pdf?.name && <p className="small muted">PDF에는 위에서 직접 고친 제목·본문이 그대로 들어가요.</p>}
-      {state === "error" && <p className="small warn">PDF를 받지 못했어요. ({error})</p>}
+      {pdf?.name && <p className="small muted">{t("pkg.pdfNote")}</p>}
+      {pdf?.name && korean && <p className="small muted">{t("pkg.pdfKorean")}</p>}
+      {state === "error" && <p className="small warn">{t("pkg.pdfError", { error })}</p>}
     </section>
   );
 }
 
 function CasesSection({ cases }) {
+  const { t, lang } = useI18n();
   return (
     <section className="pk-section">
       <h3>
-        비슷한 민원 사례 <span className="small muted">공공데이터 '{cases.query}' 검색 {cases.total}건 중</span>
+        {t("pkg.cases")} <span className="small muted">{t("pkg.casesMeta", { query: cases.query, total: cases.total })}</span>
       </h3>
+      {lang !== "ko" && <p className="small muted">{t("pkg.casesKorean")}</p>}
       <ul className="cases">
         {cases.items.map((c) => (
           <li key={c.id || c.title}>
@@ -57,16 +62,35 @@ function CasesSection({ cases }) {
           </li>
         ))}
       </ul>
-      <p className="small muted">출처: {cases.source_name}. 참고용이며 처리 결과는 기관·지역마다 다를 수 있어요.</p>
+      <p className="small muted">{t("pkg.casesSource", { source: cases.source_name })}</p>
     </section>
   );
 }
 
-export default function PackageCard({ pkg, decision, review, locationConfirmed = true, cases, files, sessionId }) {
+export default function PackageCard({ pkg, decision, review, translation, locationConfirmed = true, cases, files, sessionId }) {
+  const { t, lang } = useI18n();
   const [title, setTitle] = useState(pkg.title);
   const [body, setBody] = useState(pkg.body);
   const [checked, setChecked] = useState({});
   const [copied, setCopied] = useState(false);
+  // 시민이 외국인이면 번역본을 먼저 보여 주고, 버튼으로 제출용 한국어 원문(검증을 거친 글)으로 바꾼다
+  const hasTranslation = Boolean(translation && translation.language !== "ko");
+  const [showTranslation, setShowTranslation] = useState(hasTranslation);
+  const tr = hasTranslation && showTranslation ? translation : null;
+  const trName = hasTranslation ? languageName(translation.language, lang) : "";
+  const { agency, channel } = decision;
+
+  const view = {
+    reason: tr?.reason ?? decision.reason,
+    steps: tr?.steps ?? decision.steps,
+    cautions: tr?.cautions ?? decision.cautions,
+    issues: tr?.issues ?? review.issues,
+    unit: tr?.unit ?? agency.unit,
+    duty: tr?.duty ?? agency.duty,
+    period: tr?.period ?? decision.period,
+    tips: tr?.tips ?? pkg.tips,
+    evidence: pkg.evidence.map((e, i) => (tr?.evidence[i] ? { ...e, ...tr.evidence[i] } : e)),
+  };
 
   // '[위치]'처럼 한 줄 전체가 대괄호인 줄은 소제목이라 빈칸으로 세지 않음 (백엔드 export.blanks와 같은 규칙)
   const blanks = body
@@ -74,13 +98,12 @@ export default function PackageCard({ pkg, decision, review, locationConfirmed =
     .filter((line) => !/^\s*\[[^\]]+\]\s*$/.test(line))
     .join("\n")
     .match(/\[[^\]]+\]/g)?.length ?? 0;
-  const checkable = pkg.evidence.filter((e) => e.level !== "separate");
-  const ready = checkable.filter((e) => checked[e.item]).length;
-  const { agency, channel } = decision;
+  const checkable = view.evidence.map((e, i) => ({ ...e, index: i })).filter((e) => e.level !== "separate");
+  const ready = checkable.filter((e) => checked[e.index]).length;
 
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(`${title}\n\n${body}`);
+      await navigator.clipboard.writeText(`${title}\n\n${body}`); // 제출하는 글이므로 언제나 한국어 원문
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {
@@ -91,56 +114,54 @@ export default function PackageCard({ pkg, decision, review, locationConfirmed =
   return (
     <div className="package">
       <div className="package-head">
-        <span className="pill">민원 패키지 · {pkg.version}번째 초안</span>
+        <span className="pill">{t("pkg.head", { version: pkg.version })}</span>
         {review.passed ? (
-          <span className="pill pill-ok">✓ 검증 통과</span>
+          <span className="pill pill-ok">{t("pkg.passed")}</span>
         ) : (
-          <span className="pill pill-warn">확인 필요 {review.issues.length}건</span>
+          <span className="pill pill-warn">{t("pkg.needsCheck", { count: review.issues.length })}</span>
         )}
       </div>
 
-      {!locationConfirmed && (
-        <p className="alert small">⚠ 위치 후보가 여러 곳이어서 1순위 후보로 안내했어요. 제출 전에 위치와 담당 기관이 맞는지 꼭 확인해 주세요.</p>
-      )}
+      {!locationConfirmed && <p className="alert small">{t("pkg.locationWarn")}</p>}
       <section className="pk-section">
-        <h3>제출할 곳</h3>
+        <h3>{t("pkg.where")}</h3>
         <div className="agency">
           <strong>{agency.agency}</strong>
-          <span>{agency.unit}</span>
+          <span>{view.unit}</span>
           <small>
-            {agency.duty}
+            {view.duty}
             {agency.phone && ` · ☎ ${agency.phone}`}
           </small>
         </div>
-        <p className="small">{decision.reason}</p>
+        <p className="small">{view.reason}</p>
         {decision.others.length > 0 && (
-          <p className="small muted">함께 관련된 기관: {decision.others.map((o) => `${o.agency}(${o.unit})`).join(", ")}</p>
+          <p className="small muted">{t("pkg.related", { items: decision.others.map((o) => `${o.agency}(${o.unit})`).join(", ") })}</p>
         )}
         <div className="row">
           {channel.url ? (
             <a className="btn btn-primary btn-sm" href={channel.url} target="_blank" rel="noopener noreferrer">
-              {channel.name}에서 제출하기 ↗
+              {t("pkg.submitAt", { name: channel.name })}
             </a>
           ) : (
             <span className="pill">{channel.name}</span>
           )}
-          {channel.phone && <span className="small muted">전화 {channel.phone}</span>}
-          <span className="small muted">처리 기간: {decision.period}</span>
+          {channel.phone && <span className="small muted">{t("pkg.phone", { phone: channel.phone })}</span>}
+          <span className="small muted">{t("pkg.period", { period: view.period })}</span>
         </div>
       </section>
 
       {cases?.items?.length > 0 && <CasesSection cases={cases} />}
 
       <section className="pk-section">
-        <h3>이렇게 진행하세요</h3>
+        <h3>{t("pkg.steps")}</h3>
         <ol className="steps-list">
-          {decision.steps.map((s, i) => (
+          {view.steps.map((s, i) => (
             <li key={i}>{s}</li>
           ))}
         </ol>
-        {decision.cautions.length > 0 && (
+        {view.cautions.length > 0 && (
           <ul className="cautions">
-            {decision.cautions.map((c, i) => (
+            {view.cautions.map((c, i) => (
               <li key={i}>{c}</li>
             ))}
           </ul>
@@ -148,41 +169,60 @@ export default function PackageCard({ pkg, decision, review, locationConfirmed =
       </section>
 
       <section className="pk-section">
-        <h3>민원 초안 <span className="small muted">직접 고칠 수 있어요</span></h3>
-        <input className="field" value={title} onChange={(e) => setTitle(e.target.value)} aria-label="민원 제목" />
-        <textarea className="field" value={body} onChange={(e) => setBody(e.target.value)} rows={12} aria-label="민원 본문" />
-        {blanks > 0 && <p className="small warn">[ ] 표시된 빈칸 {blanks}곳을 채운 뒤 제출해 주세요.</p>}
+        <h3>
+          {t("pkg.draft")}{" "}
+          <span className="small muted">{tr ? t("pkg.translatedTag", { language: trName }) : t("pkg.editable")}</span>
+        </h3>
+        {tr ? (
+          <>
+            <p className="draft-title">{tr.title}</p>
+            <div className="draft-text">{tr.body}</div>
+            <p className="small muted">{translation.translated ? t("pkg.translationNote") : t("pkg.notTranslated")}</p>
+          </>
+        ) : (
+          <>
+            {hasTranslation && <p className="small muted">{t("pkg.koreanNote")}</p>}
+            <input className="field" value={title} onChange={(e) => setTitle(e.target.value)} aria-label={t("pkg.titleLabel")} />
+            <textarea className="field" value={body} onChange={(e) => setBody(e.target.value)} rows={12} aria-label={t("pkg.bodyLabel")} />
+          </>
+        )}
+        {blanks > 0 && <p className="small warn">{t("pkg.blanks", { count: blanks })}</p>}
         {!review.passed && (
           <ul className="cautions">
-            {review.issues.map((issue, i) => (
+            {view.issues.map((issue, i) => (
               <li key={i}>{issue}</li>
             ))}
           </ul>
         )}
         <div className="row">
+          {hasTranslation && (
+            <button className="btn btn-primary btn-sm" onClick={() => setShowTranslation((v) => !v)}>
+              {showTranslation ? t("pkg.showKorean") : t("pkg.showTranslation", { language: trName })}
+            </button>
+          )}
           <button className="btn btn-ghost btn-sm" onClick={copy}>
-            {copied ? "복사했어요 ✓" : "제목·본문 복사"}
+            {copied ? t("pkg.copied") : hasTranslation ? t("pkg.copyKorean") : t("pkg.copy")}
           </button>
-          <span className="small muted">제출은 직접 해 주세요. 이름·연락처는 제출 사이트에서 입력합니다.</span>
+          <span className="small muted">{t("pkg.submitSelf")}</span>
         </div>
       </section>
 
       <section className="pk-section">
         <h3>
-          증빙자료 <span className="small muted">준비 {ready}/{checkable.length}</span>
+          {t("pkg.evidence")} <span className="small muted">{t("pkg.evidenceReady", { ready, total: checkable.length })}</span>
         </h3>
         {EVIDENCE_GROUPS.map((group) => {
-          const items = pkg.evidence.filter((e) => e.level === group.level);
+          const items = view.evidence.map((e, i) => ({ ...e, index: i })).filter((e) => e.level === group.level);
           if (items.length === 0) return null;
           return (
             <div key={group.level} className={`ev-group ev-${group.tone}`}>
               <p className="ev-head">
-                <em className="ev-tag">{group.label}</em>
-                <span className="small muted">{group.desc}</span>
+                <em className="ev-tag">{t(`ev.${group.level}`)}</em>
+                <span className="small muted">{t(`ev.${group.level}Desc`)}</span>
               </p>
               <ul className="checklist">
                 {items.map((e) => (
-                  <li key={e.item}>
+                  <li key={e.index}>
                     {group.level === "separate" ? (
                       <span className="ev-info">
                         {e.item}
@@ -192,13 +232,13 @@ export default function PackageCard({ pkg, decision, review, locationConfirmed =
                       <label>
                         <input
                           type="checkbox"
-                          checked={!!checked[e.item]}
-                          onChange={() => setChecked((c) => ({ ...c, [e.item]: !c[e.item] }))}
+                          checked={!!checked[e.index]}
+                          onChange={() => setChecked((c) => ({ ...c, [e.index]: !c[e.index] }))}
                         />
                         <span>
                           {e.item}
                           <small>{e.why}</small>
-                          {e.basis && <small className="ev-basis">근거: {e.basis}</small>}
+                          {e.basis && <small className="ev-basis">{t("pkg.basis", { basis: e.basis })}</small>}
                         </span>
                       </label>
                     )}
@@ -208,16 +248,16 @@ export default function PackageCard({ pkg, decision, review, locationConfirmed =
             </div>
           );
         })}
-        {pkg.tips.length > 0 && (
+        {view.tips.length > 0 && (
           <ul className="tips">
-            {pkg.tips.map((t) => (
-              <li key={t}>{t}</li>
+            {view.tips.map((tip, i) => (
+              <li key={i}>{tip}</li>
             ))}
           </ul>
         )}
       </section>
 
-      {files && sessionId && <FilesSection files={files} sessionId={sessionId} title={title} body={body} />}
+      {files && sessionId && <FilesSection files={files} sessionId={sessionId} title={title} body={body} korean={lang !== "ko"} />}
     </div>
   );
 }
