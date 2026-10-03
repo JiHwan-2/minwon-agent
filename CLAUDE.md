@@ -53,7 +53,8 @@ frontend/src/
   i18n.js       화면 글자 번역 (서버 i18n.py와 같은 4개 언어, 키를 추가하면 4개 언어 모두에 넣기)
   components/   Chat(대화) · AgentLog(작업 기록) · PackageCard(민원 패키지)
 ```
-Workflow: guard → understand → plan → check ⇄ ask → locate ⇄ confirm_location → act → decide → draft ⇄ review → deliver (완성 후 수정 요청 → draft)
+Workflow: guard → (사진이면 look → confirm_photo ⇄) → understand → plan → check ⇄ ask → locate ⇄ confirm_location → act → decide → draft ⇄ review → deliver (완성 후 수정 요청 → draft)
+현장 사진: tools/photo.py가 줄인 사본(메타데이터 제거)만 메모리에 두고 EXIF에서 GPS·촬영 시각을 읽음. look이 GPS→주소(카카오)·Claude 이미지 분석(`claude -p` stream-json 입력)으로 확인 질문을 만들고, confirm_photo가 예/아니요 답을 판단. 사진 위치가 있으면 check는 위치를 묻지 않고 locate를 건너뜀
 understand에서 Claude가 입력 확인: 민원 아님·불분명이면 chat 단계(agent/conversation.py)에서 앞 대화를 기억해 자유롭게 답하고 끝, 다른 창구(소비자 피해·임금체불·사기·개인 간 분쟁 → agencies.json의 referrals)면 정해진 카드로 안내하고 끝. 위기 표현은 safety.py가 AI보다 먼저 109 안내
 외국어 시민: 대화·질문은 시민의 언어로, 민원 초안·PDF는 한국어로 쓰고 검증 통과 후 translate 단계에서 번역본을 만든다 (화면에서 한국어 원문으로 전환해 제출)
 대화 도중 말은 agent/topic.py가 판단: 다른 종류의 민원이면 새 thread로 처음부터, 민원에 대한 질문이면 conversation.answer가 확인된 정보로만 답하고 진행은 그대로, 관계없는 말이면 진행하지 않고 안내. Claude가 자유롭게 쓴 답에 지식베이스·이번 민원 결과에 없는 전화번호·인터넷 주소가 있으면 내보내지 않고 정해진 문장으로 바꾼다. 중단 버튼은 agent/cancel.py(claude 프로세스 종료) → 그 턴 직전 체크포인트로 되돌림

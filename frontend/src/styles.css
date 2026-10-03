@@ -102,6 +102,18 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .chip-btn { border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: 6px 12px; font-size: 13px; cursor: pointer; }
 .chip-btn:hover { border-color: var(--primary); color: var(--primary); }
 
+/* 현장 사진 */
+.bubble-photo { display: block; width: 240px; max-width: 100%; height: auto; max-height: 260px; border-radius: 10px; object-fit: cover; }
+.bubble-photo-only { background: none; padding: 0; }
+.photo-question { font-weight: 700; }
+.yes-no .btn { min-width: 84px; justify-content: center; }
+.attached { display: flex; align-items: center; gap: 10px; padding: 10px 12px 0; min-width: 0; }
+.attached img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); flex: none; }
+.attached-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attach-error { padding: 8px 12px 0; }
+.btn-attach { padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); }
+.btn-attach:hover:not(:disabled) { color: var(--primary); }
+
 .composer { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--border); }
 .composer textarea { flex: 1; resize: none; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--bg); }
 .composer textarea:focus { outline: 2px solid var(--primary); outline-offset: -1px; }

@@ -9,6 +9,7 @@ class AgentState(TypedDict, total=False):
     latest: str                                       # 이번에 시민이 보낸 말 (불분명한 말을 합친 user_input과 구분)
     chat_history: list[dict]                          # 민원이 아닌 대화 기록 (대화 단계가 앞 대화를 기억하도록)
     chat: dict                                        # 대화 단계 결과 (몇 번째 대화인지, 연락처를 걸렀는지)
+    photo: dict                                       # 현장 사진 (id·사진 정보·AI 분석·확인 단계). 사진 자체는 tools/photo.py 메모리에만
     safety: dict                                      # 긴급상황·지시주입 판단
     understanding: dict                               # 유형·요약·긴급도
     plan: dict                                        # 처리 계획 (화면 표시용)

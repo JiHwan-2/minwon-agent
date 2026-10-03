@@ -136,6 +136,23 @@ class Translation(BaseModel):
     period: str
 
 
+class PhotoAnalysis(BaseModel):
+    """시민이 올린 현장 사진에서 찾은 생활불편과, 맞는지 '예/아니요'로 확인할 질문."""
+    relevant: bool = Field(description="도로·보도·골목·공원 등 공공장소가 찍혀 있어 불편을 짐작할 수 있으면 true. 공공장소가 전혀 없으면(셀카·음식·물건·문서 등) false")
+    scene: str = Field(description="사진에 실제로 보이는 장면 1~2문장, 시민의 언어로")
+    issue: str = Field(description="시민이 불편해할 가장 그럴듯한 문제 한 문장, 시민의 언어로. relevant가 false면 빈 문자열")
+    question: str = Field(description="issue가 맞는지 예/아니요로 답할 확인 질문 한 문장, 시민의 언어로. relevant가 false면 빈 문자열")
+    category: CategoryCode = Field(description="issue의 생활불편 유형 코드 (relevant가 false면 other)")
+    emergency: bool = Field(description="불이 났거나 사람이 다쳐 있거나 구조물이 무너지는 중처럼 112·119 신고가 먼저인 상황이면 true")
+    location_clues: str = Field(description="사진에 보이는 도로명판·건물 번호판·간판·정류장 이름 등 위치 단서 글자를 보이는 그대로. 없으면 빈 문자열")
+
+
+class PhotoAnswer(BaseModel):
+    answer: Literal["yes", "no", "unclear"] = Field(description="시민의 답이 확인 질문에 대한 긍정이면 yes, 부정이거나 다른 문제를 말하면 no, 알 수 없으면 unclear")
+    issue: str = Field(description="시민이 답 속에서 직접 말한 불편이나 보충 설명 (시민의 말 그대로 정리). 예/아니요만 했으면 빈 문자열")
+    reason: str = Field(description="판단 이유 한 문장, 한국어")
+
+
 TurnKind = Literal["continue", "new_complaint", "question", "off_topic"]
 
 

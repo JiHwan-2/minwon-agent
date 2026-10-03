@@ -4,7 +4,8 @@ from langgraph.graph import END, START, StateGraph
 from minwon.agent import nodes
 from minwon.agent.state import AgentState
 
-NODE_ORDER = ["guard", "understand", "chat", "plan", "check", "ask", "locate", "confirm_location", "act", "decide", "draft", "review", "translate", "deliver"]
+NODE_ORDER = ["guard", "look", "confirm_photo", "understand", "chat", "plan", "check", "ask", "locate", "confirm_location", "act",
+              "decide", "draft", "review", "translate", "deliver"]
 
 
 def build_graph(checkpointer=None):
@@ -13,7 +14,10 @@ def build_graph(checkpointer=None):
         g.add_node(name, getattr(nodes, name))
 
     g.add_conditional_edges(START, nodes.route_entry, {"guard": "guard", "draft": "draft"})
-    g.add_edge("guard", "understand")
+    # 사진을 올렸으면: 사진 분석 → 예/아니요 확인 → (확인한 내용으로) 문제 분석
+    g.add_conditional_edges("guard", nodes.route_after_guard, {"look": "look", "understand": "understand"})
+    g.add_conditional_edges("look", nodes.route_after_look, {"confirm_photo": "confirm_photo", "understand": "understand"})
+    g.add_conditional_edges("confirm_photo", nodes.route_after_confirm_photo, {"confirm_photo": "confirm_photo", "understand": "understand"})
     g.add_conditional_edges("understand", nodes.route_after_understand, {"plan": "plan", "chat": "chat", "end": END})
     g.add_edge("chat", END)
     g.add_edge("plan", "check")
@@ -31,14 +35,16 @@ def build_graph(checkpointer=None):
 
 
 def start_input(masked_text: str, pii_findings: list[dict], lang_hint: str = "",
-                chat_history: list[dict] | None = None, latest: str = "") -> dict:
+                chat_history: list[dict] | None = None, latest: str = "", photo: dict | None = None) -> dict:
     return {
         "user_input": masked_text,
         "latest": latest or masked_text,
         "chat_history": chat_history or [],
         "pii_findings": pii_findings,
         "lang_hint": lang_hint,
-        "dialogue": [{"role": "user", "text": masked_text}],
+        "photo": photo or {},
+        # 사진이 있으면 첫 대화 기록은 사진 확인을 마친 뒤 확인한 내용으로 남긴다 (nodes._photo_text)
+        "dialogue": [] if photo else [{"role": "user", "text": masked_text}],
         "asked": [],
         "rounds": 0,
         "tool_calls": [],

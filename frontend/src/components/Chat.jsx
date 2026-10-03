@@ -9,11 +9,31 @@ function messageText(m, t) {
   return t(m.key, vars);
 }
 
+const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const PHOTO_MAX = 15 * 1024 * 1024; // 서버와 같은 한도
+
 function Bubble({ m, canChoose, onSend }) {
   const { t } = useI18n();
+  const text = messageText(m, t);
+  const photoQuestion = m.optionKind === "photo";
   return (
-    <div className={`bubble bubble-${m.role}${m.pkg ? " bubble-wide" : ""}`}>
-      <p>{messageText(m, t)}</p>
+    <div className={`bubble bubble-${m.role}${m.pkg ? " bubble-wide" : ""}${m.photoUrl && !text ? " bubble-photo-only" : ""}`}>
+      {m.photoUrl && <img className="bubble-photo" src={m.photoUrl} alt={t("chat.photoAlt")} />}
+      {text && <p>{text}</p>}
+      {photoQuestion && m.questions?.map((q) => (
+        <p key={q.slot} className="photo-question">
+          {q.text}
+        </p>
+      ))}
+      {photoQuestion && m.options?.length > 0 && (
+        <div className="row yes-no">
+          {m.options.map((o) => (
+            <button key={o.value} className="btn btn-ghost btn-sm" disabled={!canChoose} onClick={() => onSend(o.value)}>
+              {o.label}
+            </button>
+          ))}
+        </div>
+      )}
       {m.stopped && <p className="bubble-note">{t("chat.stopped")}</p>}
       {m.masked && (
         <p className="bubble-note">
@@ -27,14 +47,14 @@ function Bubble({ m, canChoose, onSend }) {
           ))}
         </ol>
       )}
-      {m.questions && (
+      {m.questions && !photoQuestion && (
         <ol className="questions">
           {m.questions.map((q) => (
             <li key={q.slot}>{q.text}</li>
           ))}
         </ol>
       )}
-      {m.options?.length > 0 && (
+      {m.options?.length > 0 && !photoQuestion && (
         <div className="options">
           {m.options.map((o) => (
             <button key={o.value} className="option-btn" disabled={!canChoose} onClick={() => onSend(o.value)}>
@@ -86,27 +106,66 @@ function Bubble({ m, canChoose, onSend }) {
   );
 }
 
-export default function Chat({ messages, phase, onSend, onStop, stopping, latestId, calm }) {
+export default function Chat({ messages, phase, onSend, onStop, stopping, latestId, calm, canAttach }) {
   const { t } = useI18n();
   const [text, setText] = useState("");
+  const [file, setFile] = useState(null); // 첨부한 현장 사진 (새 민원을 시작할 때만)
+  const [preview, setPreview] = useState("");
+  const [photoError, setPhotoError] = useState("");
   const endRef = useRef(null);
+  const fileRef = useRef(null);
   const busy = phase === "running";
   const done = phase === "ready";
+  const photo = canAttach ? file : null;
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages.length, busy]);
 
+  useEffect(() => {
+    if (!file) return undefined;
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  const pick = (e) => {
+    const chosen = e.target.files?.[0];
+    e.target.value = ""; // 같은 사진을 다시 골라도 바뀐 것으로 받도록
+    if (!chosen) return;
+    if (!PHOTO_TYPES.includes(chosen.type)) return setPhotoError(t("chat.photoType"));
+    if (chosen.size > PHOTO_MAX) return setPhotoError(t("chat.photoTooBig"));
+    setPhotoError("");
+    setFile(chosen);
+  };
+
+  const removePhoto = () => {
+    setFile(null);
+    setPreview("");
+    setPhotoError("");
+  };
+
   const submit = (e) => {
     e?.preventDefault();
     const value = text.trim();
-    if (!value || busy) return;
+    if ((!value && !photo) || busy) return;
     setText("");
-    onSend(value);
+    removePhoto();
+    onSend(value, photo);
   };
 
   const placeholder = t(
-    done ? "chat.ph.ready" : phase === "asking" ? "chat.ph.asking" : phase === "clarify" ? (calm ? "chat.ph.calm" : "chat.ph.clarify") : "chat.ph.idle",
+    photo
+      ? "chat.ph.photo"
+      : done
+        ? "chat.ph.ready"
+        : phase === "asking"
+          ? "chat.ph.asking"
+          : phase === "clarify"
+            ? calm
+              ? "chat.ph.calm"
+              : "chat.ph.clarify"
+            : "chat.ph.idle",
   );
 
   return (
@@ -134,7 +193,42 @@ export default function Chat({ messages, phase, onSend, onStop, stopping, latest
         </div>
       )}
 
+      {photo && preview && (
+        <div className="attached">
+          <img src={preview} alt={t("chat.photoAlt")} />
+          <span className="small muted attached-name">{photo.name}</span>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={removePhoto} disabled={busy}>
+            {t("chat.removePhoto")}
+          </button>
+        </div>
+      )}
+      {photoError && <p className="small warn attach-error">{photoError}</p>}
+
       <form className="composer" onSubmit={submit}>
+        {canAttach && (
+          <>
+            <input ref={fileRef} type="file" accept={PHOTO_TYPES.join(",")} onChange={pick} hidden />
+            <button
+              type="button"
+              className="btn btn-ghost btn-attach"
+              onClick={() => fileRef.current?.click()}
+              disabled={busy}
+              title={t("chat.attachHint")}
+              aria-label={t("chat.attach")}
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                <path
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinejoin="round"
+                  d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"
+                />
+                <circle cx="12" cy="13" r="3.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+              </svg>
+            </button>
+          </>
+        )}
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -152,7 +246,7 @@ export default function Chat({ messages, phase, onSend, onStop, stopping, latest
             {stopping ? t("chat.stoppingBtn") : t("chat.stopBtn")}
           </button>
         ) : (
-          <button className="btn btn-primary" type="submit" disabled={!text.trim()}>
+          <button className="btn btn-primary" type="submit" disabled={!text.trim() && !photo}>
             {t("chat.send")}
           </button>
         )}

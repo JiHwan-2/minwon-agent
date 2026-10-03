@@ -1,5 +1,6 @@
 """판단 엔진 선택: Claude Code(claude -p)를 우선 사용하고, 실패하면 규칙 엔진으로 대체한다."""
 
+import base64
 import json
 import logging
 import os
@@ -17,7 +18,9 @@ from pydantic import BaseModel
 
 from minwon.agent import cancel, prompts
 from minwon.agent.rules import RuleBrain
-from minwon.agent.schemas import ChatReply, Critique, Decision, Draft, InfoCheck, Plan, TopicCheck, Translation, Understanding
+from minwon.agent.schemas import (
+    ChatReply, Critique, Decision, Draft, InfoCheck, PhotoAnalysis, PhotoAnswer, Plan, TopicCheck, Translation, Understanding,
+)
 from minwon.settings import settings
 
 log = logging.getLogger(__name__)
@@ -40,17 +43,19 @@ class ClaudeCodeBrain:
 
     attempts = 2  # Claude 쪽 일시 오류(과부하·로그인 갱신 충돌)면 한 번 더 시도
 
-    def _cmd(self, schema: type[BaseModel], system: str, effort: str) -> list[str]:
+    def _cmd(self, schema: type[BaseModel], system: str, effort: str, model: str = "", image: bool = False) -> list[str]:
         exe = settings.claude_cli or shutil.which("claude")
         if not exe or (settings.claude_cli and not Path(exe).exists()):
             raise ClaudeCodeError("Claude Code(claude)를 찾을 수 없습니다. 설치·로그인 후 다시 실행해 주세요")
+        # 사진은 표준입력에 메시지(JSON)로 넣는다: 입력·출력 모두 stream-json이어야 한다
+        io_format = ["--input-format", "stream-json", "--output-format", "stream-json", "--verbose"] if image else ["--output-format", "json"]
         return [
             exe, "-p",
-            "--output-format", "json",
+            *io_format,
             "--json-schema", json.dumps(schema.model_json_schema(), ensure_ascii=False),
             "--system-prompt", system,
             "--tools", "",
-            "--model", settings.claude_model,
+            "--model", model or settings.claude_model,
             "--effort", effort,
             "--no-session-persistence",
             "--safe-mode",  # CLAUDE.md·스킬·훅·MCP를 읽지 않아 지시문 그대로, 더 빨리 실행
@@ -73,13 +78,20 @@ class ClaudeCodeBrain:
                 raise
         cancel.check()
         try:
-            return json.loads(stdout)
+            return _result_of(stdout)
         except json.JSONDecodeError:
             raise ClaudeCodeError(f"응답을 읽을 수 없습니다 (종료 코드 {proc.returncode}): {(stderr or stdout).strip()[:150]}")
 
-    def _ask(self, effort: str, schema: type[T], system: str, payload: Any) -> T:
+    def _ask(self, effort: str, schema: type[T], system: str, payload: Any, image: bytes | None = None) -> T:
         content = payload if isinstance(payload, str) else json.dumps(payload, ensure_ascii=False, indent=2)
-        cmd = self._cmd(schema, system, effort)
+        if image is None:
+            cmd = self._cmd(schema, system, effort)
+        else:
+            cmd = self._cmd(schema, system, effort, settings.claude_vision_model, image=True)
+            content = json.dumps({"type": "user", "message": {"role": "user", "content": [
+                {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": base64.b64encode(image).decode()}},
+                {"type": "text", "text": content},
+            ]}}, ensure_ascii=False) + "\n"
         for attempt in range(1, self.attempts + 1):
             data = self._run(cmd, content)
             if not data.get("is_error"):
@@ -118,6 +130,29 @@ class ClaudeCodeBrain:
 
     def chat(self, ctx: dict) -> ChatReply:
         return self._ask(settings.claude_effort_fast, ChatReply, prompts.CHAT, ctx)
+
+    def look(self, ctx: dict, image: bytes | None) -> PhotoAnalysis:
+        if not image:
+            raise ClaudeCodeError("분석할 사진이 없습니다 (서버가 다시 시작됨)")
+        return self._ask(settings.claude_effort_vision, PhotoAnalysis, prompts.LOOK, ctx, image)
+
+    def photo_answer(self, ctx: dict) -> PhotoAnswer:
+        return self._ask(settings.claude_effort_fast, PhotoAnswer, prompts.PHOTO_ANSWER, ctx)
+
+
+def _result_of(stdout: str) -> dict:
+    """json 출력은 응답 하나, stream-json 출력은 줄마다 이벤트이고 마지막 'result' 줄이 응답이다."""
+    try:
+        return json.loads(stdout)
+    except json.JSONDecodeError:
+        for line in reversed(stdout.splitlines()):
+            try:
+                data = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(data, dict) and data.get("type") == "result":
+                return data
+        raise
 
 
 def _json_in(text: str) -> Any:
