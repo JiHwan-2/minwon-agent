@@ -25,3 +25,8 @@ docs/reference/
 .idea/
 .DS_Store
 Thumbs.db
+
+# 제출물 영상 파일 (용량이 커서 git 제외)
+docs/submission/**/*.mp4
+docs/submission/**/*.mov
+docs/submission/**/*.mkv
