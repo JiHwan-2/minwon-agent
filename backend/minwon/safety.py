@@ -15,14 +15,10 @@ PII_PATTERNS: list[tuple[str, str, re.Pattern]] = [
 EMERGENCY_PATTERNS = re.compile(
     r"(불이 ?났|화재|연기가 ?(?:나|많이)|쓰러졌|의식이 ?없|피를 ?많이|숨을 ?안|가스 ?냄새|폭발|"
     r"칼을|흉기|폭행|맞고 ?있|납치|물에 ?빠졌|지금 ?무너|붕괴|"
-    # 번역해 둔 외국어 (영어·베트남어·중국어·태국어·인도네시아어·우즈베크어·일본어)
+    # 지원 외국어 (영어·중국어·베트남어)
     r"\bon fire\b|\bhouse fire\b|\bfire (?:broke out|in)\b|\bunconscious\b|\bgas leak|\bexplosion\b|\bstabbed\b|\bbeing attacked\b|\bkidnapp|"
-    r"đang cháy|cháy nhà|bất tỉnh|rò rỉ (?:gas|khí)|phát nổ|vụ nổ|bị đâm|bắt cóc|"
     r"着火|失火|火灾|昏迷|晕倒|煤气泄漏|燃气泄漏|爆炸|被刺|绑架|"
-    r"ไฟไหม้|หมดสติ|แก๊สรั่ว|ระเบิด|ถูกแทง|ลักพาตัว|"
-    r"kebakaran|pingsan|tidak sadarkan diri|kebocoran gas|ledakan|ditusuk|penculikan|"
-    r"yong'in|hushidan ketdi|gaz siz|portla|pichoqla|o'g'irlab ket|"
-    r"火事|火災|意識がない|ガス漏れ|爆発|刺され|誘拐)",
+    r"đang cháy|cháy nhà|bất tỉnh|rò rỉ (?:gas|khí)|phát nổ|vụ nổ|bị đâm|bắt cóc)",
     re.IGNORECASE,
 )
 
@@ -31,14 +27,10 @@ EMERGENCY_PATTERNS = re.compile(
 CRISIS_PATTERNS = re.compile(
     r"(죽고\s*싶|자살|목숨을?\s*끊|스스로\s*목숨|살기\s*싫|살고\s*싶지\s*않|사라지고\s*싶|극단적\s*(?:인\s*)?선택|"
     r"뛰어내리고\s*싶|자해|삶을\s*끝내|"
-    # 번역해 둔 외국어
+    # 지원 외국어 (영어·중국어·베트남어)
     r"\bwant to die\b|\bkill myself\b|\bsuicid|\bend my life\b|\bdon'?t want to live\b|\bhurt myself\b|"
-    r"muốn chết|tự tử|tự sát|không muốn sống|"
     r"想死|自杀|轻生|不想活|"
-    r"อยากตาย|ฆ่าตัวตาย|"
-    r"ingin mati|mau mati|bunuh diri|tidak ingin hidup|"
-    r"o'lgim kel|o'zimni o'ldir|joniga qasd|yashagim kelmay|"
-    r"死にたい|自殺|消えたい|生きていたくない)",
+    r"muốn chết|tự tử|tự sát|không muốn sống)",
     re.IGNORECASE,
 )
 

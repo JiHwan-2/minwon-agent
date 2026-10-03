@@ -90,7 +90,7 @@ def understand(state: AgentState) -> dict:
     data["language"] = i18n.normalize(data["language"]) or "ko"
     if out.source != "llm" and not i18n.detect(state["user_input"]):
         data["language"] = i18n.normalize(state.get("lang_hint")) or data["language"]
-    lang = data["language"]
+    data["language"] = lang = i18n.ui_lang(data["language"])  # 지원하지 않는 언어는 영어로 안내
     if state["safety"]["emergency"]:
         data |= {"intent": "complaint", "urgency": "high"}  # 긴급상황 표현은 민원 흐름으로 (112·119 안내는 guard가 함)
     if data["intent"] == "referral" and data["referral"] == "none":

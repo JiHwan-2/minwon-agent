@@ -31,11 +31,11 @@ def test_detects_crisis_but_not_common_exaggeration():
 
 
 def test_detects_crisis_and_emergency_in_translated_languages():
-    for text in ("I want to die", "Tôi muốn chết", "我想死", "อยากตาย", "Saya ingin mati", "O'lgim kelyapti", "死にたい"):
+    for text in ("I want to die", "我想死", "Tôi muốn chết"):
         assert is_crisis(text), text
-    for text in ("There is a house fire", "Nhà bên cạnh đang cháy", "楼下着火了", "บ้านข้างๆไฟไหม้", "Ada kebakaran", "Qo'shni uyda yong'in", "隣で火事です"):
+    for text in ("There is a house fire", "楼下着火了", "Nhà bên cạnh đang cháy"):
         assert is_emergency(text), text
-    for text in ("This noise is killing me", "I got fired from my job", "Fireworks are too loud", "被打扰了", "Lampu jalan sudah mati beberapa hari", "街灯が消えています"):
+    for text in ("This noise is killing me", "I got fired from my job", "Fireworks are too loud", "被打扰了", "路灯坏了", "Đèn đường bị tắt"):
         assert not is_crisis(text) and not is_emergency(text), text
 
 

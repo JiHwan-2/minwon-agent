@@ -148,9 +148,9 @@ def test_latin_text_uses_screen_language_when_claude_fails(monkeypatch: pytest.M
 
     _use(monkeypatch, FailsToUnderstand())
     sid = new_session()
-    resp = client.post(f"/api/sessions/{sid}/messages", json={"text": "Lampu jalan di gang rumah saya mati", "lang": "id"})
+    resp = client.post(f"/api/sessions/{sid}/messages", json={"text": "The streetlight in my alley is off", "lang": "en"})
     assert resp.status_code == 200
-    assert client.get(f"/api/sessions/{sid}").json()["understanding"]["language"] == "id"
+    assert client.get(f"/api/sessions/{sid}").json()["understanding"]["language"] == "en"
 
 
 # ---- 번역 자료 ----
@@ -172,16 +172,28 @@ def test_every_referral_has_all_translations():
         for lang, fields in langs.items():
             assert {"label", "agency", "operator", "hours", "first"} <= set(fields), (code, lang)
             assert re.search(r"[가-힣]", fields["agency"]), (code, lang)  # 한국어 기관 이름을 남겨 찾을 수 있게
-        card = knowledge.referral(code, "ja")
+        card = knowledge.referral(code, "fr")  # 지원하지 않는 언어는 영어 카드
+        assert card["label"] == i18n.REFERRALS[code]["en"]["label"]
         assert card["url"] == knowledge.referrals()[code]["url"]  # 주소는 번역하지 않음
 
 
 def test_language_detection_and_fallback():
+    assert i18n.LANGS == ("ko", "en", "zh", "vi")
     assert i18n.detect("가로등이 꺼졌어요") == "ko"
-    assert i18n.detect("街灯が消えています") == "ja"
     assert i18n.detect("路灯坏了") == "zh"
-    assert i18n.detect("ไฟถนนดับ") == "th"
     assert i18n.detect("Đèn đường bị tắt") == "vi"
-    assert i18n.detect("Lampu jalan mati") is None  # 라틴 문자는 글자 모양만으로 알 수 없음
-    assert i18n.ui_lang("zh-CN") == "zh" and i18n.ui_lang("fr") == "en" and i18n.ui_lang("") == "ko"
-    assert i18n.t("cancelled", "fr") == i18n.TEXT["cancelled"]["en"]  # 번역해 두지 않은 언어는 영어 안내문
+    assert i18n.detect("The streetlight is broken") is None  # 라틴 문자는 글자 모양만으로 알 수 없음
+    assert i18n.detect("街灯が消えています") is None  # 일본어는 한자가 섞여도 중국어로 보지 않음
+    assert i18n.ui_lang("zh-CN") == "zh" and i18n.ui_lang("ja") == "en" and i18n.ui_lang("") == "ko"
+    assert i18n.t("cancelled", "ja") == i18n.TEXT["cancelled"]["en"]  # 지원하지 않는 언어는 영어 안내문
+
+
+def test_unsupported_language_is_handled_in_english(monkeypatch: pytest.MonkeyPatch):
+    class SpeaksJapanese(RuleBrain):
+        def understand(self, text):
+            return super().understand(text).model_copy(update={"language": "ja"})
+
+    _use(monkeypatch, SpeaksJapanese())
+    sid = new_session()
+    send(sid, "家の前の街灯が消えています")
+    assert client.get(f"/api/sessions/{sid}").json()["understanding"]["language"] == "en"

@@ -25,7 +25,7 @@ class Understanding(BaseModel):
         "not_complaint=생활불편과 관계없는 말(인사·잡담·의미 없는 말·유행어·장난·다른 주제 질문)"
     )
     referral: ReferralCode = Field(description="intent가 referral이면 맞는 창구 코드, 아니면 none")
-    language: str = Field(description="시민 입력의 언어 코드, ISO 639-1 두 글자 (예: ko, vi, zh, th, id, uz, en, ja)")
+    language: str = Field(description="시민 입력의 언어 코드: ko, en, zh, vi 중 하나 (그 밖의 언어면 en)")
     reply: str = Field(
         description="intent가 unclear·not_complaint면 시민에게 보낼 안내 1~2문장(시민의 언어로, 친절하게, 생활불편 예시 하나 포함). "
         "complaint·referral이면 빈 문자열"

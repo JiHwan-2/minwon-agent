@@ -32,8 +32,9 @@ UNDERSTAND = f"""{ROLE}
   예) 인사("안녕"), 의미 없는 말·유행어("기모띠", "ㅋㅋㅋ"), 잡담·다른 주제 질문("오늘 날씨 어때?", "점심 추천해 줘")
 - 판단이 애매하면 unclear를 고르세요. 생활불편이 조금이라도 드러나면 complaint입니다.
 
-[언어] language에는 시민 입력의 언어 코드(ISO 639-1 두 글자: ko, vi, zh, th, id, uz, en, ja 등)를 씁니다.
-reply·title·summary는 시민 입력과 같은 언어로 씁니다. keywords는 공공데이터 검색에 쓰므로 언제나 한국어 단어로 씁니다.
+[언어] 지원 언어는 한국어(ko)·영어(en)·중국어(zh)·베트남어(vi)입니다. language에 시민 입력의 언어 코드를 씁니다.
+시민 입력이 이 네 언어가 아니면 language=en으로 하고 영어로 안내합니다.
+reply·title·summary는 language의 언어로 씁니다. keywords는 공공데이터 검색에 쓰므로 언제나 한국어 단어로 씁니다.
 예) "Đèn đường trước nhà tôi bị tắt" → language=vi, title·summary는 베트남어, keywords=["가로등", "고장"]
 
 [reply] unclear·not_complaint일 때만 씁니다 (referral은 창구 안내를 따로 붙이므로 빈 문자열). 시민을 탓하지 말고, 무엇을 말해 주면 되는지 예시 하나와 함께 1~2문장으로 안내합니다.
