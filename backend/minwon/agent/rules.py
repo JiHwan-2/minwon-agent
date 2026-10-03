@@ -212,6 +212,7 @@ class RuleBrain:
             body="\n".join(lines),
             evidence=evidence,
             tips=["사진에는 위치를 알 수 있는 간판·건물이 함께 나오게 찍어 주세요.", "접수번호를 메모해 두면 처리 상황을 조회할 수 있습니다."],
+            reply="",  # 규칙 엔진은 수정 요청에 따로 답하지 않는다 (화면에는 정해진 문장)
         )
 
     def critique(self, ctx: dict) -> Critique:

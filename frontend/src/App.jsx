@@ -133,7 +133,9 @@ export default function App() {
           sessionId: sessionRef.current,
         };
         if (revisingRef.current) {
-          addKey("agent", "msg.revised", { version: ev.package.version }, result);
+          // Claude가 수정 요청에 답했으면(무엇을 고쳤는지·반영하지 않은 이유) 그 답을, 없으면 정해진 문장을 보여 준다
+          if (ev.package.reply) addMessage("agent", ev.package.reply, result);
+          else addKey("agent", "msg.revised", { version: ev.package.version }, result);
           break;
         }
         const loc = ev.location ?? {};

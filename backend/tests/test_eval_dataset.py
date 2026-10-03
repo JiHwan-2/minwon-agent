@@ -46,7 +46,7 @@ def test_e2e_cases_have_full_expectations():
 def test_revision_cases_use_known_bases_and_checks():
     for c in DATA["revision"]:
         assert c["base"] in DATA["revision_base"] and c["requests"], c["id"]
-        assert set(c["expect"]) <= {"contains", "absent", "shorter", "shorter_than_previous", "title", "not_required", "changed", "translated"}, c["id"]
+        assert set(c["expect"]) <= {"contains", "absent", "shorter", "shorter_than_previous", "title", "not_required", "changed", "translated", "explained"}, c["id"]
 
 
 def test_dataset_covers_every_category_and_judgment():

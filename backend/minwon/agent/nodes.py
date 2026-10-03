@@ -436,12 +436,19 @@ def draft(state: AgentState) -> dict:
         "review_issues": review_issues,
         "revision_request": revision,
         "previous_draft": {"title": previous["title"], "body": previous["body"]} if previous and (revision or review_issues) else None,
+        "language": _language(state),
     }
     out = get_brain().call("write", ctx)
     package = out.value.model_dump() | {"version": (previous or {}).get("version", 0) + 1}
+    # 수정 요청에 대한 답(무엇을 고쳤는지·반영하지 않은 이유). 검증 의견으로 다시 쓸 때는 앞서 한 답을 그대로 둔다
+    reply = package["reply"].strip() if revision else (previous or {}).get("reply", "") if review_issues else ""
+    guarded = bool(reply and conversation.unknown_contacts(reply, state))
+    package["reply"] = "" if guarded else reply
 
     if revision:
         title, detail = "초안 다시 작성 (사용자 수정 요청)", f"요청: {revision}"
+        if guarded:
+            detail += " · 답에 확인되지 않은 연락처가 있어 정해진 문장으로 바꿈"
     elif review_issues:
         title, detail = "초안 다시 작성 (검증 의견 반영)", " / ".join(review_issues)
     else:

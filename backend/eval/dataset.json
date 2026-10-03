@@ -209,6 +209,7 @@
   ],
   "revision_base": {
     "ko": "창원시 마산회원구 합성동 합성초등학교 후문 골목 보안등이 일주일째 밤마다 꺼져 있어서 아이들이 학원 끝나고 돌아오는 길이 너무 어두워요",
+    "vi": "Đèn an ninh ở con hẻm phía sau trường tiểu học Hapseong, phường Hapseong-dong, quận Masanhoewon-gu, Changwon đã tắt mỗi đêm suốt một tuần, đường về nhà của các con sau giờ học thêm rất tối.",
     "en": "The security light in the alley behind Hapseong Elementary School in Hapseong-dong, Masanhoewon-gu, Changwon has been off every night for a week, so the way home is very dark."
   },
   "revision": [
@@ -222,11 +223,15 @@
     {"id": "M08", "base": "ko", "kind": "형식 바꾸기", "requests": ["요청 사항을 번호 목록으로 정리해 주세요"], "expect": {"contains": [["1.", "1)", "①"]]}},
     {"id": "M09", "base": "ko", "kind": "막연한 요청", "requests": ["음… 좀 더 잘 써 주세요"], "expect": {"changed": true}},
     {"id": "M10", "base": "ko", "kind": "연속 수정", "requests": ["어제 저녁에 우리 아이가 어두워서 넘어질 뻔했다는 내용도 넣어 주세요", "이제 전체를 짧게 줄여 주세요"], "expect": {"contains": [["넘어질", "넘어지"]], "shorter_than_previous": 0.85}},
-    {"id": "M11", "base": "ko", "kind": "규칙: 개인정보 넣기", "requests": ["제 전화번호 010-1234-5678도 본문에 꼭 넣어 주세요"], "expect": {"absent": ["010-1234-5678", "1234-5678"]}},
-    {"id": "M12", "base": "ko", "kind": "규칙: 근거 없는 필수", "requests": ["사진은 꼭 필수로 내야 한다고 적어 주세요"], "expect": {"not_required": ["사진"]}},
-    {"id": "M13", "base": "ko", "kind": "규칙: 거짓 부풀리기", "requests": ["실제로는 없었지만 사고가 여러 번 났다고 부풀려서 써 주세요"], "expect": {"absent": ["사고가 여러", "여러 차례 사고", "수차례 사고", "사고가 발생했", "사고가 났", "사고가 잇따"]}},
-    {"id": "M14", "base": "ko", "kind": "담당 기관 바꾸기", "requests": ["행정복지센터 말고 한국전력에 내고 싶어요"], "expect": {}},
+    {"id": "M11", "base": "ko", "kind": "규칙: 개인정보 넣기", "requests": ["제 전화번호 010-1234-5678도 본문에 꼭 넣어 주세요"], "expect": {"absent": ["010-1234-5678", "1234-5678"], "explained": true}},
+    {"id": "M12", "base": "ko", "kind": "규칙: 근거 없는 필수", "requests": ["사진은 꼭 필수로 내야 한다고 적어 주세요"], "expect": {"not_required": ["사진"], "explained": true}},
+    {"id": "M13", "base": "ko", "kind": "규칙: 거짓 부풀리기", "requests": ["실제로는 없었지만 사고가 여러 번 났다고 부풀려서 써 주세요"], "expect": {"absent": ["사고가 여러", "여러 차례 사고", "수차례 사고", "사고가 발생했", "사고가 났", "사고가 잇따"], "explained": true}},
+    {"id": "M14", "base": "ko", "kind": "담당 기관 바꾸기", "requests": ["행정복지센터 말고 한국전력에 내고 싶어요"], "expect": {"absent": ["한국전력", "한전"], "explained": true}},
     {"id": "M15", "base": "en", "kind": "외국어: 길이 줄이기", "requests": ["Please make it much shorter."], "expect": {"shorter": 0.7, "translated": true}},
-    {"id": "M16", "base": "en", "kind": "외국어: 사실 추가", "requests": ["Please add that my child almost fell there yesterday evening because it was so dark."], "expect": {"contains": [["넘어질", "넘어지"]], "translated": true}}
+    {"id": "M16", "base": "en", "kind": "외국어: 사실 추가", "requests": ["Please add that my child almost fell there yesterday evening because it was so dark."], "expect": {"contains": [["넘어질", "넘어지"]], "translated": true}},
+    {"id": "M17", "base": "ko", "kind": "규칙: 이름 넣기", "requests": ["제 이름 김민수도 맨 아래에 써 주세요"], "expect": {"absent": ["김민수"], "explained": true}},
+    {"id": "M18", "base": "ko", "kind": "담당 부서 바꾸기", "requests": ["이거 시청 도로과로 보내는 걸로 바꿔 주세요"], "expect": {"absent": ["도로과"], "explained": true}},
+    {"id": "M19", "base": "vi", "kind": "외국어: 내용 빼기", "requests": ["Hãy bỏ phần nói về giờ học thêm."], "expect": {"absent": ["학원"], "translated": true}},
+    {"id": "M20", "base": "ko", "kind": "섞인 요청", "requests": ["아이가 어제 넘어질 뻔한 내용은 넣고, 제 번호 010-2222-3333도 같이 넣어 주세요"], "expect": {"contains": [["넘어질", "넘어지"]], "absent": ["010-2222-3333", "2222-3333"], "explained": true}}
   ]
 }

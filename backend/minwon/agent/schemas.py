@@ -98,6 +98,10 @@ class Draft(BaseModel):
     )
     evidence: list[EvidenceItem] = Field(description="증빙자료 체크리스트 3~6개")
     tips: list[str] = Field(description="제출 전 팁 1~3개")
+    reply: str = Field(
+        description="수정 요청(revision_request)이 있을 때만: 시민에게 보여 줄 1~2문장을 시민의 언어(language)로. "
+        "무엇을 고쳤는지, 반영하지 않은 부분이 있으면 그 이유와 대신 할 방법. 수정 요청이 없으면 빈 문자열"
+    )
 
 
 class Critique(BaseModel):

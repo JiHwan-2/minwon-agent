@@ -3,7 +3,8 @@
 - understand: 입력 확인(민원/다른 창구/불분명/민원 아님), 생활불편 유형, 다른 창구 코드, 안전 감지(개인정보·긴급·위기·지시 주입)
 - turn: 대화 도중 말 판단(이어지는 말/다른 민원/관계없는 말). 짧은 답은 실제 서비스처럼 판단 없이 '이어지는 말'로 처리
 - e2e: 실행 중인 서버로 처음부터 끝까지 → 담당 기관·부서·위치 (질문에는 '모름', 위치 후보는 1번으로 자동 답변)
-- revision: 서버로 민원을 완성한 뒤 시민이 수정을 요청 → 요청대로 다시 썼는지(넣기·빼기·고치기·줄이기·제목·규칙 지키기·번역)
+- revision: 서버로 민원을 완성한 뒤 시민이 수정을 요청 → 요청대로 다시 썼는지(넣기·빼기·고치기·줄이기·제목·규칙 지키기·번역),
+  따르면 안 되는 요청은 반영하지 않고 이유를 알렸는지
 
 자동 테스트(pytest)와 달리 실제 Claude·카카오·공공데이터를 부른다.
 사용 (backend 폴더에서):
@@ -260,7 +261,7 @@ def _draft_of(state: dict) -> dict:
     review = state.get("review") or {}
     tr = state.get("translation") or {}
     return {
-        "title": pkg.get("title", ""), "body": pkg.get("body", ""), "version": pkg.get("version", 0),
+        "title": pkg.get("title", ""), "body": pkg.get("body", ""), "version": pkg.get("version", 0), "reply": pkg.get("reply", ""),
         "evidence": [{"item": e["item"], "level": e["level"]} for e in pkg.get("evidence", [])],
         "review_passed": review.get("passed"), "review_issues": review.get("issues", []), "review_round": review.get("round"),
         "translation": {"version": tr.get("version"), "translated": tr.get("translated"), "body": tr.get("body", "")} if tr else None,
@@ -335,6 +336,8 @@ def score_revision(case: dict, got: dict) -> dict:
                                          for e in after["evidence"])
     if expect.get("changed"):
         checks["changed"] = after["body"] != before["body"]
+    if expect.get("explained"):
+        checks["explained"] = bool(after.get("reply"))  # 반영하지 않은 요청이 있으면 시민에게 이유를 알렸는지
     if expect.get("translated"):
         tr = after["translation"] or {}
         checks["translated"] = bool(tr.get("translated")) and tr.get("version") == after["version"]
@@ -371,6 +374,8 @@ def revision_details(rows: list[dict]) -> list[str]:
             lines.append(f"- 요청: {s['request']} → {s['end']} ({s['seconds']}초)")
             lines += [f"  - {n['type']}: {n.get('message') or ''} {('(' + n['reason'] + ')') if n.get('reason') else ''}" for n in s["notes"]]
         lines += [f"- 기록: {x}" for x in g["revision_log"]]
+        if a.get("reply"):
+            lines.append(f"- 시민에게 한 답: {a['reply']}")
         lines += [f"- 담당 기관: {g['agency']} · 본문 {len(b['body'])}자 → {len(a['body'])}자 · 버전 {b['version']} → {a['version']}"]
         if a["review_issues"]:
             lines.append("- 남은 검증 의견: " + " / ".join(a["review_issues"]))

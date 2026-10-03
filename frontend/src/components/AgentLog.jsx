@@ -183,6 +183,7 @@ function DraftBody({ entry }) {
       <p className="strong">{pkg.title}</p>
       <p className="small muted">{t("log.draftMeta", { version: pkg.version, chars: pkg.body.length, count: pkg.evidence.length })}</p>
       {entry.log?.title?.includes("다시") && <p className="small warn">{entry.log.detail.split(" → ")[0]}</p>}
+      {pkg.reply && <p className="small">{t("log.draftReply", { reply: pkg.reply })}</p>}
     </div>
   );
 }
