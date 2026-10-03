@@ -130,7 +130,7 @@ git clone https://github.com/JiHwan-2/minwon-agent.git
 
 **4. 확인:** `pytest`가 모두 통과하고 화면에서 예시 문장이 끝까지 진행되면 준비 완료입니다.
 
-**5. Claude Code를 쓴다면:** 저장소의 `CLAUDE.md`(작업 지침)와 `.claude/skills/gn-contest`(대회 규정)를 자동으로 읽어 같은 규칙으로 작업합니다.
+**5. Claude Code를 쓴다면:** 저장소의 `CLAUDE.md`(작업 지침), `.claude/skills/gn-contest`(대회 규정), `.claude/skills/gn-deliverables`(제출물 만드는 법)를 자동으로 읽어 같은 규칙으로 작업합니다. 규정 원문·판넬 예시(`docs/reference/`)는 git에 없으니 팀장에게 받아 같은 폴더에 넣습니다.
 
 ## 협업 규칙
 

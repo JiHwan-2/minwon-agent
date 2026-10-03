@@ -2,6 +2,7 @@
 
 제4회 경남 AI·SW 경진대회(대학부 · 01 사회문제 해결형 AI Agent) 출품작.
 대회 규정·심사기준·제출물·일정은 **`.claude/skills/gn-contest/SKILL.md`를 먼저 읽고** 판단한다.
+제출물(기술설명서·시연영상·발표자료·판넬 보고서·출처신고서)을 만들 때는 **`.claude/skills/gn-deliverables/SKILL.md`** 를 따르고, 진행·담당은 `docs/submission/README.md`에 적는다.
 설계는 `docs/design.md`, 출처·신규개발분 기록은 `docs/sources.md`.
 
 ## 팀과 역할
