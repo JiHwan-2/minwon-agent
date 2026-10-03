@@ -205,6 +205,8 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .cases { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; }
 .cases li { display: grid; gap: 1px; padding-left: 10px; border-left: 3px solid var(--border); }
 .cases small { color: var(--muted); }
+.case-link { color: var(--primary); text-decoration: none; font-weight: 600; overflow-wrap: anywhere; }
+.case-link:hover { text-decoration: underline; }
 .ev-group { display: grid; gap: 6px; padding-left: 10px; border-left: 3px solid var(--border); }
 .ev-danger { border-left-color: var(--danger); }
 .ev-primary { border-left-color: var(--primary); }

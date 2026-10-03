@@ -8,10 +8,11 @@ import pytest
 
 from minwon.tools import cases
 
-ROWS = [
-    {"faqNo": 1001, "title": "보안등 고장 신고는 어디에 하나요", "ancName": "창원시", "regDate": "20240312101500", "dutySctnNm": "민원"},
-    {"faqNo": 1002, "title": "골목 보안등 수리 요청", "ancName": "김해시", "regDate": "20231105090000", "dutySctnNm": "민원"},
+ROWS = [  # dutySctnNm: 공공데이터포털 명세 그대로 tqapttn=민원, tqaplcy=정책
+    {"faqNo": 1001, "title": "보안등 고장 신고는 어디에 하나요", "ancName": "창원시", "regDate": "20240312101500", "dutySctnNm": "tqapttn"},
+    {"faqNo": 1002, "title": "골목 보안등 수리 요청", "ancName": "김해시", "regDate": "20231105090000", "dutySctnNm": "tqaplcy"},
 ]
+CASE_1001 = "https://www.epeople.go.kr/nep/pttn/gnrlPttn/pttnSmlrCaseDetail.npaid?epUnionSn=1001&dutySctnNm=tqapttn"
 
 
 def _json(status: int, payload) -> httpx.Response:
@@ -69,8 +70,19 @@ def test_finds_cases_and_tries_next_query_when_empty(api):
     assert fake.params[0]["serviceKey"] == "test-key" and fake.params[0]["searchType"] == 1
     data = r["data"]
     assert data["query"] == "보안등" and data["total"] == 2
-    assert data["items"][0] == {"title": "보안등 고장 신고는 어디에 하나요", "agency": "창원시", "date": "2024-03-12", "id": "1001"}
+    assert data["items"][0] == {"title": "보안등 고장 신고는 어디에 하나요", "agency": "창원시", "date": "2024-03-12", "id": "1001",
+                                "url": CASE_1001}
+    assert data["items"][1]["url"].endswith("epUnionSn=1002&dutySctnNm=tqaplcy")
     assert "사례 2건 중 2건" in r["summary"] and "(창원시)" in r["summary"]
+
+
+def test_case_link_only_from_valid_number_and_type():
+    assert cases.case_url("6915298", "tqapttn") == (
+        "https://www.epeople.go.kr/nep/pttn/gnrlPttn/pttnSmlrCaseDetail.npaid?epUnionSn=6915298&dutySctnNm=tqapttn")
+    assert cases.case_url("", "tqapttn") == ""  # 번호가 없으면 링크 없이 제목만
+    assert cases.case_url("1001", "") == ""
+    assert cases.case_url("1&x=<script>", "tqapttn") == ""  # 외부 데이터로 이상한 주소를 만들지 않는다
+    assert cases.case_url("1001", "민원") == ""
 
 
 def test_reads_nested_and_xml_responses(api):

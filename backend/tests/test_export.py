@@ -27,7 +27,9 @@ VALUES = {
         "tips": ["접수번호를 메모해 두세요."],
         "version": 1,
     },
-    "cases": {"items": [{"title": "보안등 고장 신고는 어디에 하나요", "agency": "창원시", "date": "2024-03-12"}],
+    "cases": {"items": [{"title": "보안등 고장 신고는 어디에 하나요", "agency": "창원시", "date": "2024-03-12",
+                         "url": "https://www.epeople.go.kr/nep/pttn/gnrlPttn/pttnSmlrCaseDetail.npaid?epUnionSn=1001&dutySctnNm=tqapttn"},
+                        {"title": "골목 보안등 수리 요청", "agency": "김해시", "date": "2023-11-05", "url": ""}],
               "source_name": "국민권익위원회 민원정책 질의응답 (공공데이터포털)"},
     "location_confirmed": True,
 }
@@ -48,6 +50,8 @@ needs_font = pytest.mark.skipif(not _has_font(), reason="이 PC에 한글 글꼴
 def test_package_pdf_is_created_and_reflects_edits():
     pdf, pages = export.package_pdf(VALUES)
     assert pdf.startswith(b"%PDF") and pages >= 1
+    # 사례 제목을 누르면 국민신문고 원문으로 (링크가 있는 사례만)
+    assert pdf.count(b"/URI (https://www.epeople.go.kr/nep/pttn/gnrlPttn/pttnSmlrCaseDetail.npaid?epUnionSn=1001") >= 1
     edited, _ = export.package_pdf(VALUES, title="고친 제목", body="고친 본문입니다. " * 80)
     assert edited.startswith(b"%PDF") and edited != pdf
 
