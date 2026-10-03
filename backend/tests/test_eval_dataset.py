@@ -14,7 +14,7 @@ def _values(v):
 
 
 def test_ids_are_unique_and_prefixed():
-    for part, prefix in (("understand", "URNXS"), ("turn", "T"), ("e2e", "A")):
+    for part, prefix in (("understand", "URNXS"), ("turn", "T"), ("e2e", "A"), ("revision", "M")):
         ids = [c["id"] for c in DATA[part]]
         assert len(ids) == len(set(ids)), part
         assert all(i[0] in prefix for i in ids), part
@@ -41,6 +41,12 @@ def test_e2e_cases_have_full_expectations():
     for c in DATA["e2e"]:
         assert c["category"] in knowledge.categories(), c["id"]
         assert c["sigungu"] and c["agency"] and c["unit"], c["id"]
+
+
+def test_revision_cases_use_known_bases_and_checks():
+    for c in DATA["revision"]:
+        assert c["base"] in DATA["revision_base"] and c["requests"], c["id"]
+        assert set(c["expect"]) <= {"contains", "absent", "shorter", "shorter_than_previous", "title", "not_required", "changed", "translated"}, c["id"]
 
 
 def test_dataset_covers_every_category_and_judgment():
