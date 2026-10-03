@@ -57,11 +57,19 @@ function CasesSection({ cases }) {
       <ul className="cases">
         {cases.items.map((c) => (
           <li key={c.id || c.title}>
-            <span>{c.title}</span>
+            {c.url ? (
+              // 누르면 국민신문고 '민원 질의응답·답변원문'의 그 사례(질문·답변·담당부서)를 새 창으로 연다
+              <a className="case-link" href={c.url} target="_blank" rel="noopener noreferrer" title={t("pkg.caseOpen")}>
+                {c.title} <span aria-hidden="true">↗</span>
+              </a>
+            ) : (
+              <span>{c.title}</span>
+            )}
             <small>{[c.agency, c.date].filter(Boolean).join(" · ")}</small>
           </li>
         ))}
       </ul>
+      {cases.items.some((c) => c.url) && <p className="small muted">{t("pkg.casesClick")}</p>}
       <p className="small muted">{t("pkg.casesSource", { source: cases.source_name })}</p>
     </section>
   );

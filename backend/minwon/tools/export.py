@@ -164,8 +164,14 @@ def package_pdf(values: dict, title: str | None = None, body: str | None = None)
         doc.heading("5. 비슷한 민원 사례")
         for c in cases:
             meta = " · ".join(x for x in (c.get("agency"), c.get("date")) if x)
-            doc.write_line(f"· {c['title']}" + (f" ({meta})" if meta else ""), 10)
-        doc.write_line(f"출처: {values['cases']['source_name']} — 참고용이며 처리 결과는 기관·지역마다 다를 수 있습니다.", 8.5, MUTED)
+            line = f"· {c['title']}" + (f" ({meta})" if meta else "")
+            if c.get("url"):  # 누르면 국민신문고 원문(질문·답변)으로
+                doc.write_line(f"{line} [원문]", 10, PRIMARY, link=c["url"])
+            else:
+                doc.write_line(line, 10)
+        doc.write_line(f"출처: {values['cases']['source_name']} — 참고용이며 처리 결과는 기관·지역마다 다를 수 있습니다."
+                       + (" [원문]을 누르면 국민신문고에서 질문·답변 원문을 볼 수 있습니다." if any(c.get("url") for c in cases) else ""),
+                       8.5, MUTED)
 
     return bytes(doc.output()), doc.page_no()
 

@@ -1,9 +1,10 @@
 """비슷한 민원 사례 조회: 국민권익위원회 민원정책 질의응답(공공데이터포털 Open API)에서 같은 유형의 사례를 찾는다."""
 
+import re
 import time
 import xml.etree.ElementTree as ET
 from typing import Any
-from urllib.parse import unquote
+from urllib.parse import unquote, urlencode
 
 import httpx
 
@@ -12,6 +13,7 @@ from minwon.settings import settings
 from minwon.tools import regions, tool_result
 
 URL = "https://apis.data.go.kr/1140100/CivilPolicyQnaService/PolicyQnaList"
+DETAIL_URL = "https://www.epeople.go.kr/nep/pttn/gnrlPttn/pttnSmlrCaseDetail.npaid"  # 국민신문고 사례 원문 (질문·답변·담당부서)
 SOURCE_NAME = "국민권익위원회 민원정책 질의응답 (공공데이터포털)"
 RETRYABLE_STATUS = {429, 500, 502, 503, 504}
 MAX_QUERIES = 3
@@ -128,13 +130,22 @@ def _result_error(data: Any) -> str:
     return f"공공데이터 API 결과 오류 ({code} {message})".strip()
 
 
+def case_url(faq_no: str, duty: str) -> str:
+    """국민신문고 '민원 질의응답·답변원문'의 그 사례 원문 주소. 번호·업무구분이 정상 값일 때만 만든다 (외부 데이터로 이상한 주소를 만들지 않게)."""
+    if not (re.fullmatch(r"\d{1,16}", faq_no) and re.fullmatch(r"[a-z]{1,10}", duty)):
+        return ""
+    return f"{DETAIL_URL}?{urlencode({'epUnionSn': faq_no, 'dutySctnNm': duty})}"
+
+
 def _case(row: dict) -> dict:
     date = str(row.get("regDate", ""))
+    faq_no, duty = str(row.get("faqNo", "")).strip(), str(row.get("dutySctnNm", "")).strip()
     return {
         "title": str(row.get("title", "")).strip(),
         "agency": str(row.get("ancName", "")).strip(),
         "date": f"{date[:4]}-{date[4:6]}-{date[6:8]}" if len(date) >= 8 and date[:8].isdigit() else "",
-        "id": str(row.get("faqNo", "")),
+        "id": faq_no,
+        "url": case_url(faq_no, duty),
     }
 
 
