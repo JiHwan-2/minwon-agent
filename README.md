@@ -130,7 +130,7 @@ git clone https://github.com/JiHwan-2/minwon-agent.git
 
 | 구분 | 규칙 |
 |---|---|
-| 역할 | 김지환: `backend/` (AI·Agent) · 서준호: `frontend/` (화면). 상대 폴더를 크게 고칠 땐 먼저 상의 |
+| 역할 | 폴더가 아니라 **기능 단위**로 나눠, 맡은 사람이 백엔드·화면·테스트까지 구현. 공용 핵심 파일(`api.py`·`graph.py`·`nodes.py`·`schemas.py`·`App.jsx`)을 크게 고칠 땐 먼저 상의 |
 | 시작 전 | `git pull`로 최신 코드 받기 |
 | 작업 | 기능마다 브랜치 만들기: `git switch -c feat/기능이름` |
 | 커밋 | 테스트 통과 후 한국어 메시지로 커밋, 바로 `git push` |
