@@ -60,3 +60,43 @@ def referral(code: str, lang: str = "ko") -> dict:
 
 def referral_guide() -> str:
     return "\n".join(f"- {code}: {r['label']} ({r['examples']}) → {r['agency']}" for code, r in referrals().items())
+
+
+@cache
+def _services() -> dict:
+    return json.loads((_DIR / "services.json").read_text(encoding="utf-8"))
+
+
+def services() -> dict[str, dict]:
+    """민원 서비스 안내 (서류 발급·신고·신청): 받는 방법·수수료·준비물·찾아갈 기관."""
+    return _services()["services"]
+
+
+def service(code: str) -> dict:
+    return services()[code]
+
+
+def service_groups() -> dict[str, dict]:
+    return _services()["groups"]
+
+
+def office_kind(kind: str) -> dict:
+    return _services()["offices"][kind]
+
+
+def kiosk_info() -> dict:
+    return _services()["kiosk"]
+
+
+def holidays(year: int) -> set[str]:
+    return set(_services()["holidays"].get(str(year), []))
+
+
+def services_checked() -> str:
+    return _services()["checked"]
+
+
+def service_guide() -> str:
+    groups = service_groups()
+    return "\n".join(f"- {code}: {s['label']} [{groups[s['group']]['label']}] (예: {', '.join(s['keywords'][:3])})"
+                     for code, s in services().items())

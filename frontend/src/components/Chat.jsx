@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n.js";
+import GuideCard from "./GuideCard.jsx";
 import PackageCard from "./PackageCard.jsx";
 
 // 번역 키로 저장한 메시지는 지금 화면 언어로 그린다. vars 안의 {key}도 번역한다 (예: 생활불편 유형 이름)
@@ -17,7 +18,7 @@ function Bubble({ m, canChoose, onSend }) {
   const text = messageText(m, t);
   const photoQuestion = m.optionKind === "photo";
   return (
-    <div className={`bubble bubble-${m.role}${m.pkg ? " bubble-wide" : ""}${m.photoUrl && !text ? " bubble-photo-only" : ""}`}>
+    <div className={`bubble bubble-${m.role}${m.pkg || m.guide ? " bubble-wide" : ""}${m.photoUrl && !text ? " bubble-photo-only" : ""}`}>
       {m.photoUrl && <img className="bubble-photo" src={m.photoUrl} alt={t("chat.photoAlt")} />}
       {text && <p>{text}</p>}
       {photoQuestion && m.questions?.map((q) => (
@@ -87,6 +88,7 @@ function Bubble({ m, canChoose, onSend }) {
           {m.unknown?.length > 0 && <li className="muted">{t("chat.unknown", { items: m.unknown.map((s) => t(`slot.${s}`)).join(", ") })}</li>}
         </ul>
       )}
+      {m.guide && <GuideCard guide={m.guide} />}
       {m.pkg && (
         <>
           <PackageCard
@@ -161,11 +163,13 @@ export default function Chat({ messages, phase, onSend, onStop, stopping, latest
         ? "chat.ph.ready"
         : phase === "asking"
           ? "chat.ph.asking"
-          : phase === "clarify"
-            ? calm
-              ? "chat.ph.calm"
-              : "chat.ph.clarify"
-            : "chat.ph.idle",
+          : phase === "guided"
+            ? "chat.ph.guided"
+            : phase === "clarify"
+              ? calm
+                ? "chat.ph.calm"
+                : "chat.ph.clarify"
+              : "chat.ph.idle",
   );
 
   return (

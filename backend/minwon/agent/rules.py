@@ -17,6 +17,9 @@ from minwon.agent.schemas import (
     Plan,
     PlanStep,
     Question,
+    ServiceCheck,
+    ServiceGuide,
+    ServiceQuestion,
     TopicCheck,
     Translation,
     Understanding,
@@ -62,6 +65,13 @@ def classify(text: str) -> str:
     return best if scores[best] > 0 else "other"
 
 
+def classify_service(text: str) -> str:
+    """민원 서비스(서류 발급·신고·신청) 키워드. 가장 많이·길게 맞은 서비스, 없으면 빈 문자열."""
+    scores = {code: sum(len(kw) for kw in s["keywords"] if kw in text) for code, s in knowledge.services().items()}
+    best = max(scores, key=scores.get)
+    return best if scores[best] > 0 else ""
+
+
 def find_location(text: str) -> str:
     parts = [r for r in REGIONS if r in text][:1]
     parts += [d for d in DISTRICT.findall(text) if d not in NOT_DISTRICT][:3]
@@ -92,8 +102,18 @@ class RuleBrain:
         code = classify(text)
         cat = knowledge.category(code)
         keywords = [kw for kw in cat["keywords"] if kw in text][:5] or [cat["label"]]
+        service = classify_service(text)
+        if service and code == "other":
+            # 생활불편 키워드 없이 서류 발급·신고 키워드만 있으면 민원 서비스 안내로
+            s = knowledge.service(service)
+            return Understanding(
+                intent="service", service=service, referral="none", language=i18n.detect(text) or "ko", reply="",
+                category="other", title=f"{s['label']} 안내", summary=text.strip()[:200], urgency="low",
+                keywords=[kw for kw in s["keywords"] if kw in text][:5] or [s["label"]], location_hint=find_location(text),
+            )
         return Understanding(
             intent="complaint",  # 민원 여부·다른 창구 판단은 Claude만 한다. 대체 경로에서는 기존처럼 민원으로 진행
+            service="none",
             referral="none",
             language=i18n.detect(text) or "ko",  # 글자 모양으로 알 수 있는 언어만. 모르면 한국어
             reply="",
@@ -242,6 +262,41 @@ class RuleBrain:
     def chat(self, ctx: dict) -> ChatReply:
         """자유 대화는 규칙으로 할 수 없으니 정해 둔 대체 문장을 돌려준다."""
         return ChatReply(reply=ctx["fallback"])
+
+    def service_check(self, ctx: dict) -> ServiceCheck:
+        """대화에서 장소 표현을 찾아 needs에 채우고, 없는 것은 정해 둔 질문으로 묻는다."""
+        user_texts = [d["text"] for d in ctx["dialogue"] if d["role"] == "user"]
+        place = find_location(" ".join(user_texts))
+        answers = {}
+        for i, turn in enumerate(ctx["dialogue"]):  # 질문 하나에 대한 답은 답 전체를 그 항목으로 본다
+            slots = turn.get("slots", [])
+            if turn["role"] == "agent" and len(slots) == 1 and i + 1 < len(ctx["dialogue"]):
+                answers[slots[0]] = ctx["dialogue"][i + 1]["text"].strip()
+        found = {slot: answers.get(slot) or place for slot in ("here", "residence") if slot in ctx["service"]["needs"]}
+        questions = [ServiceQuestion(slot=slot, text=ctx["fallback_questions"][slot])
+                     for slot in ctx["service"]["needs"] if not found.get(slot) and slot not in ctx["asked"]] if ctx["can_ask"] else []
+        target = found.get(ctx["service"]["search_at"], "")
+        return ServiceCheck(here=found.get("here", ""), residence=found.get("residence", ""), detail="",
+                            questions=questions[:2], location_query="" if UNKNOWN.match(target) else target)
+
+    def service_guide(self, ctx: dict) -> ServiceGuide:
+        """정해 둔 문장으로 안내한다 (지금 운영 중인 곳을 먼저)."""
+        s = ctx["service"]
+        online = next((c for c in s["channels"] if c["type"] == "online"), None)
+        open_places = [p for p in [*ctx["offices"], *ctx["kiosks"]] if p["state"] == "open"]
+        if open_places:
+            p = open_places[0]
+            where = f"{p['name']}" + (f"({p['distance_m']}m)" if p.get("distance_m") is not None else "")
+            recommendation = f"지금 운영 중인 가까운 곳은 {where}이에요."
+        elif ctx["offices"] or ctx["kiosks"]:
+            recommendation = "지금은 가까운 기관이 운영 시간이 아니거나 운영 시간을 확인해야 해요."
+        else:
+            recommendation = "가까운 기관 정보를 찾지 못했어요."
+        if online:
+            recommendation += f" {online['name']}({online.get('fee', '')})로 하면 방문하지 않아도 돼요."
+        steps = [f"{c['name']}: {c['how']}" + (f" ({c['fee']})" if c.get("fee") else "") for c in s["channels"]][:4]
+        tips = ([s["deadline"]] if s.get("deadline") else []) + s["cautions"][:2]
+        return ServiceGuide(summary=s["summary"], recommendation=recommendation.strip(), steps=steps, tips=tips)
 
     def look(self, ctx: dict, image: bytes | None) -> PhotoAnalysis:
         """사진은 규칙으로 볼 수 없다. 불편을 찾지 못한 것으로 돌려주면 시민에게 직접 설명을 부탁한다."""

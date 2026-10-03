@@ -33,7 +33,7 @@ sessions: dict[str, dict] = {}
 
 SNAPSHOT_KEYS = (
     "photo", "safety", "understanding", "plan", "info", "dialogue", "location", "nearby", "agencies", "cases",
-    "tool_calls", "decision", "package", "review", "translation", "files", "location_confirmed", "chat_history", "log",
+    "tool_calls", "decision", "package", "review", "translation", "files", "location_confirmed", "chat_history", "guide", "log",
 )
 RESULT_KEYS = ("info", "location", "location_confirmed", "agencies", "cases", "decision", "package", "review", "translation", "files")
 
@@ -201,9 +201,12 @@ def _run(session_id: str, text: str, lang_hint: str = "", photo: dict | None = N
                 # 앞에서 올린 사진으로 아직 묻지 못했으면, 이어서 한 말("사진 보고 찾아 줘")과 함께 사진을 한 번 더 본다
                 photo = {k: earlier[k] for k in ("id", "name", "width", "height")} | {
                     "language": i18n.ui_lang(lang), "looks": earlier.get("looks", 1) + 1}
+            # 민원 서비스 안내에 이어서 묻는 말이면 앞에서 확정한 위치를 그대로 쓴다 ("초본도 같이 돼요?"에 위치를 다시 묻지 않게)
+            kept = snapshot.values.get("location") if intent == "service" and snapshot.values.get("location_confirmed") else None
             sessions[session_id] = {"thread": uuid.uuid4().hex, "rollback": None}  # 중단하면 previous·before로 되돌아감
             config = _config(session_id)
-            graph_input = start_input(text, masked.findings, hint, snapshot.values.get("chat_history"), masked.text, photo)
+            graph_input = start_input(text, masked.findings, hint, snapshot.values.get("chat_history"), masked.text, photo,
+                                      kept if (kept or {}).get("address") else None)
         elif snapshot.values:
             yield _event(type="error", code="session_busy", message=i18n.t("error.busy", lang))
             return
@@ -243,6 +246,9 @@ def _run(session_id: str, text: str, lang_hint: str = "", photo: dict | None = N
     understanding = snapshot.values.get("understanding") or {}
     if pending := _pending(snapshot):
         yield _event(type="ask", kind=pending.get("kind", ""), questions=pending["questions"], options=pending.get("options", []))
+    elif understanding.get("intent") == "service":
+        yield _event(type="guide", guide=snapshot.values.get("guide"), info=snapshot.values.get("info"),
+                     location=snapshot.values.get("location"))
     elif understanding.get("intent", "complaint") != "complaint":
         yield _event(type="redirect", intent=understanding["intent"], message=understanding["reply"],
                      referral=understanding.get("referral_info"))

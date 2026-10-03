@@ -14,7 +14,7 @@ def _values(v):
 
 
 def test_ids_are_unique_and_prefixed():
-    for part, prefix in (("understand", "URNXS"), ("turn", "T"), ("e2e", "A")):
+    for part, prefix in (("understand", "URNXSV"), ("turn", "T"), ("e2e", "A")):
         ids = [c["id"] for c in DATA[part]]
         assert len(ids) == len(set(ids)), part
         assert all(i[0] in prefix for i in ids), part
@@ -27,6 +27,8 @@ def test_understand_labels_use_real_codes():
         assert all(v in CategoryCode.__args__ for v in _values(c.get("category", []))), c["id"]
         if "referral" in c:
             assert c["referral"] in ReferralCode.__args__ and c["intent"] == "referral", c["id"]
+        if "service" in c:
+            assert c["service"] in knowledge.services() and c["intent"] == "service", c["id"]
         assert set(c.get("safety", {})) <= {"pii", "emergency", "crisis", "injection"}, c["id"]
         if "language" in c:
             assert c["language"] in i18n.LANGS, c["id"]
@@ -49,4 +51,6 @@ def test_dataset_covers_every_category_and_judgment():
     intents = {v for c in DATA["understand"] for v in _values(c.get("intent", []))}
     assert intents == set(Intent.__args__)
     assert {c["referral"] for c in DATA["understand"] if "referral" in c} == set(ReferralCode.__args__) - {"none"}
+    groups = {knowledge.service(c["service"])["group"] for c in DATA["understand"] if "service" in c}
+    assert groups == set(knowledge.service_groups())  # 증명서·신청신고·생활 행정·복지를 모두 묻는다
     assert {c["kind"] for c in DATA["turn"]} == set(TurnKind.__args__)

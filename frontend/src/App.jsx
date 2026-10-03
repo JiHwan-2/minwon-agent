@@ -26,7 +26,8 @@ export default function App() {
   const [health, setHealth] = useState(null);
   const [messages, setMessages] = useState(() => [greeting()]);
   const [timeline, setTimeline] = useState([]);
-  const [phase, setPhase] = useState("idle"); // idle | running | asking | ready | clarify(민원이 아니거나 불분명해 다시 말해 주길 기다림)
+  // idle | running | asking | ready | clarify(민원이 아니거나 불분명해 다시 말해 주길 기다림) | guided(민원 서비스 안내 뒤 이어서 묻기)
+  const [phase, setPhase] = useState("idle");
   const [stopping, setStopping] = useState(false);
   const [crisis, setCrisis] = useState(false); // 이번 메시지에 위기 표현이 있었으면 민원 예시 버튼을 내밀지 않는다
   const sessionRef = useRef(null);
@@ -119,9 +120,10 @@ export default function App() {
             addKey("agent", "msg.understood", { title: u.title, category: { key: `category.${u.category}` } });
             if (photoNoteRef.current) addKey("agent", photoNoteRef.current.key, photoNoteRef.current.vars);
           }
+          if (u.intent === "service") addKey("agent", "msg.serviceUnderstood", { title: u.title, group: { key: `group.${u.service_group}` } });
           photoNoteRef.current = null;
         }
-        if (ev.node === "plan") addKey("agent", "msg.planned", {}, { plan: data.plan });
+        if (ev.node === "plan" || ev.node === "svc_plan") addKey("agent", "msg.planned", {}, { plan: data.plan });
         break;
       }
       case "ask": {
@@ -167,6 +169,15 @@ export default function App() {
         if (loc.address) addKey("agent", "msg.readyAt", { address: loc.address }, result);
         else addKey("agent", "msg.ready", {}, result);
         addKey("agent", "msg.reviseHint");
+        break;
+      }
+      case "guide": {
+        // 민원 서비스 안내: 받는 방법·가까운 곳·운영 여부 카드. 이어서 묻는 말은 같은 위치로 답한다
+        setPhase("guided");
+        const address = ev.guide?.location?.address;
+        if (address) addKey("agent", "msg.guideReadyAt", { address }, { guide: ev.guide });
+        else addKey("agent", "msg.guideReady", {}, { guide: ev.guide });
+        addKey("agent", "msg.guideHint");
         break;
       }
       case "redirect":
@@ -251,7 +262,7 @@ export default function App() {
 
   // file: 새 민원을 시작할 때 함께 올린 현장 사진 (File)
   const send = async (text, file = null) => {
-    const continuing = phase === "asking" || phase === "ready" || phase === "clarify";
+    const continuing = phase === "asking" || phase === "ready" || phase === "clarify" || phase === "guided";
     revisingRef.current = phase === "ready";
     if (!continuing) {
       setTimeline([]);
@@ -349,7 +360,7 @@ export default function App() {
             onStop={stop}
             stopping={stopping}
             calm={crisis}
-            canAttach={phase === "idle" || phase === "clarify"}
+            canAttach={phase === "idle" || phase === "clarify" || phase === "guided"}
             latestId={messages[messages.length - 1]?.id}
           />
           <AgentLog timeline={timeline} running={phase === "running"} />

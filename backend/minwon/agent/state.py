@@ -25,6 +25,7 @@ class AgentState(TypedDict, total=False):
     agencies: dict                                    # 담당 부서·창구·절차·증빙
     cases: dict                                       # 공공데이터에서 찾은 비슷한 민원 사례
     files: dict                                       # 만든 결과물 정보 (민원 패키지 PDF)
+    guide: dict                                       # 민원 서비스 안내 (받는 방법·가까운 기관·발급기·운영 여부·안내 문장)
     tool_calls: Annotated[list[dict], operator.add]   # Tool 호출 기록
     decision: dict                                    # 주 담당 기관·제출 창구·할 일
     package: dict                                     # 민원 초안·증빙 체크리스트 (최신본)

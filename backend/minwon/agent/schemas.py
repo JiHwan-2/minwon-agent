@@ -13,17 +13,24 @@ Action = Literal["ask_user", "geocode", "find_nearby", "kb_lookup", "case_search
 NearbyKind = Literal["police", "community_center"]
 
 
-Intent = Literal["complaint", "referral", "unclear", "not_complaint"]
+Intent = Literal["complaint", "service", "referral", "unclear", "not_complaint"]
 ReferralCode = Literal["none", "consumer", "labor", "crime", "legal"]  # knowledge/agencies.json의 referrals
+ServiceCode = Literal[  # knowledge/services.json의 services
+    "none", "resident_copy", "family_cert", "seal_cert", "land_building", "car_registry", "passport", "local_tax_cert",
+    "national_tax_cert", "health_insurance", "driving_record", "military_cert", "graduation_cert", "move_in", "id_card",
+    "birth_report", "bulky_waste", "welfare",
+]
 
 
 class Understanding(BaseModel):
     intent: Intent = Field(
         description="complaint=도와줄 생활불편이 하나라도 있음, "
+        "service=서류 발급·신고·신청 같은 민원 서비스를 어디서·어떻게·얼마에 하는지 물음(등본·가족관계증명서·여권·전입신고 등), "
         "referral=시·군·구청 민원이 아니라 다른 공식 창구가 해결하는 일(소비자 피해·임금체불·사기·개인 간 분쟁), "
         "unclear=불편이 있는 듯하지만 무엇이 불편한지 알 수 없음, "
-        "not_complaint=생활불편과 관계없는 말(인사·잡담·의미 없는 말·유행어·장난·다른 주제 질문)"
+        "not_complaint=생활불편·민원과 관계없는 말(인사·잡담·의미 없는 말·유행어·장난·다른 주제 질문)"
     )
+    service: ServiceCode = Field(description="intent가 service면 맞는 민원 서비스 코드, 아니면 none")
     referral: ReferralCode = Field(description="intent가 referral이면 맞는 창구 코드, 아니면 none")
     language: str = Field(description="시민 입력의 언어 코드: ko, en, zh, vi 중 하나 (그 밖의 언어면 en)")
     reply: str = Field(
@@ -134,6 +141,31 @@ class Translation(BaseModel):
     unit: str
     duty: str
     period: str
+
+
+ServiceSlot = Literal["here", "residence"]
+
+
+class ServiceQuestion(BaseModel):
+    slot: ServiceSlot
+    text: str = Field(description="시민에게 보낼 쉽고 구체적인 질문 한 문장, 예시 포함, 시민의 언어로")
+
+
+class ServiceCheck(BaseModel):
+    """민원 서비스 안내에 필요한 정보: 가까운 기관을 찾을 위치와 주민등록 주소지."""
+    here: str = Field(description="시민이 말한 지금 있는 곳이나 찾아갈 동네 (말한 그대로). 없으면 빈 문자열")
+    residence: str = Field(description="시민이 말한 주민등록 주소지(이사했으면 새 주소). 없으면 빈 문자열")
+    detail: str = Field(description="안내에 필요한 세부 사항 (서류 종류·용도·분실 여부 등) 한 문장. 없으면 빈 문자열")
+    questions: list[ServiceQuestion] = Field(description="needs 중 아직 모르는 것만 질문, 최대 2개. can_ask가 false면 빈 목록")
+    location_query: str = Field(description="search_at 위치를 지도에서 찾을 검색어(시·구·동 + 장소명), 한국어. 모르면 빈 문자열")
+
+
+class ServiceGuide(BaseModel):
+    """민원 서비스 안내: 받는 방법·기관·운영 여부를 근거로 시민에게 지금 가장 좋은 방법을 알려 준다."""
+    summary: str = Field(description="시민의 질문에 대한 바로 답 1~2문장, 시민의 언어로")
+    recommendation: str = Field(description="지금 시각·운영 여부·거리를 따져 가장 좋은 방법과 이유 1~2문장, 시민의 언어로")
+    steps: list[str] = Field(description="시민이 할 일 3~5개, 순서대로, 시민의 언어로")
+    tips: list[str] = Field(description="이 시민의 상황에서 알아 둘 점 0~3개, 시민의 언어로")
 
 
 class PhotoAnalysis(BaseModel):

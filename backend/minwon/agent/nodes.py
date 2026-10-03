@@ -9,7 +9,7 @@ from minwon.agent import cancel, conversation
 from minwon.agent.brain import get_brain
 from minwon.agent.state import AgentState
 from minwon.settings import settings
-from minwon.tools import cases, export, photo as photos, regions
+from minwon.tools import cases, export, offices, photo as photos, regions
 from minwon.tools.export import export_pdf
 from minwon.tools.kb import kb_lookup
 from minwon.tools.locate import NEARBY_LABEL, find_nearby, from_coords, geocode, resolve_candidate
@@ -18,6 +18,9 @@ MAX_CONFIRM_ROUNDS = 2
 MAX_PHOTO_ROUNDS = 2  # 사진 확인 질문에 예/아니요를 알 수 없는 답이 오면 한 번 더 묻는다
 
 TOOL_TITLE = {
+    "service_kb": "민원 안내 지식베이스 조회",
+    "find_kiosks": "가까운 무인민원발급기 찾기",
+    "check_hours": "지금 운영 여부 확인",
     "photo_meta": "사진 정보 읽기 (EXIF)",
     "reverse_geocode": "사진 위치 → 주소 확인",
     "geocode": "위치 확인",
@@ -27,6 +30,8 @@ TOOL_TITLE = {
 }
 SOURCE_DETAIL = {
     "kakao": "카카오 로컬 API",
+    "kakao+data_go_kr": "카카오 로컬 API + 공공데이터포털 (행정안전부 무인민원발급기 정보)",
+    "clock": "현재 시각·공휴일",
     "exif": "사진 정보(EXIF)",
     "text_fallback": "대체 경로: 문장에서 지역 추출",
     "kb": "지식베이스",
@@ -46,6 +51,8 @@ def _started(node: str) -> None:
 def _tool_title(tool: str) -> str:
     if tool.startswith("find_nearby:"):
         return f"주변 기관 검색 ({NEARBY_LABEL.get(tool.split(':', 1)[1], '')})"
+    if tool.startswith("find_offices:"):
+        return f"가까운 {knowledge.office_kind(tool.split(':', 1)[1])['label']} 찾기"
     return TOOL_TITLE.get(tool, tool)
 
 
@@ -239,8 +246,18 @@ def understand(state: AgentState) -> dict:
         data |= {"intent": "complaint", "urgency": "high"}  # 긴급상황 표현은 민원 흐름으로 (112·119 안내는 guard가 함)
     if data["intent"] == "referral" and data["referral"] == "none":
         data["intent"] = "complaint"  # 창구를 고르지 못했으면 지금처럼 민원 흐름으로
+    if data["intent"] == "service" and data["service"] == "none":
+        # 맞는 민원 서비스를 고르지 못했으면 무엇을 하려는지 되묻는다
+        data |= {"intent": "unclear", "reply": data["reply"].strip() or i18n.t("reply.unclear", lang)}
     if data["intent"] != "referral":
         data["referral"] = "none"
+    if data["intent"] != "service":
+        data["service"] = "none"
+    if data["intent"] == "service":
+        s = knowledge.service(data["service"])
+        data["service_group"] = s["group"]
+        detail = f"민원 서비스 안내: {s['label']} [{knowledge.service_groups()[s['group']]['label']}] → 가까운 기관·받는 방법 안내"
+        return {"understanding": data, "log": [_log("understand", "입력 확인", detail, out.source, error=out.error)]}
 
     if data["intent"] == "referral":
         # 창구 이름·번호·주소는 Claude가 쓰지 않고 지식베이스(공식 안내로 확인한 값)에서 가져온다
@@ -270,6 +287,8 @@ def route_after_understand(state: AgentState) -> str:
     u = state["understanding"]
     if u["intent"] == "complaint":
         return "plan"
+    if u["intent"] == "service":
+        return "svc_plan"
     # 민원이 아닌 말은 Claude와 바로 대화하듯 답한다. 위기 표현·다른 창구는 정해진 안내 그대로
     if u["intent"] in ("unclear", "not_complaint") and not state["safety"].get("crisis"):
         return "chat"
@@ -449,10 +468,14 @@ def locate(state: AgentState) -> dict:
             "tool_calls": calls, "log": _tool_logs("locate", calls)}
 
 
+def _is_service(state: AgentState) -> bool:
+    return (state.get("understanding") or {}).get("intent") == "service"
+
+
 def route_after_locate(state: AgentState) -> str:
     if state["location"].get("ambiguous") and state.get("confirm_rounds", 0) < MAX_CONFIRM_ROUNDS:
         return "confirm_location"
-    return "act"
+    return "svc_act" if _is_service(state) else "act"
 
 
 def confirm_location(state: AgentState) -> dict:
@@ -484,7 +507,9 @@ def confirm_location(state: AgentState) -> dict:
 
 
 def route_after_confirm(state: AgentState) -> str:
-    return "act" if state.get("location_confirmed") else "locate"
+    if not state.get("location_confirmed"):
+        return "locate"
+    return "svc_act" if _is_service(state) else "act"
 
 
 def act(state: AgentState) -> dict:
@@ -763,6 +788,10 @@ def route_entry(state: AgentState) -> str:
     return "draft" if state.get("revision_request") and state.get("package") else "guard"
 
 
+def route_after_ask(state: AgentState) -> str:
+    return "svc_check" if _is_service(state) else "check"
+
+
 def ask(state: AgentState) -> dict:
     """Memory: 그래프를 멈추고 사용자 답변을 받아 대화 기록에 남긴다."""
     questions = state["info"]["questions"]
@@ -781,3 +810,164 @@ def ask(state: AgentState) -> dict:
         "rounds": state.get("rounds", 0) + 1,
         "log": [_log("ask", "추가 질문·답변", detail)],
     }
+
+
+# ── 민원 서비스 안내 (서류 발급·신고·신청): 계획 → 필요한 정보 ⇄ 질문 → 위치 → Tool → 안내 ──
+
+def _service(state: AgentState) -> dict:
+    return knowledge.service(state["understanding"]["service"])
+
+
+def svc_plan(state: AgentState) -> dict:
+    """Planning: 서비스 템플릿(필요한 정보·찾아갈 기관·무인민원발급기)으로 처리 계획을 세운다."""
+    _started("svc_plan")
+    u, s, lang = state["understanding"], _service(state), _language(state)
+
+    def step(action: str, key: str = "", **values) -> dict:
+        return {"action": action, "title": i18n.t(key or f"svc.step.{action}", lang, **values), "reason": ""}
+
+    steps = [step("service_kb")]
+    if not _known_place(state, s["search_at"]):  # 앞 질문에서 확정한 위치가 있으면 묻거나 다시 찾지 않는다
+        steps += [step("ask_user", f"svc.step.ask.{need}") for need in s["needs"]]
+        steps.append(step("geocode"))
+    steps += [step("find_offices", office=i18n.office(kind, lang, knowledge.office_kind(kind)["label"])) for kind in s["offices"]]
+    if s["kiosk"]:
+        steps.append(step("find_kiosks"))
+    steps += [step("check_hours"), step("guide")]
+    plan = {"goal": i18n.t("svc.goal", lang, label=u["title"] or s["label"]), "steps": steps,
+            "required_info": list(s["needs"]), "fixes": [], "service": u["service"]}
+    detail = " → ".join(x["title"] for x in steps)
+    return {"plan": plan, "log": [_log("svc_plan", "안내 계획 수립", f"{s['label']} 템플릿: {detail}")]}
+
+
+def _known_place(state: AgentState, search_at: str) -> str:
+    """앞 질문에서 이미 확정한 위치 (같은 용도로 찾은 곳일 때만)."""
+    loc = state.get("location") or {}
+    return loc.get("address", "") if state.get("location_confirmed") and loc.get("for") == search_at else ""
+
+
+def svc_check(state: AgentState) -> dict:
+    """Reasoning: 가까운 기관을 찾을 위치·주민등록 주소지가 있는지 보고, 없으면 질문을 만든다."""
+    _started("svc_check")
+    s, lang = _service(state), _language(state)
+    rounds = state.get("rounds", 0)
+    asked = state.get("asked", [])
+    known = _known_place(state, s["search_at"])
+    ctx = {
+        "service": {"code": state["understanding"]["service"], "label": s["label"], "needs": s["needs"], "search_at": s["search_at"]},
+        "dialogue": state["dialogue"], "asked": asked, "can_ask": rounds < settings.max_question_rounds,
+        "known_location": known, "language": lang,
+        "fallback_questions": {slot: i18n.t(f"svc.ask.{slot}", lang) for slot in ("here", "residence")},
+    }
+    out = get_brain().call("service_check", ctx)
+    r = out.value.model_dump()
+    found = {"here": r["here"].strip(), "residence": r["residence"].strip()}
+    if known:
+        found[s["search_at"]] = known
+    questions = [q for q in r["questions"] if q["slot"] in s["needs"] and q["slot"] not in asked and not found.get(q["slot"])]
+    if ctx["can_ask"]:
+        for need in s["needs"]:  # 꼭 필요한데 비었으면 정해 둔 질문으로라도 묻는다
+            if not found.get(need) and need not in asked and all(q["slot"] != need for q in questions):
+                questions.append({"slot": need, "text": ctx["fallback_questions"][need]})
+    else:
+        questions = []
+
+    target = found.get(s["search_at"], "")
+    query = known or r["location_query"].strip() or target
+    vague = bool(target) and not known and not regions.is_specific_place(f"{target} {query}")
+    if vague and ctx["can_ask"] and f"{s['search_at']}_vague" not in asked:
+        questions = [{"slot": s["search_at"], "text": i18n.t("svc.ask.vague", lang, place=target)},
+                     *[q for q in questions if q["slot"] != s["search_at"]]]
+    facts = [{"slot": slot, "value": value} for slot, value in found.items() if value]
+    if r["detail"].strip():
+        facts.append({"slot": "detail", "value": r["detail"].strip()})
+    info = {"facts": facts, "questions": questions[:2], "location_query": "" if questions else query,
+            "unknown": [n for n in s["needs"] if not found.get(n)], "location_vague": vague}
+    if info["questions"]:
+        detail = "질문 필요: " + ", ".join(q["slot"] for q in info["questions"])
+    elif known:
+        detail = f"앞에서 확인한 위치로 진행: {known}"
+    elif query:
+        detail = f"필요한 정보 충분 (위치 검색어: {query})"
+    else:
+        detail = "위치를 알 수 없어 온라인 방법 위주로 안내"
+    update = {"info": info, "log": [_log("svc_check", "필요한 정보 판단", detail, out.source, error=out.error)]}
+    if vague and info["questions"]:
+        update["asked"] = [*asked, f"{s['search_at']}_vague"]  # 모호한 위치는 한 번만 다시 묻는다
+    return update
+
+
+def route_after_svc_check(state: AgentState) -> str:
+    if state["info"]["questions"]:
+        return "ask"
+    if _known_place(state, _service(state)["search_at"]) or not state["info"]["location_query"]:
+        return "svc_act"  # 이미 확정한 위치가 있거나, 위치를 끝내 모르면 지도 검색 없이 진행
+    return "locate"
+
+
+def svc_act(state: AgentState) -> dict:
+    """Tool Use: 받는 방법 조회 → 가까운 기관·무인민원발급기 찾기 → 지금 운영 여부 확인."""
+    _started("svc_act")
+    code = state["understanding"]["service"]
+    s = knowledge.service(code)
+    location = state.get("location") or {}
+    calls: list[dict] = []
+
+    def run(tool: str, input_text: str, fn, *args) -> dict:
+        return _run_tool("svc_act", calls, tool, input_text, fn, *args)
+
+    kb = run("service_kb", s["label"], offices.service_lookup, code)["data"]
+    where = location.get("address") or "(위치 모름)"
+    found = {kind: run(f"find_offices:{kind}", where, offices.find_offices, kind, location)["data"] for kind in s["offices"]}
+    kiosks = run("find_kiosks", where, offices.find_kiosks, location)["data"] if s["kiosk"] else []
+    now = offices.now_info(offices.current_time())
+    checked = run("check_hours", offices.now_label(now), offices.check_hours, found, kiosks, now)["data"]
+
+    guide = {**kb, "offices": checked["offices"], "kiosks": checked["kiosks"], "now": now,
+             "location": {k: location.get(k, "") for k in ("address", "place_name", "sigungu", "dong")} if location.get("address") else None}
+    update = {"guide": guide, "tool_calls": calls, "log": _tool_logs("svc_act", calls)}
+    if location.get("address") and not location.get("for"):
+        update["location"] = location | {"for": s["search_at"]}  # 이어서 묻는 말에서도 같은 위치를 쓸 수 있게
+    return update
+
+
+def _brief(places: list[dict], limit: int) -> list[dict]:
+    return [{"name": p["name"], "distance_m": p.get("distance_m"), "state": p["state"], "today": p["today"],
+             "spot": p.get("spot", "")} for p in places[:limit]]
+
+
+def _unknown_contacts(guide: dict, text: str) -> list[str]:
+    """안내 문장에 지식베이스·검색 결과에 없는 전화번호·인터넷 주소가 있으면 돌려준다."""
+    phones = {conversation._digits(c["phone"]) for c in guide["channels"] if c.get("phone")}
+    hosts = {conversation._host(c["url"]) for c in guide["channels"] if c.get("url")}
+    phones |= {conversation._digits(p["phone"]) for places in [*guide["offices"].values(), guide["kiosks"]] for p in places if p.get("phone")}
+    bad = []
+    for m in conversation.CONTACT.finditer(text):
+        token = m.group(0)
+        known = conversation._host(token) in hosts if token.lower().startswith(("http", "www")) else conversation._digits(token) in phones
+        if not known:
+            bad.append(token)
+    return bad
+
+
+def svc_answer(state: AgentState) -> dict:
+    """Reasoning: Tool 결과로 지금 가장 좋은 방법·할 일을 시민의 언어로 정리한다 (지어낸 연락처는 막는다)."""
+    _started("svc_answer")
+    g, lang = state["guide"], _language(state)
+    facts = {f["slot"]: f["value"] for f in (state.get("info") or {}).get("facts", [])}
+    ctx = {
+        "question": state.get("latest") or state["user_input"], "detail": facts.get("detail", ""),
+        "service": {k: g[k] for k in ("label", "summary", "deadline", "channels", "prepare", "cautions")},
+        "now": g["now"], "location": g["location"],
+        "offices": [p | {"kind": knowledge.office_kind(kind)["label"]} for kind, places in g["offices"].items() for p in _brief(places, 2)],
+        "kiosks": _brief(g["kiosks"], 3),
+        "language": lang, "language_name": i18n.LANG_NAMES.get(lang, lang),
+    }
+    out = get_brain().call("service_guide", ctx)
+    text, source, error = out.value.model_dump(), out.source, out.error
+    bad = _unknown_contacts(g, " ".join([text["summary"], text["recommendation"], *text["steps"], *text["tips"]]))
+    if bad:  # 확인되지 않은 전화번호·주소를 쓴 안내는 내보내지 않고 정해 둔 문장으로
+        text = get_brain().rule.service_guide(ctx).model_dump()
+        source, error = "rule_fallback", f"확인되지 않은 연락처 {len(bad)}개 → 정해 둔 안내로 바꿈"
+    guide = g | text | {"language": lang, "guarded": bool(bad)}
+    return {"guide": guide, "log": [_log("svc_answer", "안내 정리", f"{text['summary']} / 추천: {text['recommendation']}", source, error=error)]}
