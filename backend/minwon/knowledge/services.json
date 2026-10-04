@@ -15,7 +15,7 @@
     },
     "sigungu_office": {
       "label": "시·군·구청 민원실", "query": "{office}", "suffix": ["시청", "군청", "구청"], "exclude": ["별관", "주차장", "무인", "발급기", "은행", "출장소", "지점"],
-      "radius": 20000, "hours": {"weekday": ["09:00", "18:00"], "holiday": null},
+      "radius": 20000, "sort": "accuracy", "hours": {"weekday": ["09:00", "18:00"], "holiday": null},
       "hours_note": "평일 09:00~18:00. 야간·토요 민원실을 여는 곳도 있어요"
     },
     "police": {

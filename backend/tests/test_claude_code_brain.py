@@ -13,7 +13,7 @@ from minwon.agent.schemas import Understanding
 UNDERSTOOD = {
     "intent": "complaint", "service": "none", "referral": "none", "language": "ko", "reply": "",
     "category": "street_light", "title": "골목 가로등 고장", "summary": "골목 가로등이 일주일째 꺼져 있습니다.",
-    "urgency": "medium", "keywords": ["가로등", "골목"], "location_hint": "",
+    "urgency": "medium", "keywords": ["가로등", "골목"], "location_hint": "", "others": [],
 }
 
 

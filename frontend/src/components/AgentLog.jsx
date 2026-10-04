@@ -64,6 +64,7 @@ function UnderstandBody({ u, chatted }) {
       <p className="strong">{u.title}</p>
       <p>{u.summary}</p>
       <p className="muted small">{t("log.keywords", { items: u.keywords.join(", ") })}</p>
+      {u.others?.length > 0 && <p className="small warn">{t("log.others", { items: u.others.join(", ") })}</p>}
     </div>
   );
 }

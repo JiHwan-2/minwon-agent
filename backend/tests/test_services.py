@@ -155,6 +155,21 @@ def test_office_search_keeps_only_the_offices_themselves():
     assert offices._keep("상남동행정복지센터", center) and not offices._keep("상남동행정복지센터 무인민원발급기", center)
 
 
+def test_city_hall_is_searched_by_name_not_by_distance(monkeypatch: pytest.MonkeyPatch):
+    # 가까운 순이면 '양산시청점' 가게·주차장이 먼저 나와 진짜 시청이 10개 안에 들지 못했다 (실제 카카오 결과)
+    seen: list[dict] = []
+
+    def keyword(query, size=1, **near):
+        seen.append(near)
+        return [{"place_name": "양산시청", "road_address_name": "경남 양산시 중앙로 39", "distance": "3703"}], 1
+
+    monkeypatch.setattr(offices.kakao, "keyword", keyword)
+    found = offices.find_offices("sigungu_office", {"x": "129.0", "y": "35.3", "sigungu": "양산시"})
+    assert [p["name"] for p in found["data"]] == ["양산시청"] and seen[-1]["sort"] == "accuracy"
+    offices.find_offices("community_center", {"x": "129.0", "y": "35.3", "sigungu": "양산시"})
+    assert seen[-1]["sort"] == "distance"  # 행정복지센터처럼 여러 곳 중 고르는 기관은 그대로 가까운 순
+
+
 def test_named_halls_count_as_specific_places():
     from minwon.tools import regions
     assert regions.is_specific_place("창원시청 근처")

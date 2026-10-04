@@ -43,6 +43,10 @@ class Understanding(BaseModel):
     urgency: Literal["low", "medium", "high"] = Field(description="사람이 다칠 위험이 있으면 high")
     keywords: list[str] = Field(description="핵심 단어 2~5개. 공공데이터 검색에 쓰므로 시민의 언어와 상관없이 항상 한국어 단어")
     location_hint: str = Field(description="입력에 나온 장소 표현 그대로. 없으면 빈 문자열")
+    others: list[str] = Field(
+        description="complaint일 때 이번 민원과 따로 처리할 다른 생활불편이 함께 있으면 각각 짧게(시민의 언어로, 예: '골목 쓰레기 무단투기'). "
+        "같은 시설의 한 가지 문제면 빈 목록"
+    )
 
 
 class PlanStep(BaseModel):

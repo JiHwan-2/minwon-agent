@@ -62,6 +62,12 @@ CASES = {
         "answers": [],
         "after_ready": [],
     },
+    "TC9": {
+        "type": "민원 서비스 안내",
+        "input": "주민등록등본 어디서 떼요?",
+        "answers": ["창원시 성산구 상남동"],
+        "after_ready": [],
+    },
 }
 
 PHONE = re.compile(r"01[016789]-?\d{3,4}-?\d{4}")
@@ -142,6 +148,21 @@ def final_result(client: httpx.Client, base: str, sid: str) -> dict:
     return result
 
 
+def guide_result(guide: dict) -> dict:
+    """민원 서비스 안내 카드: 받는 방법·가까운 기관과 지금 운영 여부·무인민원발급기·추천."""
+    return {
+        "status": "guide",
+        "service": guide.get("label"),
+        "location": (guide.get("location") or {}).get("address"),
+        "now": guide.get("now"),
+        "channels": [f"{c['name']} ({c.get('fee') or '-'})" for c in guide.get("channels", [])],
+        "offices": {k: [f"{p['name']} {p.get('distance_m')}m {p['state']}" for p in v[:2]] for k, v in (guide.get("offices") or {}).items()},
+        "kiosks": [f"{p['name']} {p.get('distance_m')}m {p['state']}" for p in (guide.get("kiosks") or [])[:3]],
+        "summary": guide.get("summary"), "recommendation": guide.get("recommendation"),
+        "steps": guide.get("steps", []), "tips": guide.get("tips", []), "guarded": guide.get("guarded"),
+    }
+
+
 def run_case(client: httpx.Client, base: str, case_id: str) -> dict:
     case = CASES[case_id]
     sid = client.post(f"{base}/api/sessions").json()["session_id"]
@@ -161,6 +182,9 @@ def run_case(client: httpx.Client, base: str, case_id: str) -> dict:
         elif end == "ready" and after_ready:
             turns[-1]["result"] = final_result(client, base, sid)
             text = after_ready.pop(0)
+        elif end == "guide":
+            turns[-1]["result"] = guide_result(events[-1]["guide"])
+            break
         elif end == "cancelled" and stop_after:
             turns[-1]["state_after_stop"] = client.get(f"{base}/api/sessions/{sid}").json()["status"]
             stop_after = None  # 같은 내용을 다시 보내 정상 진행 확인

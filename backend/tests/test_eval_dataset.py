@@ -14,7 +14,7 @@ def _values(v):
 
 
 def test_ids_are_unique_and_prefixed():
-    for part, prefix in (("understand", "URNXSV"), ("turn", "T"), ("e2e", "A"), ("revision", "M")):
+    for part, prefix in (("understand", "URNXSV"), ("turn", "T"), ("e2e", "A"), ("revision", "M"), ("svc", "G")):
         ids = [c["id"] for c in DATA[part]]
         assert len(ids) == len(set(ids)), part
         assert all(i[0] in prefix for i in ids), part
@@ -49,6 +49,12 @@ def test_revision_cases_use_known_bases_and_checks():
     for c in DATA["revision"]:
         assert c["base"] in DATA["revision_base"] and c["requests"], c["id"]
         assert set(c["expect"]) <= {"contains", "absent", "shorter", "shorter_than_previous", "title", "not_required", "changed", "translated", "explained"}, c["id"]
+
+
+def test_svc_cases_use_real_services_and_languages():
+    for c in DATA["svc"]:
+        assert c["service"] in knowledge.services() and c["sigungu"], c["id"]
+        assert c.get("language", "ko") in i18n.LANGS, c["id"]
 
 
 def test_dataset_covers_every_category_and_judgment():

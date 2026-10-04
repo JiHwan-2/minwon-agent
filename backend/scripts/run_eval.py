@@ -5,12 +5,15 @@
 - e2e: 실행 중인 서버로 처음부터 끝까지 → 담당 기관·부서·위치 (질문에는 '모름', 위치 후보는 1번으로 자동 답변)
 - revision: 서버로 민원을 완성한 뒤 시민이 수정을 요청 → 요청대로 다시 썼는지(넣기·빼기·고치기·줄이기·제목·규칙 지키기·번역),
   따르면 안 되는 요청은 반영하지 않고 이유를 알렸는지
+- svc: 서버로 서류 발급·신고·신청 질문 → 위치 질문에 답 → 안내 카드. 맞는 서비스·위치·가까운 기관·무인민원발급기,
+  수수료·연락처를 지어내지 않았는지, 시민의 언어로 답했는지
 
 자동 테스트(pytest)와 달리 실제 Claude·카카오·공공데이터를 부른다.
 사용 (backend 폴더에서):
   .venv\\Scripts\\python scripts\\run_eval.py                         (understand·turn, 서버 불필요, 약 2~3분)
   .venv\\Scripts\\python scripts\\run_eval.py --parts e2e              (서버 필요, 약 5~10분)
   .venv\\Scripts\\python scripts\\run_eval.py --parts revision         (서버 필요, 약 15~20분)
+  .venv\\Scripts\\python scripts\\run_eval.py --parts svc              (서버 필요, 약 5~10분)
   .venv\\Scripts\\python scripts\\run_eval.py --parts understand --only U01,R01 --note "지시문 수정 후"
   .venv\\Scripts\\python scripts\\run_eval.py --compare                (실행 없이 저장된 결과들을 비교해 회차마다 달라진 문항 찾기)
 결과: docs/eval/날짜-시각.md(요약·틀린 것) + 같은 이름 .json(전체 기록), 비교는 docs/eval/stability-날짜-시각.md
@@ -32,7 +35,7 @@ import httpx
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from minwon import safety  # noqa: E402
+from minwon import knowledge, safety  # noqa: E402
 from minwon.agent import topic  # noqa: E402
 from minwon.agent.brain import get_brain  # noqa: E402
 from minwon.settings import settings  # noqa: E402
@@ -63,7 +66,7 @@ def run_understand(case: dict) -> dict:
     seconds = round(time.perf_counter() - started, 1)
     u = out.value
     got = {"intent": u.intent, "category": u.category, "service": u.service, "referral": u.referral, "language": u.language,
-           "title": u.title, "reply": u.reply}
+           "title": u.title, "reply": u.reply, "others": u.others}
     detected = {
         "pii": sorted(f["kind"] for f in masked.findings),
         "emergency": safety.is_emergency(masked.text),
@@ -91,6 +94,8 @@ def score_understand(case: dict, got: dict, detected: dict) -> dict:
         checks["language"] = got.get("language") == case["language"]
         if got["intent"] in FILTERED:  # 민원이 아니라고 안내했으면 그 안내도 시민의 언어여야 한다
             checks["reply_lang"] = written_in(got["reply"], case["language"])
+    if "others" in case:  # 서로 다른 불편을 함께 말했으면 하나만 이번 민원으로, 나머지는 따로 안내할 목록으로
+        checks["others"] = bool(got.get("others")) == case["others"]
     if case.get("no_contact"):  # 연락처를 물어도 지어내지 않아야 한다 (정해진 안내문은 서버가 따로 붙임)
         checks["no_contact"] = not CONTACT.search(got["reply"])
     return checks
@@ -391,6 +396,113 @@ def revision_details(rows: list[dict]) -> list[str]:
     return lines
 
 
+# ---- 민원 서비스 안내 (처음부터 끝까지) ----
+
+WON = re.compile(r"\d[\d,]*\s*원")
+
+
+def mostly_in(text: str, lang: str) -> bool:
+    """안내가 주로 그 언어로 쓰였는지 (기관 이름 같은 한국어 원문이 섞여도 됨)."""
+    hangul = len(_SCRIPTS["ko"].findall(text))
+    if lang == "ko":
+        return hangul > 0
+    if lang == "zh":
+        return len(_SCRIPTS["zh"].findall(text)) > hangul
+    return len(re.findall(r"[A-Za-zÀ-ỹ]", text)) > hangul
+
+
+def run_svc(case: dict, base: str) -> dict:
+    """서류 발급·신고·신청 질문 → (위치 질문에는 case의 answers로 답함) → 안내 카드까지."""
+    answers = list(case.get("answers", []))
+    given, questions = [], []
+    started = time.perf_counter()
+    with httpx.Client() as client:
+        sid = client.post(f"{base}/api/sessions", timeout=10).json()["session_id"]
+        events = send(client, base, sid, case["text"])
+        while events and events[-1]["type"] == "ask" and len(given) < 4:
+            questions.append(" / ".join(q["text"] for q in events[-1]["questions"]))
+            answer = "1" if events[-1]["options"] else (answers.pop(0) if answers else "모름")
+            given.append(answer)
+            events = send(client, base, sid, answer)
+        state = client.get(f"{base}/api/sessions/{sid}", timeout=30).json()
+    seconds = round(time.perf_counter() - started, 1)
+    end = events[-1] if events else {}
+    guide = end.get("guide") or {}
+    location = guide.get("location") or {}
+    text = " ".join([guide.get("summary", ""), guide.get("recommendation", ""), *guide.get("steps", []), *guide.get("tips", [])])
+    got = {
+        "end": end.get("type", ""),
+        "intent": (state.get("understanding") or {}).get("intent", ""),
+        "service": (state.get("understanding") or {}).get("service", ""),
+        "sigungu": location.get("sigungu", ""),
+        "address": location.get("address", ""),
+        "offices": {k: [f"{p['name']}({p['state']})" for p in v[:2]] for k, v in (guide.get("offices") or {}).items()},
+        "kiosks": [f"{p['name']}({p['state']})" for p in (guide.get("kiosks") or [])[:3]],
+        "now": guide.get("now") or {},
+        "summary": guide.get("summary", ""), "recommendation": guide.get("recommendation", ""),
+        "steps": guide.get("steps", []), "tips": guide.get("tips", []), "text": text,
+        "guarded": bool(guide.get("guarded")),
+        "questions": questions, "answers": given,
+        "fallback_steps": [x["node"] for x in state.get("log") or [] if x.get("source") == "rule_fallback"],
+        "fallback_errors": sorted({x.get("error", "")[:120] for x in state.get("log") or [] if x.get("source") == "rule_fallback"}),
+    }
+    checks = score_svc(case, got)
+    return {**case, "got": got, "checks": checks, "ok": all(checks.values()), "seconds": seconds}
+
+
+def score_svc(case: dict, got: dict) -> dict:
+    s = knowledge.service(case["service"])
+    known = json.dumps(s, ensure_ascii=False).replace(" ", "")
+    fees = [m.group(0).replace(" ", "") for m in WON.finditer(got["text"])]
+    checks = {
+        "finished": got["end"] == "guide",
+        "service": got["intent"] == "service" and got["service"] == case["service"],
+        "sigungu": case["sigungu"] in got["sigungu"],
+        "offices": all(got["offices"].get(kind) for kind in s["offices"]),
+        "fee_grounded": all(f in known for f in fees),  # 안내에 쓴 금액은 지식베이스에 있는 것만
+        "no_made_up_contact": not got["guarded"],
+        "language": mostly_in(got["text"], case.get("language", "ko")),
+    }
+    if s["kiosk"]:
+        checks["kiosk"] = bool(got["kiosks"])
+    return checks
+
+
+def summarize_svc(rows: list[dict]) -> dict:
+    def count(key):
+        have = [r for r in rows if key in r["checks"]]
+        return [sum(r["checks"][key] for r in have), len(have)]
+
+    return {
+        "cases": len(rows),
+        "all_ok": sum(r["ok"] for r in rows),
+        **{k: count(k) for k in ("finished", "service", "sigungu", "offices", "kiosk", "fee_grounded", "no_made_up_contact", "language")},
+        "fallback_cases": sum(bool(r["got"]["fallback_steps"]) for r in rows),
+        "seconds_avg": round(statistics.mean(r["seconds"] for r in rows), 1) if rows else None,
+    }
+
+
+def svc_details(rows: list[dict]) -> list[str]:
+    """안내 내용 (지금 시각에 맞는 방법을 권했는지 등 자동 채점이 못 보는 것은 사람이 읽고 판단)."""
+    lines = ["", "## 민원 서비스 안내 내용", ""]
+    for r in rows:
+        g = r["got"]
+        mark = "통과" if r["ok"] else "실패: " + ", ".join(k for k, v in r["checks"].items() if not v)
+        now = g["now"]
+        day = " 공휴일" if now.get("holiday") else " 주말" if now.get("weekend") else ""
+        lines += [f"### {r['id']} {r['text']} — {mark}", "",
+                  "- 질문 → 답: " + (" / ".join(f"{q} → {a}" for q, a in zip(g["questions"], g["answers"])) or "질문 없음"),
+                  f"- 위치: {g['address'] or '없음'} · 지금: {now.get('date', '')}({now.get('weekday', '')}) {now.get('time', '')}{day}"
+                  f" · 다음 평일 {now.get('next_workday', '')}",
+                  "- 가까운 기관: " + "; ".join(f"{k}: {', '.join(v)}" for k, v in g["offices"].items()),
+                  f"- 무인민원발급기: {', '.join(g['kiosks']) or '없음'}",
+                  f"- 요약: {g['summary']}", f"- 추천: {g['recommendation']}"]
+        lines += [f"  - {x}" for x in g["steps"]]
+        lines += [f"- 팁: {x}" for x in g["tips"]]
+        lines.append("")
+    return lines
+
+
 # ---- 보고서 ----
 
 def report(result: dict) -> str:
@@ -437,14 +549,26 @@ def report(result: dict) -> str:
             f"| 다시 쓴 초안 검증 통과 | {pct(*s['review_passed'])} | |",
             f"| 수정 요청 처리 시간 | 평균 {s['seconds_avg']}초 | 요청 1번당 |",
         ]
+    if "svc" in parts:
+        s = parts["svc"]["summary"]
+        lines += [
+            f"| 민원 서비스 안내 (문항 전체) | {pct(s['all_ok'], s['cases'])} | 아래 항목이 모두 맞음 |",
+            f"| 민원 서비스 분류 | {pct(*s['service'])} | 등본·전입신고·대형폐기물 등 맞는 서비스 |",
+            f"| 위치(시·군·구) · 가까운 기관 | {pct(*s['sigungu'])} · {pct(*s['offices'])} | 카카오 지도 기준 |",
+            f"| 무인민원발급기 찾기 | {pct(*s['kiosk'])} | 발급기로 받을 수 있는 서류만 |",
+            f"| 수수료를 지어내지 않음 | {pct(*s['fee_grounded'])} | 안내의 금액이 모두 지식베이스에 있음 |",
+            f"| 연락처를 지어내지 않음 | {pct(*s['no_made_up_contact'])} | |",
+            f"| 시민의 언어로 안내 | {pct(*s['language'])} | |",
+            f"| 전체 흐름 시간 | 평균 {s['seconds_avg']}초 | 위치 질문 답변 포함 |",
+        ]
     fallback = sum(parts[p]["summary"].get("fallback", 0) for p in ("understand", "turn") if p in parts)
-    for p in ("e2e", "revision"):
+    for p in ("e2e", "revision", "svc"):
         if p in parts:
             fallback += parts[p]["summary"]["fallback_cases"]
     lines += ["", f"규칙 엔진으로 대체된 판단: {fallback}건 (0이면 모든 판단을 Claude가 함)"]
     if fallback:
         errors = {r["error"][:120] for p in ("understand", "turn") for r in parts.get(p, {}).get("rows", []) if r.get("error")}
-        errors |= {e for p in ("e2e", "revision") for r in parts.get(p, {}).get("rows", []) for e in r["got"]["fallback_errors"] if e}
+        errors |= {e for p in ("e2e", "revision", "svc") for r in parts.get(p, {}).get("rows", []) for e in r["got"]["fallback_errors"] if e}
         lines += ["", "> 주의: Claude 호출이 실패해 규칙 엔진이 대신한 판단이 있어 Claude 정확도로 볼 수 없습니다. 원인을 고친 뒤 다시 실행하세요.", ""]
         lines += [f"- {e}" for e in sorted(errors)] or ["- (오류 내용 없음)"]
 
@@ -453,7 +577,7 @@ def report(result: dict) -> str:
         lines += [f"| {g} | {pct(ok, n)} |" for g, (ok, n) in parts["understand"]["summary"]["groups"].items()]
 
     wrong = []
-    for name in ("understand", "turn", "e2e", "revision"):
+    for name in ("understand", "turn", "e2e", "revision", "svc"):
         for r in parts.get(name, {}).get("rows", []):
             if r["ok"]:
                 continue
@@ -465,6 +589,9 @@ def report(result: dict) -> str:
                 want, got = f"{r['stage']} · {r['kind']}", f"{r['got']['kind']} ({r['got']['reason']})"
             elif name == "revision":
                 want, got = r["kind"], r["got"]["after"]["title"]
+            elif name == "svc":
+                want = f"{r['service']} · {r['sigungu']}"
+                got = f"{r['got']['service']} · {r['got']['sigungu']} · {r['got']['recommendation'][:60]}"
             else:
                 want = f"{r['category']} · {'/'.join(r['agency'])} {'/'.join(r['unit'])} · {r['sigungu']}"
                 got = f"{r['got']['category']} · {r['got']['agency']} {r['got']['unit']} · {r['got']['sigungu']}"
@@ -473,19 +600,23 @@ def report(result: dict) -> str:
     lines += (["| ID | 입력 | 정답 | 결과 | 틀린 항목 |", "|---|---|---|---|---|", *wrong] if wrong else ["없음"])
     if "revision" in parts:
         lines += revision_details(parts["revision"]["rows"])
+    if "svc" in parts:
+        lines += svc_details(parts["svc"]["rows"])
     return "\n".join(lines) + "\n"
 
 
 # ---- 여러 번 실행 비교 (흔들림) ----
 
-PART_LABEL = {"understand": "입력 확인", "turn": "대화 도중", "e2e": "처음부터 끝까지", "revision": "수정 요청"}
+PART_LABEL = {"understand": "입력 확인", "turn": "대화 도중", "e2e": "처음부터 끝까지", "revision": "수정 요청", "svc": "민원 서비스 안내"}
 SCORERS = {
     "understand": lambda case, row: score_understand(case, row["got"], row["detected"]),
     "turn": lambda case, row: score_turn(case, row["got"]),
     "e2e": lambda case, row: score_e2e(case, row["got"]),
     "revision": lambda case, row: score_revision(case, row["got"]),
+    "svc": lambda case, row: score_svc(case, row["got"]),
 }
-SUMMARIZERS = {"understand": summarize_understand, "turn": summarize_turn, "e2e": summarize_e2e, "revision": summarize_revision}
+SUMMARIZERS = {"understand": summarize_understand, "turn": summarize_turn, "e2e": summarize_e2e, "revision": summarize_revision,
+               "svc": summarize_svc}
 METRICS = [
     ("understand", "입력 확인 문항 (모든 항목 정답)", lambda s: (s["all_ok"], s["cases"])),
     ("understand", "입력 확인 판단", lambda s: s["intent"]),
@@ -500,6 +631,7 @@ METRICS = [
     ("e2e", "초안 검증 통과", lambda s: s["review_passed"]),
     ("revision", "수정 요청 반영 (문항 전체)", lambda s: (s["all_ok"], s["cases"])),
     ("revision", "요청 내용대로 고침", lambda s: s["expected"]),
+    ("svc", "민원 서비스 안내 (문항 전체)", lambda s: (s["all_ok"], s["cases"])),
 ]
 
 
@@ -513,12 +645,14 @@ def answer_of(part: str, got: dict) -> str:
         return got["kind"]
     if part == "revision":
         return got["after"]["title"]
+    if part == "svc":
+        return f"{got['service']}·{got['sigungu']}"
     return f"{got['category']}·{got['agency']} {got['unit']}"
 
 
 def valid_part(part: str, rows: list[dict]) -> bool:
     """규칙 엔진 대체가 섞인 실행은 Claude 결과로 보지 않는다."""
-    if part in ("e2e", "revision"):
+    if part in ("e2e", "revision", "svc"):
         return not any(r["got"]["fallback_steps"] for r in rows)
     return all(r["source"] in ("llm", "skip") for r in rows)
 
@@ -561,7 +695,8 @@ def compare(paths: list[Path], data: dict) -> str:
         avg = f"{statistics.mean(rates):.1f}%" if rates else "-"
         lines.append(f"| {label} | " + " | ".join([f"{ok}/{total}" for ok, total in cells] + ["-"] * (n - len(cells))) + f" | {avg} |")
     for part, label, key in (("understand", "문제 분석 판단 시간(초)", "seconds_avg"), ("turn", "대화 도중 판단 시간(초)", "seconds_avg"),
-                             ("e2e", "전체 흐름 시간(초)", "seconds_avg"), ("revision", "수정 요청 처리 시간(초)", "seconds_avg")):
+                             ("e2e", "전체 흐름 시간(초)", "seconds_avg"), ("revision", "수정 요청 처리 시간(초)", "seconds_avg"),
+                             ("svc", "민원 서비스 안내 시간(초)", "seconds_avg")):
         if part in summaries:
             vals = [s[key] for s in summaries[part]]
             nums = [v for v in vals if v is not None]
@@ -585,6 +720,8 @@ def compare(paths: list[Path], data: dict) -> str:
                 truth = f"{want['stage']} · {want['kind']}"
             elif part == "revision":
                 truth = want["kind"]
+            elif part == "svc":
+                truth = f"{want['service']} · {want['sigungu']}"
             else:
                 truth = f"{want['category']} · {'/'.join(want['agency'])} {'/'.join(want['unit'])}"
             row = (f"| {PART_LABEL[part]} | {cid} | {want['text']} | {truth} | {sum(oks)}/{len(oks)} | "
@@ -607,7 +744,7 @@ def compare(paths: list[Path], data: dict) -> str:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="정확도 평가 세트 실행")
-    ap.add_argument("--parts", default="understand,turn", help="understand,turn,e2e,revision 중 쉼표로 (e2e·revision은 서버 필요)")
+    ap.add_argument("--parts", default="understand,turn", help="understand,turn,e2e,revision,svc 중 쉼표로 (e2e·revision·svc는 서버 필요)")
     ap.add_argument("--only", default="", help="실행할 ID (예: U01,T05,A03)")
     ap.add_argument("--base", default="http://localhost:8000", help="e2e에 쓸 서버 주소")
     ap.add_argument("--workers", type=int, default=6, help="동시에 돌릴 Claude 판단 수")
@@ -645,6 +782,7 @@ def main() -> int:
         "turn": (lambda c: run_turn(c, data["turn_default"]), summarize_turn, args.workers),
         "e2e": (lambda c: run_e2e(c, args.base), summarize_e2e, args.e2e_workers),
         "revision": (lambda c: run_revision(c, args.base, data["revision_base"]), summarize_revision, args.e2e_workers),
+        "svc": (lambda c: run_svc(c, args.base), summarize_svc, args.e2e_workers),
     }
     for name in parts:
         run, summarize, workers = jobs[name]

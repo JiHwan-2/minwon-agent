@@ -118,6 +118,8 @@ export default function App() {
           setLang(u.language); // 시민이 쓴 언어로 화면을 바꾼다 (지원하지 않는 언어면 영어)
           if (u.intent === "complaint") {
             addKey("agent", "msg.understood", { title: u.title, category: { key: `category.${u.category}` } });
+            // 다른 생활불편을 함께 말했으면 이번 민원에는 넣지 않았다고 바로 알린다 (마친 뒤 따로 말하면 새 민원으로 이어 감)
+            if (u.others?.length) addKey("agent", "msg.others", { items: u.others.join(", ") });
             if (photoNoteRef.current) addKey("agent", photoNoteRef.current.key, photoNoteRef.current.vars);
           }
           if (u.intent === "service") addKey("agent", "msg.serviceUnderstood", { title: u.title, group: { key: `group.${u.service_group}` } });

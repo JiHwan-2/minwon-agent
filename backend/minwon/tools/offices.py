@@ -94,7 +94,8 @@ def find_offices(kind: str, location: dict) -> dict:
     if not (location.get("x") and location.get("y")):
         return tool_result(tool, False, "skipped", f"위치를 몰라 {info['label']} 검색을 건너뜀", [])
     query = info["query"].replace("{office}", regions.office_name(location.get("sigungu", "")))
-    near = {"x": location["x"], "y": location["y"], "radius": min(info.get("radius", 5000), 20000), "sort": "distance"}
+    # 시·군·구청처럼 이름으로 찾는 기관은 정확도 순: 가까운 순이면 '○○시청점' 가게·주차장이 먼저 나와 진짜 청사가 밀려난다
+    near = {"x": location["x"], "y": location["y"], "radius": min(info.get("radius", 5000), 20000), "sort": info.get("sort", "distance")}
     try:
         docs, n = kakao.keyword(query, size=10, **near)
     except kakao.KakaoError as e:

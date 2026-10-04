@@ -109,7 +109,7 @@ class RuleBrain:
             return Understanding(
                 intent="service", service=service, referral="none", language=i18n.detect(text) or "ko", reply="",
                 category="other", title=f"{s['label']} 안내", summary=text.strip()[:200], urgency="low",
-                keywords=[kw for kw in s["keywords"] if kw in text][:5] or [s["label"]], location_hint=find_location(text),
+                keywords=[kw for kw in s["keywords"] if kw in text][:5] or [s["label"]], location_hint=find_location(text), others=[],
             )
         return Understanding(
             intent="complaint",  # 민원 여부·다른 창구 판단은 Claude만 한다. 대체 경로에서는 기존처럼 민원으로 진행
@@ -123,6 +123,7 @@ class RuleBrain:
             urgency="high" if DANGER.search(text) else "medium" if code != "other" else "low",
             keywords=keywords,
             location_hint=find_location(text),
+            others=[],
         )
 
     def plan(self, ctx: dict) -> Plan:
