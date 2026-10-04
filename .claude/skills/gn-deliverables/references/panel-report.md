@@ -65,8 +65,8 @@
 
 1. 재료를 `docs/submission/panel/판넬.md`에 정리하고 사용자 확인 (문장은 판넬에 들어갈 길이로 짧게).
 2. `docs/submission/panel/panel1.html`, `panel2.html`을 HTML/CSS 한 장으로 만든다: 가로형 1754×1240px(A4 가로 비율, 세로형이면 1240×1754), 외부 의존 없이 이미지는 `img/` 상대 경로, 글꼴 Pretendard(웹폰트) 또는 맑은 고딕, 색은 서비스 기본색(#1d5bd6 계열)로 통일. 구역 제목에 01~04 번호, 예시처럼 둥근 카드·아이콘(이모지 또는 단순 SVG). 사진·캐릭터 이미지를 지어내지 않는다.
-3. 미리보기: 브라우저 창으로 열어 확인 (필요하면 `docs/submission`을 간단한 정적 서버로 띄워 미리보기).
-4. 뽑기 (사용자가 Chrome에서): **PNG** = 개발자 도구 → Ctrl+Shift+P → 'Capture full size screenshot'(장치 배율 2 권장) / **PDF** = Ctrl+P → 대상 'PDF로 저장', 여백 없음, 배경 그래픽 체크.
+3. 화면 캡처: `docs/submission/capture_screens.py`가 Edge를 화면 없이 띄워 실제 서비스에 시나리오를 입력하고 2배 해상도로 찍는다 (`img/`). 판넬용 조각(`img/p_*.png`)은 거기서 잘라 낸다.
+4. 뽑기: `docs/submission/panel/render.py`가 PNG(3508×2480)·PDF(2쪽)를 만들고 넘친 칸을 알려 준다. 근거·확인할 것은 `docs/submission/panel/판넬.md`.
 5. 결과 파일: `AI민원길잡이_개발완료보고서_판넬1.png`·`_판넬2.png` + 두 장을 묶은 PDF.
 
 ## 점검

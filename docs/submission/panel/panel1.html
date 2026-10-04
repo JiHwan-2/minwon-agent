@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1754">
+<title>AI민원길잡이 개발완료보고서 판넬 1</title>
+<link rel="stylesheet" href="panel.css">
+<style>
+  .body { grid-template-rows: 524px 1fr; }
+  .row1 { display: grid; grid-template-columns: 438px 1fr; gap: 14px; min-height: 0; }
+  .row2 { display: grid; grid-template-columns: 1000px 1fr; gap: 14px; min-height: 0; }
+  .detail { display: grid; grid-template-columns: 1fr 360px; gap: 14px; min-height: 0; flex: 1; }
+  .detail .left { display: flex; flex-direction: column; gap: 8px; }
+  .result { display: grid; grid-template-columns: 290px 1fr; gap: 12px; flex: 1; min-height: 0; }
+  .result .shots { grid-template-columns: 1fr 1.18fr 1fr; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <header class="head">
+    <div class="event">제4회 경남 AI·SW 경진대회 2026 <span class="pill">대학부 · 01 사회문제 해결형 AI Agent</span></div>
+    <div class="title"><h1>AI민원길잡이 <em>AI Agent</em></h1></div>
+    <p class="lead">생활불편을 평소 말투로 말하면, 담당 기관을 찾고 검증된 민원 초안·증빙 목록까지 준비해 주는 행정 길잡이 AI 에이전트</p>
+    <div class="team"><span><b>팀명</b>AI민원길잡이</span><span class="sep">|</span><span><b>팀원</b>김지환(팀장), 서준호</span><span class="sep">|</span><span>창신대학교 컴퓨터공학과</span></div>
+    <div class="motif">
+      <div class="flow">
+        <div class="dot">💬<small>말하면</small></div><span class="arr">›</span>
+        <div class="dot">📍<small>찾고</small></div><span class="arr">›</span>
+        <div class="dot">📝<small>준비</small></div>
+      </div>
+      <div class="slogan">말하면,<br><span>길이 보입니다</span></div>
+    </div>
+  </header>
+
+  <main class="body">
+    <div class="row1">
+      <!-- 01 -->
+      <section class="card">
+        <div class="sec"><span class="no">01</span><h2>프로젝트 개요</h2><span class="sub">개발 배경 · 목표</span></div>
+        <ol class="nums">
+          <li><i>1</i><span>가로등 고장, 위험한 횡단보도 같은 <b>생활불편</b>을 겪어도 어느 기관·창구에 무엇을 준비해 내야 할지 몰라 민원을 <b>포기하거나 잘못 낸다.</b></span></li>
+          <li><i>2</i><span>행정 용어·절차가 낯선 시민, 한국어가 서툰 <b>경남 거주 외국인 주민</b>에게는 더 어렵다.</span></li>
+          <li><i>3</i><span>AI Agent가 시민의 말·현장 사진을 이해하고, 모자란 정보는 <b>묻고</b>, 지도·지식베이스·공공데이터로 근거를 <b>찾아</b>, 담당 기관과 민원 초안을 스스로 <b>검증</b>해 건네는 것이 목표다.</span></li>
+          <li><i>4</i><span>8일 개발기간 동안 입력부터 민원 패키지(PDF)까지 <b>처음부터 끝까지 동작하는 MVP(Level 3)</b>를 완성했다. 민원 제출은 시민이 확인 후 직접 한다.</span></li>
+        </ol>
+        <div class="quote">
+          <q>시민의 말을 민원으로 바꾸는 행정 길잡이</q>
+          <p>스스로 계획하고, 모자란 정보는 묻고, 검색으로 근거를 찾고,<br>결과를 검증한 뒤 건넨다</p>
+        </div>
+      </section>
+
+      <!-- 02 -->
+      <section class="card">
+        <div class="sec"><span class="no">02</span><h2>개발 세부 내용</h2><span class="sub">시스템 구조 / 활용 데이터 · AI · 기술 / 3단계 개발 내용</span></div>
+        <div class="detail">
+          <div class="left">
+            <div class="sub-h"><b>A</b>시스템 구조도 (Agent Workflow ①~⑦)</div>
+            <div class="flow5">
+              <div class="box"><h4>시민 입력<small>① 입력·안전 점검<br>&nbsp;</small></h4><div class="ico">🗣️</div>
+                <ul><li>평소 말투·현장 사진</li><li>한·영·중·베트남어</li><li>개인정보 가림</li><li>112·119·109 안내</li></ul></div>
+              <div class="box"><h4>이해 · 계획<small>② 입력 확인·문제 분석<br>③ 처리 계획</small></h4><div class="ico">🧠</div>
+                <ul><li>민원·민원 서비스·<br>다른 창구 구분</li><li>유형·긴급도·언어</li><li>할 일·Tool 계획</li></ul></div>
+              <div class="box"><h4>정보 · Tool<small>④ 정보 판단·추가 질문<br>⑤ Tool 실행</small></h4><div class="ico">🔎</div>
+                <ul><li>부족한 정보 질문</li><li>카카오 지도·기관</li><li>지식베이스</li><li>공공데이터 2종</li></ul></div>
+              <div class="box"><h4>판단 · 검증<small>⑥ 판단·작성·검증<br>&nbsp;</small></h4><div class="ico">⚖️</div>
+                <ul><li>담당 기관·창구 판단</li><li>민원 초안·증빙</li><li>규칙 검사 + AI 검토</li><li>문제면 다시 작성</li></ul></div>
+              <div class="box"><h4>결과 전달<small>⑦ 결과 전달·피드백<br>&nbsp;</small></h4><div class="ico">📦</div>
+                <ul><li>민원 패키지·PDF</li><li>민원 서비스 안내</li><li>번역본 + 한국어 원문</li><li>수정 요청 반영</li></ul></div>
+            </div>
+            <div class="feedback"><b>🔁 Feedback</b> 검증 실패 → 다시 작성 · Tool 실패 → 재시도·대체 경로 · 수정 요청 → 그 부분만 다시 작성</div>
+
+            <div class="sub-h" style="margin-top:6px"><b>B</b>활용 데이터 / AI / 활용 기술</div>
+            <div class="tri">
+              <div class="box"><h4>🗂️ 활용 데이터</h4><ul class="checks">
+                <li>카카오 로컬 API (위치·기관)</li>
+                <li>공공데이터 2종 (민원 사례·발급기)</li>
+                <li>지식베이스 (12유형·서비스 17종)</li></ul></div>
+              <div class="box"><h4>🤖 AI · Claude Opus 5.5</h4><ul class="checks">
+                <li>분석·계획·정보 판단</li>
+                <li>기관 판단·초안·AI 검토</li>
+                <li>사진 분석·번역·대화</li></ul></div>
+              <div class="box"><h4>🛠️ 활용 기술</h4><ul class="checks">
+                <li>Claude Code CLI · JSON Schema</li>
+                <li>LangGraph · FastAPI · React</li>
+                <li>Pillow(사진 정보) · fpdf2(PDF)</li></ul></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="sub-h"><b>C</b>3단계 개발 내용</div>
+            <div class="steps3">
+              <div class="step s1"><div class="ic">🧱</div><div><h4>1단계. 기반 구축<small>(1~3일차)</small></h4><ul>
+                <li>문제 정의 · Workflow 설계</li>
+                <li>Agent 골격: 안전 점검·분석·계획·질문</li>
+                <li>카카오 위치·관할 기관·지식베이스</li>
+                <li>처음부터 끝까지(E2E) 민원 패키지 완성</li></ul></div></div>
+              <div class="step s2"><div class="ic">⚙️</div><div><h4>2단계. 판단 · 확장<small>(4~5일차)</small></h4><ul>
+                <li>Claude 판단 엔진 · 공공데이터 민원 사례</li>
+                <li>입력 확인 · 위기 109 · 다른 창구 안내</li>
+                <li>4개 언어 · 수정 요청 답변</li>
+                <li>현장 사진(GPS) · 민원 서비스 안내</li></ul></div></div>
+              <div class="step s3"><div class="ic">✅</div><div><h4>3단계. 검증 · 완성<small>(6~8일차)</small></h4><ul>
+                <li>평가 세트로 측정 → 틀린 곳 보완</li>
+                <li>대표 테스트케이스 9건 재실행</li>
+                <li>제출물 · 회귀 점검</li></ul></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="row2">
+      <!-- 03 -->
+      <section class="card">
+        <div class="sec"><span class="no">03</span><h2>구현 결과</h2><span class="sub">주요 기능 / 실제 실행 화면 (2026-10-04)</span></div>
+        <div class="result">
+          <div style="display:flex; flex-direction:column">
+            <ul class="checks big" style="gap:7px">
+              <li><b>입력 확인·문제 분석·처리 계획</b><br>민원·민원 서비스·다른 창구를 구분</li>
+              <li><b>추가 질문·대화</b><br>상태 저장, 사진은 예/아니요로 확인</li>
+              <li><b>위치·기관 검색</b><br>카카오·공공데이터·지식베이스, 재시도</li>
+              <li><b>담당 기관 + 민원 패키지 PDF</b><br>민원 서비스는 지금 되는 방법 안내</li>
+              <li><b>결과 검증·수정</b><br>규칙 검사 + AI 검토, 수정 요청 반영</li>
+            </ul>
+            <div class="band"><span class="tro">🏆</span>8일 개발기간 · Level 3 MVP</div>
+          </div>
+          <div class="shots">
+            <div class="shot"><div class="cap">① 입력 → 문제 이해 → 처리 계획</div><div class="img"><img class="top" src="img/p_chat.png" alt="대화 화면"></div></div>
+            <div class="shot"><div class="cap">⑤ 작업 기록: 실제 Tool 호출</div><div class="img"><img class="top" src="img/p_tools.png" alt="작업 기록 Tool 실행"></div></div>
+            <div class="shot"><div class="cap">⑦ 민원 패키지: 제출할 곳 · 사례</div><div class="img"><img class="top" src="img/p_package.png" alt="민원 패키지"></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 04 -->
+      <section class="card">
+        <div class="sec"><span class="no">04</span><h2>기대 효과</h2><span class="sub">시민 · 외국인 주민 · 지자체를 위한 가치</span></div>
+        <div class="who3">
+          <div class="who w1"><div class="ic">🙋</div><h4>시민</h4><ul class="checks">
+            <li>포기하던 민원을 대화로 준비</li>
+            <li>기관·창구·증빙을 한 번에</li>
+            <li>서류 발급은 지금 되는 곳으로</li></ul>
+            <div class="say">“말하면, 길이 보입니다”</div></div>
+          <div class="who w2"><div class="ic">🌏</div><h4>외국인 주민</h4><ul class="checks">
+            <li>내 언어로 묻고 안내받기</li>
+            <li>번역본 + 검증된 한국어 원문</li>
+            <li>다른 공식 창구도 안내</li></ul>
+            <div class="say">“내 언어로 묻고, 한국어로 제출”</div></div>
+          <div class="who w3"><div class="ic">🏛️</div><h4>지자체 · 민원 담당</h4><ul class="checks">
+            <li>위치·상황이 정리된 민원</li>
+            <li>담당 기관 오지정 감소 기대</li>
+            <li>근거 없는 '필수' 서류 방지</li></ul>
+            <div class="say">“정리된 민원, 빠른 처리”</div></div>
+        </div>
+        <div class="metrics">
+          <div class="metric"><b>11/11</b><span>담당 기관</span></div>
+          <div class="metric"><b>132/132</b><span>입력 확인</span></div>
+          <div class="metric"><b>10/10</b><span>민원 서비스</span></div>
+          <div class="metric"><b>20/20</b><span>수정 요청</span></div>
+          <div class="metric"><b>9/9</b><span>대표 테스트</span></div>
+        </div>
+        <p class="note">평가 세트·대표 테스트케이스, 실제 Claude로 실행(2026-10-04). 한계: 부서명은 지자체마다 다를 수 있어 일반 표현으로 안내 · 사용자 검증과 준비 시간 단축은 아직 측정하지 않음</p>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot"><span><b>AI민원길잡이</b> · 제4회 경남 AI·SW 경진대회 2026 개발완료보고서 (판넬 1/2)</span><span>창신대학교 컴퓨터공학과 김지환 · 서준호</span></footer>
+</div>
+</body>
+</html>
