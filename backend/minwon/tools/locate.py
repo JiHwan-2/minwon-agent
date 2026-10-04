@@ -35,11 +35,70 @@ def _with_region(candidate: dict, query: str) -> tuple[dict, int]:
     return loc, n - 1
 
 
-def _search(query: str, context_text: str) -> tuple[list[dict], int]:
+# 장소를 설명하는 말일 뿐 장소 이름이 아닌 단어. 지도 검색어에 섞이면 카카오가 0건을 주거나 엉뚱한 곳을 준다
+# (예: '창신대학교 정문 버스정류장' → 0건, '창신대 버스정류장' → 노무법인, '창신대학교 앞' → 사진관)
+NOT_NAME = {"앞", "뒤", "옆", "근처", "부근", "맞은편", "건너편", "인근", "주변", "쪽", "방향", "기준", "가장", "가까운", "사이",
+            "버스정류장", "정류장", "정류소", "횡단보도", "건널목", "신호등", "가로등", "보안등", "골목", "골목길", "인도", "도로", "길가"}
+
+
+def _keys(query: str) -> list[str]:
+    """검색 결과가 이 장소가 맞는지 볼 장소 이름 단어들: 시·군·구·동 이름, 설명하는 말, 조사를 뺀 단어."""
+    region = regions.parse(query)
+    skip = {w for part in (region["sido"], region["sigungu"], region["dong"]) for w in part.split()}
+    skip |= {"경남", "경상남도", *regions.SIDO, *regions.GYEONGNAM}  # '창원 초등학교'의 '창원'처럼 시 이름만 쓴 말
+    keys = []
+    for raw in query.split():
+        word = regions._strip_token(raw)
+        if (len(word) < 2 or {raw, word} & (skip | NOT_NAME | regions.GENERIC_PREFIX)
+                or (regions.DONG_TOKEN.match(word) and word not in regions.NOT_DONG)):
+            continue
+        keys.append(word)
+    return keys
+
+
+def _relevant(docs: list[dict], query: str) -> list[dict]:
+    """장소 이름에 시민이 말한 장소 이름(앞 세 글자)이 들어 있는 결과만 (주소·설명에만 걸린 엉뚱한 가게는 뺀다)."""
+    keys = _keys(query)
+    if not keys or regions.ROAD_ADDRESS.search(query) or regions.LOT_ADDRESS.search(query):
+        return docs  # 주소로 찾을 때는 장소 이름을 비교하지 않는다
+    names = [k for k in keys if k not in regions.LANDMARK_SUFFIXES]  # '놀이터'·'사거리' 같은 시설 종류는 이름이 아님
+    if not names:
+        return docs  # '초등학교'처럼 이름 없이 종류만 말했으면 후보를 그대로 보여 주고 고르게 한다
+
+    def score(doc: dict) -> int:
+        name = (doc.get("place_name") or "").replace(" ", "")
+        if any(name == k or name.startswith(k) for k in names):
+            return 3  # '용지호수' → '용지호수'가 '스타벅스 창원용지호수점'보다 앞
+        if any(k in name for k in names):
+            return 2
+        return 1 if any(k[:3] in name for k in names) else 0
+
+    return sorted((d for d in docs if score(d)), key=score, reverse=True)
+
+
+def _variants(query: str) -> list[str]:
+    """못 찾았을 때 다시 찾을 검색어: 시·도·시·군·구 빼기 → 설명하는 말 빼기 → 뒤에서부터 한 단어씩 줄이기 (장소 이름은 남김)."""
+    region = regions.parse(query)
+    drop = {w for part in (region["sido"], region["sigungu"]) for w in part.split()} | {"경남", "경상남도"}
+    tokens = [t for t in query.split() if t not in drop]
+    names = [t for t in tokens if t not in NOT_NAME and t not in regions.GENERIC_PREFIX]
+    keys = _keys(query)
+    out = [" ".join(tokens)]
+    # 뒤에서부터 줄이되 장소 이름 단어가 하나도 남지 않으면 그만 (그때는 동 단위 확인으로 넘어감)
+    out += [" ".join(names[:i]) for i in range(len(names), 0, -1) if any(regions._strip_token(t) in keys for t in names[:i])]
+    found: list[str] = []
+    for v in out:
+        if v and v != query and v not in found:
+            found.append(v)
+    return found
+
+
+def _search(query: str, context_text: str, address: bool = True) -> tuple[list[dict], int]:
     """카카오 검색 후보 최대 5개. 사용자가 말한 시·군 안의 결과를 우선한다. (후보, 재시도 횟수)"""
     docs, n = kakao.keyword(query, size=5)
     retries = n - 1
-    if not docs:
+    docs = _relevant(docs, query)
+    if not docs and address:
         docs, n = kakao.address(query)
         retries += n - 1
     candidates = [_candidate(d) for d in docs]
@@ -88,6 +147,13 @@ def geocode(query: str, context_text: str = "") -> dict:
     if query.strip():
         try:
             candidates, retries = _search(query, context_text)
+            used = query
+            for variant in [] if candidates else _variants(query):  # 못 찾으면 검색어를 줄여 다시 찾는다
+                candidates, more = _search(variant, f"{query} {context_text}", address=False)
+                retries += more
+                if candidates:
+                    used = variant
+                    break
             if candidates:
                 loc, more = _with_region(candidates[0], query)
                 retries += more
@@ -95,6 +161,9 @@ def geocode(query: str, context_text: str = "") -> dict:
                 loc |= {"ambiguous": ambiguous, "candidates": candidates}
                 where = " ".join(v for v in (loc["sigungu"], loc["dong"]) if v)
                 summary = f"{loc['address']} ({where})"
+                if used != query:
+                    loc["approximate"] = True
+                    summary = f"'{query}'(으)로는 못 찾아 '{used}'(으)로 찾음: {candidates[0]['name'] or loc['address']} · {summary}"
                 if ambiguous:
                     summary = f"후보 {len(candidates)}곳 — 사용자 확인 필요 (1순위: {candidates[0]['name'] or loc['address']})"
                 return tool_result("geocode", True, "kakao", summary, loc, retries)

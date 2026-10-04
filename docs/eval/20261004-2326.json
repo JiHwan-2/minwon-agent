@@ -1,0 +1,82 @@
+{
+  "run_at": "2026-10-04 23:25",
+  "model": "claude-opus-5-5 (Claude Code)",
+  "note": "새 문항 A12(창신대 정문 버스정류장 근처 횡단보도) 첫 측정",
+  "parts": {
+    "e2e": {
+      "summary": {
+        "cases": 1,
+        "all_ok": 1,
+        "agency_and_unit": [
+          1,
+          1
+        ],
+        "finished": [
+          1,
+          1
+        ],
+        "category": [
+          1,
+          1
+        ],
+        "sigungu": [
+          1,
+          1
+        ],
+        "agency": [
+          1,
+          1
+        ],
+        "unit": [
+          1,
+          1
+        ],
+        "review_passed": [
+          1,
+          1
+        ],
+        "fallback_cases": 0,
+        "seconds_avg": 66.4
+      },
+      "rows": [
+        {
+          "id": "A12",
+          "text": "창원시 마산회원구 창신대학교 정문 버스정류장 근처 횡단보도 신호가 너무 빨리 바뀌어요",
+          "category": "traffic_safety",
+          "sigungu": "마산회원구",
+          "agency": [
+            "경찰서"
+          ],
+          "unit": [
+            "교통"
+          ],
+          "note": "지도에 그대로는 없는 긴 장소 표현 (2026-10-04 사용자 시험에서 위치가 구 단위로만 잡힌 사례)",
+          "got": {
+            "end": "ready",
+            "category": "traffic_safety",
+            "agency": "마산동부경찰서",
+            "unit": "교통 담당 부서(교통과·교통안전계)",
+            "sigungu": "창원시 마산회원구",
+            "address": "경남 창원시 마산회원구 팔용로 262",
+            "review_passed": true,
+            "review_issues": [],
+            "fallback_steps": [],
+            "fallback_errors": [],
+            "answers": [
+              "모름"
+            ]
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": true,
+            "unit": true
+          },
+          "ok": true,
+          "seconds": 66.4
+        }
+      ]
+    }
+  }
+}

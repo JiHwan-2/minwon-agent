@@ -1,0 +1,1113 @@
+{
+  "run_at": "2026-10-04 23:19",
+  "model": "claude-opus-5-5 (Claude Code)",
+  "note": "위치 검색 보완 후(검색어 줄여 다시 찾기·장소 이름이 다른 결과 제외) 회귀 확인",
+  "parts": {
+    "e2e": {
+      "summary": {
+        "cases": 11,
+        "all_ok": 11,
+        "agency_and_unit": [
+          11,
+          11
+        ],
+        "finished": [
+          11,
+          11
+        ],
+        "category": [
+          11,
+          11
+        ],
+        "sigungu": [
+          11,
+          11
+        ],
+        "agency": [
+          11,
+          11
+        ],
+        "unit": [
+          11,
+          11
+        ],
+        "review_passed": [
+          11,
+          11
+        ],
+        "fallback_cases": 0,
+        "seconds_avg": 60.3
+      },
+      "rows": [
+        {
+          "id": "A01",
+          "text": "창원시 마산회원구 합성동 합성초등학교 후문 골목 보안등이 일주일째 밤마다 꺼져 있어요",
+          "category": "street_light",
+          "sigungu": "마산회원구",
+          "agency": [
+            "행정복지센터"
+          ],
+          "unit": [
+            "보안등"
+          ],
+          "got": {
+            "end": "ready",
+            "category": "street_light",
+            "agency": "합성1동행정복지센터",
+            "unit": "보안등 담당",
+            "sigungu": "창원시 마산회원구",
+            "address": "경남 창원시 마산회원구 합성북16길 75",
+            "review_passed": true,
+            "review_issues": [],
+            "fallback_steps": [],
+            "fallback_errors": [],
+            "answers": []
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": true,
+            "unit": true
+          },
+          "ok": true,
+          "seconds": 47.1
+        },
+        {
+          "id": "A02",
+          "text": "창원시 성산구 상남동 상남시장 앞 인도에 불법 주정차가 매일 저녁 심해요",
+          "category": "illegal_parking",
+          "sigungu": "성산구",
+          "agency": [
+            "성산구청"
+          ],
+          "unit": [
+            "주정차"
+          ],
+          "got": {
+            "end": "ready",
+            "category": "illegal_parking",
+            "agency": "창원시 성산구청",
+            "unit": "주정차 단속 부서(교통지도과 등)",
+            "sigungu": "창원시 성산구",
+            "address": "경남 창원시 성산구 마디미로 28",
+            "review_passed": true,
+            "review_issues": [],
+            "fallback_steps": [],
+            "fallback_errors": [],
+            "answers": [
+              "모름"
+            ]
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": true,
+            "unit": true
+          },
+          "ok": true,
+          "seconds": 58.5
+        },
+        {
+          "id": "A03",
+          "text": "김해시 삼계동 삼계초등학교 정문 앞 횡단보도에 신호등이 없어서 등굣길 아이들이 위험해요",
+          "category": "traffic_safety",
+          "sigungu": "김해시",
+          "agency": [
+            "경찰서",
+            "김해시청"
+          ],
+          "unit": [
+            "교통"
+          ],
+          "note": "신호등 신설은 시·군·구청과 경찰서 모두 접수(시·군·구가 의견 수렴 → 시·도경찰청 교통안전시설심의). 서울시 정보소통광장 회신 참고",
+          "got": {
+            "end": "ready",
+            "category": "traffic_safety",
+            "agency": "김해중부경찰서",
+            "unit": "교통 담당 부서(교통과·교통안전계)",
+            "sigungu": "김해시",
+            "address": "경남 김해시 가야로38번길 30",
+            "review_passed": true,
+            "review_issues": [],
+            "fallback_steps": [],
+            "fallback_errors": [],
+            "answers": [
+              "모름"
+            ]
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": true,
+            "unit": true
+          },
+          "ok": true,
+          "seconds": 73.3
+        },
+        {
+          "id": "A04",
+          "text": "창원시 성산구 가음정동 가음정공원 놀이터 그네 줄이 끊어져 있어요",
+          "category": "park_facility",
+          "sigungu": "성산구",
+          "agency": [
+            "성산구청"
+          ],
+          "unit": [
+            "공원"
+          ],
+          "got": {
+            "end": "ready",
+            "category": "park_facility",
+            "agency": "창원시 성산구청",
+            "unit": "공원 관리 부서(공원녹지과 등)",
+            "sigungu": "창원시 성산구",
+            "address": "경남 창원시 성산구 가음정동 591",
+            "review_passed": true,
+            "review_issues": [],
+            "fallback_steps": [],
+            "fallback_errors": [],
+            "answers": []
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": true,
+            "unit": true
+          },
+          "ok": true,
+          "seconds": 50.2
+        },
+        {
+          "id": "A05",
+          "text": "진주시 가좌동 경상국립대 정문 앞 도로에 큰 포트홀이 생겼어요",
+          "category": "road_damage",
+          "sigungu": "진주시",
+          "agency": [
+            "진주시청"
+          ],
+          "unit": [
+            "도로"
+          ],
+          "got": {
+            "end": "ready",
+            "category": "road_damage",
+            "agency": "진주시청",
+            "unit": "도로 관리 부서(건설과·도로과 등)",
+            "sigungu": "진주시",
+            "address": "경남 진주시 진주대로 501",
+            "review_passed": true,
+            "review_issues": [],
+            "fallback_steps": [],
+            "fallback_errors": [],
+            "answers": [
+              "모름"
+            ]
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": true,
+            "unit": true
+          },
+          "ok": true,
+          "seconds": 76.3
+        },
+        {
+          "id": "A06",
+          "text": "양산시 물금읍 양산부산대병원 앞 버스정류장에 버스가 안 서고 그냥 지나가요",
+          "category": "public_transport",
+          "sigungu": "양산시",
+          "agency": [
+            "양산시청"
+          ],
+          "unit": [
+            "대중교통"
+          ],
+          "got": {
+            "end": "ready",
+            "category": "public_transport",
+            "agency": "양산시청",
+            "unit": "대중교통 부서(대중교통과 등)",
+            "sigungu": "양산시",
+            "address": "경남 양산시 물금읍 금오로 20",
+            "review_passed": true,
+            "review_issues": [],
+            "fallback_steps": [],
+            "fallback_errors": [],
+            "answers": [
+              "모름"
+            ]
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": true,
+            "unit": true
+          },
+          "ok": true,
+          "seconds": 58.4
+        },
+        {
+          "id": "A07",
+          "text": "창원시 진해구 석동 아파트 단지 옆 공사장에서 새벽 6시부터 소음이 심해요",
+          "category": "noise",
+          "sigungu": "진해구",
+          "agency": [
+            "진해구청"
+          ],
+          "unit": [
+            "환경"
+          ],
+          "got": {
+            "end": "ready",
+            "category": "noise",
+            "agency": "창원시 진해구청",
+            "unit": "환경 부서(환경위생과 등)",
+            "sigungu": "창원시 진해구",
+            "address": "경남 창원시 진해구 석동",
+            "review_passed": true,
+            "review_issues": [],
+            "fallback_steps": [],
+            "fallback_errors": [],
+            "answers": [
+              "모름"
+            ]
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": true,
+            "unit": true
+          },
+          "ok": true,
+          "seconds": 55.1
+        },
+        {
+          "id": "A08",
+          "text": "거제시 고현동 고현시장 뒷골목에 쓰레기 무단투기가 매일 쌓여요",
+          "category": "garbage",
+          "sigungu": "거제시",
+          "agency": [
+            "거제시청",
+            "행정복지센터"
+          ],
+          "unit": [
+            "청소",
+            "환경"
+          ],
+          "got": {
+            "end": "ready",
+            "category": "garbage",
+            "agency": "거제시청",
+            "unit": "청소 부서(자원순환과 등)",
+            "sigungu": "거제시",
+            "address": "경남 거제시 거제중앙로 1873-1",
+            "review_passed": true,
+            "review_issues": [],
+            "fallback_steps": [],
+            "fallback_errors": [],
+            "answers": []
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": true,
+            "unit": true
+          },
+          "ok": true,
+          "seconds": 47.8
+        },
+        {
+          "id": "A09",
+          "text": "통영시 무전동 동네 하천에 기름 같은 게 떠 있고 냄새가 나요",
+          "category": "pollution",
+          "sigungu": "통영시",
+          "agency": [
+            "통영시청"
+          ],
+          "unit": [
+            "환경"
+          ],
+          "got": {
+            "end": "ready",
+            "category": "pollution",
+            "agency": "통영시청",
+            "unit": "환경 부서(환경관리과 등)",
+            "sigungu": "통영시",
+            "address": "경남 통영시 무전동",
+            "review_passed": true,
+            "review_issues": [],
+            "fallback_steps": [],
+            "fallback_errors": [],
+            "answers": [
+              "모름"
+            ]
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": true,
+            "unit": true
+          },
+          "ok": true,
+          "seconds": 75.3
+        },
+        {
+          "id": "A10",
+          "text": "김해시 내외동 연지공원 근처 길에 들개 무리가 돌아다녀서 아이들이 무서워해요",
+          "category": "animal",
+          "sigungu": "김해시",
+          "agency": [
+            "김해시청"
+          ],
+          "unit": [
+            "동물"
+          ],
+          "got": {
+            "end": "ready",
+            "category": "animal",
+            "agency": "김해시청",
+            "unit": "동물보호 담당 부서",
+            "sigungu": "김해시",
+            "address": "경남 김해시 금관대로1368번길 7",
+            "review_passed": true,
+            "review_issues": [],
+            "fallback_steps": [],
+            "fallback_errors": [],
+            "answers": [
+              "모름"
+            ]
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": true,
+            "unit": true
+          },
+          "ok": true,
+          "seconds": 56.8
+        },
+        {
+          "id": "A11",
+          "text": "창원시 마산합포구 오동동 골목 하수구가 막혀서 비만 오면 물이 넘쳐요",
+          "category": "water_sewer",
+          "sigungu": "마산합포구",
+          "agency": [
+            "창원시청"
+          ],
+          "unit": [
+            "상하수도"
+          ],
+          "got": {
+            "end": "ready",
+            "category": "water_sewer",
+            "agency": "창원시청",
+            "unit": "상하수도 담당 부서(상하수도사업소 등)",
+            "sigungu": "창원시 마산합포구",
+            "address": "경남 창원시 마산합포구 오동서6길 24",
+            "review_passed": true,
+            "review_issues": [],
+            "fallback_steps": [],
+            "fallback_errors": [],
+            "answers": [
+              "모름"
+            ]
+          },
+          "checks": {
+            "finished": true,
+            "category": true,
+            "sigungu": true,
+            "agency": true,
+            "unit": true
+          },
+          "ok": true,
+          "seconds": 64.5
+        }
+      ]
+    },
+    "svc": {
+      "summary": {
+        "cases": 10,
+        "all_ok": 10,
+        "finished": [
+          10,
+          10
+        ],
+        "service": [
+          10,
+          10
+        ],
+        "sigungu": [
+          10,
+          10
+        ],
+        "offices": [
+          10,
+          10
+        ],
+        "kiosk": [
+          3,
+          3
+        ],
+        "fee_grounded": [
+          10,
+          10
+        ],
+        "no_made_up_contact": [
+          10,
+          10
+        ],
+        "language": [
+          10,
+          10
+        ],
+        "fallback_cases": 0,
+        "seconds_avg": 24.6
+      },
+      "rows": [
+        {
+          "id": "G01",
+          "text": "주민등록등본 어디서 떼요?",
+          "answers": [
+            "창원시 성산구 상남동"
+          ],
+          "service": "resident_copy",
+          "sigungu": "성산구",
+          "got": {
+            "end": "guide",
+            "intent": "service",
+            "service": "resident_copy",
+            "sigungu": "창원시 성산구",
+            "address": "경남 창원시 성산구 상남동 24",
+            "offices": {
+              "community_center": [
+                "상남동행정복지센터(closed)",
+                "중앙동행정복지센터(closed)"
+              ]
+            },
+            "kiosks": [
+              "무인민원발급창구 상남시장(unknown)",
+              "무인민원발급창구 국민은행 창원종합금융센터(unknown)",
+              "무인민원발급창구 농협협동조합중앙회 창원시지부(unknown)"
+            ],
+            "now": {
+              "date": "2026-10-04",
+              "time": "23:24",
+              "weekday": "일",
+              "holiday": false,
+              "weekend": true,
+              "workday": false,
+              "next_workday": "2026-10-06(화)"
+            },
+            "summary": "주민등록등본은 주소지와 관계없이 전국 어디서나 뗄 수 있어요. 지금은 일요일 밤(23:24)이라 정부24(온라인)로 떼시는 게 가장 좋고, 정부24에서는 무료예요.",
+            "recommendation": "지금은 행정복지센터가 문을 닫았으니 24시간 이용할 수 있는 정부24에서 무료로 바로 떼시길 권해 드려요. 종이로 꼭 받아야 하는데 출력이 어렵다면 가까운 무인민원발급창구 상남시장(120m)도 있지만, 운영 여부를 알 수 없으니 운영 시간을 먼저 확인해 주세요.",
+            "steps": [
+              "정부24에 공동·금융인증서나 간편인증으로 로그인해 주세요.",
+              "'주민등록표 등본'을 신청하면서 제출처가 요구하는 표시 항목(주민등록번호 뒷자리, 세대 구성 사유, 변동 사항 등)을 골라 주세요.",
+              "바로 출력하거나 전자문서지갑에 저장해 주세요.",
+              "온라인이 어려우시면 무인민원발급창구 상남시장(120m)이나 국민은행 창원종합금융센터(212m)의 운영 시간을 확인한 뒤, 지문으로 본인 확인을 하고 떼세요(1통 200원, 지자체에 따라 무료).",
+              "창구에서 떼야 한다면 다음 평일인 2026년 10월 6일(화)에 신분증을 가지고 상남동행정복지센터(671m)에 가 주세요(1통 400원)."
+            ],
+            "tips": [
+              "본인이나 같은 세대원이 아닌 사람이 대신 떼려면 위임장과 위임한 사람의 신분증이 필요해요.",
+              "10월 5일(월)은 관공서가 쉬는 날이라 행정복지센터는 10월 6일(화)부터 문을 열어요."
+            ],
+            "text": "주민등록등본은 주소지와 관계없이 전국 어디서나 뗄 수 있어요. 지금은 일요일 밤(23:24)이라 정부24(온라인)로 떼시는 게 가장 좋고, 정부24에서는 무료예요. 지금은 행정복지센터가 문을 닫았으니 24시간 이용할 수 있는 정부24에서 무료로 바로 떼시길 권해 드려요. 종이로 꼭 받아야 하는데 출력이 어렵다면 가까운 무인민원발급창구 상남시장(120m)도 있지만, 운영 여부를 알 수 없으니 운영 시간을 먼저 확인해 주세요. 정부24에 공동·금융인증서나 간편인증으로 로그인해 주세요. '주민등록표 등본'을 신청하면서 제출처가 요구하는 표시 항목(주민등록번호 뒷자리, 세대 구성 사유, 변동 사항 등)을 골라 주세요. 바로 출력하거나 전자문서지갑에 저장해 주세요. 온라인이 어려우시면 무인민원발급창구 상남시장(120m)이나 국민은행 창원종합금융센터(212m)의 운영 시간을 확인한 뒤, 지문으로 본인 확인을 하고 떼세요(1통 200원, 지자체에 따라 무료). 창구에서 떼야 한다면 다음 평일인 2026년 10월 6일(화)에 신분증을 가지고 상남동행정복지센터(671m)에 가 주세요(1통 400원). 본인이나 같은 세대원이 아닌 사람이 대신 떼려면 위임장과 위임한 사람의 신분증이 필요해요. 10월 5일(월)은 관공서가 쉬는 날이라 행정복지센터는 10월 6일(화)부터 문을 열어요.",
+            "guarded": false,
+            "questions": [
+              "가까운 행정복지센터와 무인민원발급기를 찾아 드릴게요. 지금 계신 곳이나 가실 동네를 알려 주세요. (예: 창원시 성산구 상남동)"
+            ],
+            "answers": [
+              "창원시 성산구 상남동"
+            ],
+            "fallback_steps": [],
+            "fallback_errors": []
+          },
+          "checks": {
+            "finished": true,
+            "service": true,
+            "sigungu": true,
+            "offices": true,
+            "fee_grounded": true,
+            "no_made_up_contact": true,
+            "language": true,
+            "kiosk": true
+          },
+          "ok": true,
+          "seconds": 29.2
+        },
+        {
+          "id": "G02",
+          "text": "가족관계증명서 떼야 하는데 지금 창원시청 근처에 있어요",
+          "service": "family_cert",
+          "sigungu": "성산구",
+          "got": {
+            "end": "guide",
+            "intent": "service",
+            "service": "family_cert",
+            "sigungu": "창원시 성산구",
+            "address": "경남 창원시 성산구 중앙대로 151",
+            "offices": {
+              "community_center": [
+                "용지동행정복지센터(closed)",
+                "중앙동행정복지센터(closed)"
+              ]
+            },
+            "kiosks": [
+              "무인민원발급창구 창원시청(창원시의회)(unknown)",
+              "무인민원발급창구 이마트(unknown)",
+              "무인민원발급창구 창원보건소(unknown)"
+            ],
+            "now": {
+              "date": "2026-10-04",
+              "time": "23:24",
+              "weekday": "일",
+              "holiday": false,
+              "weekend": true,
+              "workday": false,
+              "next_workday": "2026-10-06(화)"
+            },
+            "summary": "지금은 일요일 밤 11시 24분이라 주변 행정복지센터는 모두 문을 닫았어요. 가족관계증명서는 대법원 전자가족관계등록시스템에서 지금 바로 무료로 받으실 수 있어요.",
+            "recommendation": "인증서가 있으시면 대법원 전자가족관계등록시스템(온라인)이 가장 좋아요. 24시간 열려 있고 무료예요. 인증서가 없으시면 창원시청(창원시의회) 무인민원발급창구(4m)에 가 보실 수 있어요. 다만 지금 운영하는지는 확인되지 않아서, 운영 시간과 가족관계 서류를 발급하는 기기인지 먼저 확인하셔야 해요.",
+            "steps": [
+              "제출할 곳에서 일반·상세·특정 증명서 가운데 어떤 것을 원하는지 확인하세요. 따로 말이 없으면 '일반'을 받으시면 돼요.",
+              "대법원 전자가족관계등록시스템에 인증서로 로그인한 뒤 가족관계증명서와 증명서 종류를 고르고 출력하세요. 수수료는 없어요.",
+              "온라인으로 받기 어려우시면 바로 옆 '무인민원발급창구 창원시청(창원시의회)'(4m)에 가 보세요. 지금 운영하는지와 기기 메뉴에 가족관계 서류가 있는지 확인하시고, 1통에 500원이에요.",
+              "그곳이 안 되면 '무인민원발급창구 이마트'(215m)나 '무인민원발급창구 창원보건소'(337m)도 운영 여부를 확인한 뒤 이용해 보세요.",
+              "창구에서 받으셔야 하면 2026년 10월 6일(화)에 신분증을 가지고 용지동행정복지센터(920m)에 가세요. 1통에 1,000원이에요."
+            ],
+            "tips": [
+              "오늘(10월 4일)은 행정복지센터가 쉬어요. 월요일인 10월 5일도 관공서가 쉬는 날이라 다음으로 문을 여는 날은 10월 6일(화)이에요.",
+              "모든 무인민원발급기에서 가족관계 서류를 발급하지는 않아요. 기기 메뉴를 꼭 확인하세요.",
+              "본인이나 배우자, 직계 가족이 아닌 사람이 대신 받으려면 위임장이 필요해요."
+            ],
+            "text": "지금은 일요일 밤 11시 24분이라 주변 행정복지센터는 모두 문을 닫았어요. 가족관계증명서는 대법원 전자가족관계등록시스템에서 지금 바로 무료로 받으실 수 있어요. 인증서가 있으시면 대법원 전자가족관계등록시스템(온라인)이 가장 좋아요. 24시간 열려 있고 무료예요. 인증서가 없으시면 창원시청(창원시의회) 무인민원발급창구(4m)에 가 보실 수 있어요. 다만 지금 운영하는지는 확인되지 않아서, 운영 시간과 가족관계 서류를 발급하는 기기인지 먼저 확인하셔야 해요. 제출할 곳에서 일반·상세·특정 증명서 가운데 어떤 것을 원하는지 확인하세요. 따로 말이 없으면 '일반'을 받으시면 돼요. 대법원 전자가족관계등록시스템에 인증서로 로그인한 뒤 가족관계증명서와 증명서 종류를 고르고 출력하세요. 수수료는 없어요. 온라인으로 받기 어려우시면 바로 옆 '무인민원발급창구 창원시청(창원시의회)'(4m)에 가 보세요. 지금 운영하는지와 기기 메뉴에 가족관계 서류가 있는지 확인하시고, 1통에 500원이에요. 그곳이 안 되면 '무인민원발급창구 이마트'(215m)나 '무인민원발급창구 창원보건소'(337m)도 운영 여부를 확인한 뒤 이용해 보세요. 창구에서 받으셔야 하면 2026년 10월 6일(화)에 신분증을 가지고 용지동행정복지센터(920m)에 가세요. 1통에 1,000원이에요. 오늘(10월 4일)은 행정복지센터가 쉬어요. 월요일인 10월 5일도 관공서가 쉬는 날이라 다음으로 문을 여는 날은 10월 6일(화)이에요. 모든 무인민원발급기에서 가족관계 서류를 발급하지는 않아요. 기기 메뉴를 꼭 확인하세요. 본인이나 배우자, 직계 가족이 아닌 사람이 대신 받으려면 위임장이 필요해요.",
+            "guarded": false,
+            "questions": [],
+            "answers": [],
+            "fallback_steps": [],
+            "fallback_errors": []
+          },
+          "checks": {
+            "finished": true,
+            "service": true,
+            "sigungu": true,
+            "offices": true,
+            "fee_grounded": true,
+            "no_made_up_contact": true,
+            "language": true,
+            "kiosk": true
+          },
+          "ok": true,
+          "seconds": 23.5
+        },
+        {
+          "id": "G03",
+          "text": "이사 왔는데 전입신고는 어디서 해요?",
+          "answers": [
+            "김해시 내외동"
+          ],
+          "service": "move_in",
+          "sigungu": "김해시",
+          "got": {
+            "end": "guide",
+            "intent": "service",
+            "service": "move_in",
+            "sigungu": "김해시",
+            "address": "경남 김해시 내외중앙로 36",
+            "offices": {
+              "community_center": [
+                "내외동행정복지센터(closed)",
+                "회현동행정복지센터(closed)"
+              ]
+            },
+            "kiosks": [],
+            "now": {
+              "date": "2026-10-04",
+              "time": "23:24",
+              "weekday": "일",
+              "holiday": false,
+              "weekend": true,
+              "workday": false,
+              "next_workday": "2026-10-06(화)"
+            },
+            "summary": "전입신고는 정부24 전입신고(전입신고+)에서 온라인으로 하시거나, 새 주소지인 내외동행정복지센터에 가서 하시면 됩니다. 수수료는 무료이고, 이사한 날부터 14일 안에 하셔야 합니다(늦으면 과태료가 있습니다).",
+            "recommendation": "지금은 일요일 밤이라 행정복지센터가 문을 닫았으니, 24시간 되는 정부24 전입신고(전입신고+)로 지금 바로 신고하시는 것이 가장 좋습니다. 직접 가셔야 한다면 가까운 내외동행정복지센터(약 291m)에 다음 평일인 2026년 10월 6일(화)에 가시면 됩니다.",
+            "steps": [
+              "정부24 전입신고(전입신고+)에 로그인해 주세요.",
+              "'전입신고'를 고르고 새 주소(김해시 내외동)와 함께 옮기는 가족을 입력해 주세요.",
+              "세대주가 따로 계시면 세대주 확인(동의)을 받아 주세요.",
+              "온라인으로 어려우시면 2026년 10월 6일(화)에 신분증을 가지고 내외동행정복지센터에 가서 전입신고서를 작성해 주세요."
+            ],
+            "tips": [
+              "전세나 월세로 사신다면 전입신고와 함께 확정일자도 받아 두세요. 보증금을 지키는 데(대항력·우선변제) 도움이 됩니다. 행정복지센터에서 확정일자를 함께 받으시려면 임대차계약서 원본을 챙겨 가세요.",
+              "전입신고+로 하시면 관련 감면 신청도 한 번에 할 수 있습니다.",
+              "전입신고는 새 주소지 관할 기관에서 처리하니, 예전에 살던 동네 센터가 아닌 내외동 쪽으로 신고하시면 됩니다."
+            ],
+            "text": "전입신고는 정부24 전입신고(전입신고+)에서 온라인으로 하시거나, 새 주소지인 내외동행정복지센터에 가서 하시면 됩니다. 수수료는 무료이고, 이사한 날부터 14일 안에 하셔야 합니다(늦으면 과태료가 있습니다). 지금은 일요일 밤이라 행정복지센터가 문을 닫았으니, 24시간 되는 정부24 전입신고(전입신고+)로 지금 바로 신고하시는 것이 가장 좋습니다. 직접 가셔야 한다면 가까운 내외동행정복지센터(약 291m)에 다음 평일인 2026년 10월 6일(화)에 가시면 됩니다. 정부24 전입신고(전입신고+)에 로그인해 주세요. '전입신고'를 고르고 새 주소(김해시 내외동)와 함께 옮기는 가족을 입력해 주세요. 세대주가 따로 계시면 세대주 확인(동의)을 받아 주세요. 온라인으로 어려우시면 2026년 10월 6일(화)에 신분증을 가지고 내외동행정복지센터에 가서 전입신고서를 작성해 주세요. 전세나 월세로 사신다면 전입신고와 함께 확정일자도 받아 두세요. 보증금을 지키는 데(대항력·우선변제) 도움이 됩니다. 행정복지센터에서 확정일자를 함께 받으시려면 임대차계약서 원본을 챙겨 가세요. 전입신고+로 하시면 관련 감면 신청도 한 번에 할 수 있습니다. 전입신고는 새 주소지 관할 기관에서 처리하니, 예전에 살던 동네 센터가 아닌 내외동 쪽으로 신고하시면 됩니다.",
+            "guarded": false,
+            "questions": [
+              "전입신고는 새 주소지 관할 행정복지센터에서 처리하므로, 이사 온 새 주소의 동네를 알려 주세요. (예: 창원시 의창구 팔용동)"
+            ],
+            "answers": [
+              "김해시 내외동"
+            ],
+            "fallback_steps": [],
+            "fallback_errors": []
+          },
+          "checks": {
+            "finished": true,
+            "service": true,
+            "sigungu": true,
+            "offices": true,
+            "fee_grounded": true,
+            "no_made_up_contact": true,
+            "language": true
+          },
+          "ok": true,
+          "seconds": 30.4
+        },
+        {
+          "id": "G04",
+          "text": "안 쓰는 소파 버리려면 어떻게 해야 돼요?",
+          "answers": [
+            "진주시 가좌동"
+          ],
+          "service": "bulky_waste",
+          "sigungu": "진주시",
+          "got": {
+            "end": "guide",
+            "intent": "service",
+            "service": "bulky_waste",
+            "sigungu": "진주시",
+            "address": "경남 진주시 가좌동 산 182-1",
+            "offices": {
+              "community_center": [
+                "내동면사무소(closed)",
+                "가호동행정복지센터(closed)"
+              ]
+            },
+            "kiosks": [],
+            "now": {
+              "date": "2026-10-04",
+              "time": "23:24",
+              "weekday": "일",
+              "holiday": false,
+              "weekend": true,
+              "workday": false,
+              "next_workday": "2026-10-06(화)"
+            },
+            "summary": "소파는 대형폐기물이라서 진주시에 배출 신고를 먼저 하고, 수수료를 낸 다음 내놓으셔야 해요. 수수료는 품목, 크기, 지자체마다 달라요.",
+            "recommendation": "지금은 일요일 밤이라 가까운 내동면사무소(약 2.0km)와 가호동행정복지센터(약 2.3km)가 모두 문을 닫았어요. 지금 바로 할 수 있는 진주시 누리집 온라인 신고를 권해 드려요.",
+            "steps": [
+              "소파의 종류와 크기(예: 3인용, 가로 길이)를 미리 확인해 두세요.",
+              "진주시 누리집에서 대형폐기물 배출 신고를 열고 품목(소파)과 크기를 고르세요.",
+              "화면에 나온 수수료를 결제하세요.",
+              "받은 신고번호를 종이에 적어 소파에 잘 보이게 붙이세요.",
+              "안내받은 날짜와 장소에 맞춰 소파를 내놓으세요."
+            ],
+            "tips": [
+              "온라인 신고가 어려우시면 2026년 10월 6일(화)에 가호동행정복지센터나 내동면사무소에 가셔서 신고하세요. 수수료를 내면 납부필증(스티커)을 받는데, 이걸 소파에 붙여 내놓으시면 돼요.",
+              "신고하지 않고 내놓으면 무단투기로 과태료를 낼 수 있으니 꼭 신고한 다음에 내놓으세요."
+            ],
+            "text": "소파는 대형폐기물이라서 진주시에 배출 신고를 먼저 하고, 수수료를 낸 다음 내놓으셔야 해요. 수수료는 품목, 크기, 지자체마다 달라요. 지금은 일요일 밤이라 가까운 내동면사무소(약 2.0km)와 가호동행정복지센터(약 2.3km)가 모두 문을 닫았어요. 지금 바로 할 수 있는 진주시 누리집 온라인 신고를 권해 드려요. 소파의 종류와 크기(예: 3인용, 가로 길이)를 미리 확인해 두세요. 진주시 누리집에서 대형폐기물 배출 신고를 열고 품목(소파)과 크기를 고르세요. 화면에 나온 수수료를 결제하세요. 받은 신고번호를 종이에 적어 소파에 잘 보이게 붙이세요. 안내받은 날짜와 장소에 맞춰 소파를 내놓으세요. 온라인 신고가 어려우시면 2026년 10월 6일(화)에 가호동행정복지센터나 내동면사무소에 가셔서 신고하세요. 수수료를 내면 납부필증(스티커)을 받는데, 이걸 소파에 붙여 내놓으시면 돼요. 신고하지 않고 내놓으면 무단투기로 과태료를 낼 수 있으니 꼭 신고한 다음에 내놓으세요.",
+            "guarded": false,
+            "questions": [
+              "소파 같은 대형폐기물은 주소지 관할 시·군·구에 신고하고 내놓아야 해요. 주민등록 주소지를 알려 주세요. 이사했다면 새 주소를 알려 주세요. (예: 창원시 의창구 팔용동)"
+            ],
+            "answers": [
+              "진주시 가좌동"
+            ],
+            "fallback_steps": [],
+            "fallback_errors": []
+          },
+          "checks": {
+            "finished": true,
+            "service": true,
+            "sigungu": true,
+            "offices": true,
+            "fee_grounded": true,
+            "no_made_up_contact": true,
+            "language": true
+          },
+          "ok": true,
+          "seconds": 27.8
+        },
+        {
+          "id": "G05",
+          "text": "여권 새로 만들려면 어디 가야 돼요? 양산 물금읍에 살아요",
+          "service": "passport",
+          "sigungu": "양산시",
+          "got": {
+            "end": "guide",
+            "intent": "service",
+            "service": "passport",
+            "sigungu": "양산시",
+            "address": "경남 양산시 물금읍 청운로 185",
+            "offices": {
+              "sigungu_office": [
+                "양산시청(closed)"
+              ]
+            },
+            "kiosks": [],
+            "now": {
+              "date": "2026-10-04",
+              "time": "23:24",
+              "weekday": "일",
+              "holiday": false,
+              "weekend": true,
+              "workday": false,
+              "next_workday": "2026-10-06(화)"
+            },
+            "summary": "여권을 새로 만들려면 시·군·구청 여권 민원실에 직접 가서 신청하셔야 해요. 물금읍에서 가장 가까운 곳은 양산시청(약 3.7km)이에요.",
+            "recommendation": "지금은 일요일 밤이라 양산시청이 문을 닫았어요. 다음 평일인 2026년 10월 6일(화)에 양산시청 여권 민원실로 가세요. 예전에 전자여권을 받은 적이 있는 성인이라면 지금 정부24에서 재발급을 신청해 두고, 받을 때 한 번만 가셔도 돼요.",
+            "steps": [
+              "준비물을 챙기세요: 여권용 사진 1장(6개월 안에 찍은 것, 가로 3.5cm × 세로 4.5cm, 흰 배경), 신분증, 재발급이면 쓰던 여권",
+              "2026년 10월 6일(화)에 양산시청 여권 민원실에 가서 신청하세요. 전국 어느 시·군·구청 여권 민원실에서도 신청할 수 있어요.",
+              "수수료를 내세요: 10년 복수여권 58면은 52,000원, 26면은 49,000원이에요(2026년 3월 1일부터 적용).",
+              "보통 근무일 기준 4~5일 뒤에 직접 가서 여권을 받으세요."
+            ],
+            "tips": [
+              "예전에 전자여권을 받은 적이 있는 성인이라면 정부24에서 24시간 재발급을 신청할 수 있어요. 이때는 여권을 받을 때만 방문하시면 돼요.",
+              "방학·휴가철에는 신청이 몰려서 더 오래 걸릴 수 있어요. 출국 날짜가 정해져 있으면 넉넉히 미리 신청하세요.",
+              "여권 유효기간이 6개월보다 적게 남으면 입국을 막는 나라도 있어요. 출국 전에 꼭 확인하세요."
+            ],
+            "text": "여권을 새로 만들려면 시·군·구청 여권 민원실에 직접 가서 신청하셔야 해요. 물금읍에서 가장 가까운 곳은 양산시청(약 3.7km)이에요. 지금은 일요일 밤이라 양산시청이 문을 닫았어요. 다음 평일인 2026년 10월 6일(화)에 양산시청 여권 민원실로 가세요. 예전에 전자여권을 받은 적이 있는 성인이라면 지금 정부24에서 재발급을 신청해 두고, 받을 때 한 번만 가셔도 돼요. 준비물을 챙기세요: 여권용 사진 1장(6개월 안에 찍은 것, 가로 3.5cm × 세로 4.5cm, 흰 배경), 신분증, 재발급이면 쓰던 여권 2026년 10월 6일(화)에 양산시청 여권 민원실에 가서 신청하세요. 전국 어느 시·군·구청 여권 민원실에서도 신청할 수 있어요. 수수료를 내세요: 10년 복수여권 58면은 52,000원, 26면은 49,000원이에요(2026년 3월 1일부터 적용). 보통 근무일 기준 4~5일 뒤에 직접 가서 여권을 받으세요. 예전에 전자여권을 받은 적이 있는 성인이라면 정부24에서 24시간 재발급을 신청할 수 있어요. 이때는 여권을 받을 때만 방문하시면 돼요. 방학·휴가철에는 신청이 몰려서 더 오래 걸릴 수 있어요. 출국 날짜가 정해져 있으면 넉넉히 미리 신청하세요. 여권 유효기간이 6개월보다 적게 남으면 입국을 막는 나라도 있어요. 출국 전에 꼭 확인하세요.",
+            "guarded": false,
+            "questions": [],
+            "answers": [],
+            "fallback_steps": [],
+            "fallback_errors": []
+          },
+          "checks": {
+            "finished": true,
+            "service": true,
+            "sigungu": true,
+            "offices": true,
+            "fee_grounded": true,
+            "no_made_up_contact": true,
+            "language": true
+          },
+          "ok": true,
+          "seconds": 21.8
+        },
+        {
+          "id": "G06",
+          "text": "인감증명서 떼려고 하는데 거제 고현동 근처에서 뗄 수 있어요?",
+          "service": "seal_cert",
+          "sigungu": "거제시",
+          "got": {
+            "end": "guide",
+            "intent": "service",
+            "service": "seal_cert",
+            "sigungu": "거제시",
+            "address": "경남 거제시 계룡로 61",
+            "offices": {
+              "community_center": [
+                "고현동주민센터(closed)",
+                "상문동주민센터(closed)"
+              ]
+            },
+            "kiosks": [],
+            "now": {
+              "date": "2026-10-04",
+              "time": "23:24",
+              "weekday": "일",
+              "holiday": false,
+              "weekend": true,
+              "workday": false,
+              "next_workday": "2026-10-06(화)"
+            },
+            "summary": "네, 고현동 근처에서 받으실 수 있어요. 가장 가까운 곳은 고현동주민센터(약 921m)인데, 지금은 일요일 밤이라 문을 닫았어요. 면허 신청·경력 증명 같은 일반 용도라면 지금 정부24에서 무료로 받으실 수 있어요.",
+            "recommendation": "일반 용도라면 지금 바로 정부24에서 받으세요. 24시간 이용할 수 있고 무료예요. 부동산·자동차 매도용이라면 직접 가셔야 해서, 주민센터가 다시 문을 여는 2026년 10월 6일(화)에 고현동주민센터(약 921m)에 가세요.",
+            "steps": [
+              "먼저 인감증명서를 어디에 쓰실지 확인해 주세요. 일반 용도인지, 부동산·자동차 매도용인지에 따라 받는 방법이 달라요.",
+              "일반 용도(면허 신청·경력 증명 등)라면 지금 정부24에 들어가 인감증명서를 신청하세요. 수수료는 없어요.",
+              "매도용이거나 직접 가서 받고 싶으시면 2026년 10월 6일(화)에 신분증을 가지고 고현동주민센터(약 921m)나 상문동주민센터(약 1,468m)에 가세요. 1통에 600원이에요.",
+              "매도용이라면 사는 사람(매수자)의 정보를 미리 챙겨 가세요. 신청서에 적어야 해요."
+            ],
+            "tips": [
+              "인감이 등록되어 있어야 받을 수 있어요. 처음 받으시는 거라면 주소지 행정복지센터에서 인감 신고부터 하셔야 해요.",
+              "본인이 아닌 사람이 대신 받으려면 인감 위임장이 필요해요.",
+              "인감증명서 대신 본인서명사실확인서를 받아 주는 곳도 많아요. 내실 곳에 미리 물어보시면 도장 없이 행정복지센터에서 직접 받으실 수도 있어요."
+            ],
+            "text": "네, 고현동 근처에서 받으실 수 있어요. 가장 가까운 곳은 고현동주민센터(약 921m)인데, 지금은 일요일 밤이라 문을 닫았어요. 면허 신청·경력 증명 같은 일반 용도라면 지금 정부24에서 무료로 받으실 수 있어요. 일반 용도라면 지금 바로 정부24에서 받으세요. 24시간 이용할 수 있고 무료예요. 부동산·자동차 매도용이라면 직접 가셔야 해서, 주민센터가 다시 문을 여는 2026년 10월 6일(화)에 고현동주민센터(약 921m)에 가세요. 먼저 인감증명서를 어디에 쓰실지 확인해 주세요. 일반 용도인지, 부동산·자동차 매도용인지에 따라 받는 방법이 달라요. 일반 용도(면허 신청·경력 증명 등)라면 지금 정부24에 들어가 인감증명서를 신청하세요. 수수료는 없어요. 매도용이거나 직접 가서 받고 싶으시면 2026년 10월 6일(화)에 신분증을 가지고 고현동주민센터(약 921m)나 상문동주민센터(약 1,468m)에 가세요. 1통에 600원이에요. 매도용이라면 사는 사람(매수자)의 정보를 미리 챙겨 가세요. 신청서에 적어야 해요. 인감이 등록되어 있어야 받을 수 있어요. 처음 받으시는 거라면 주소지 행정복지센터에서 인감 신고부터 하셔야 해요. 본인이 아닌 사람이 대신 받으려면 인감 위임장이 필요해요. 인감증명서 대신 본인서명사실확인서를 받아 주는 곳도 많아요. 내실 곳에 미리 물어보시면 도장 없이 행정복지센터에서 직접 받으실 수도 있어요.",
+            "guarded": false,
+            "questions": [],
+            "answers": [],
+            "fallback_steps": [],
+            "fallback_errors": []
+          },
+          "checks": {
+            "finished": true,
+            "service": true,
+            "sigungu": true,
+            "offices": true,
+            "fee_grounded": true,
+            "no_made_up_contact": true,
+            "language": true
+          },
+          "ok": true,
+          "seconds": 22.8
+        },
+        {
+          "id": "G07",
+          "text": "등본이랑 초본 둘 다 필요해요. 통영 무전동이에요",
+          "service": "resident_copy",
+          "sigungu": "통영시",
+          "got": {
+            "end": "guide",
+            "intent": "service",
+            "service": "resident_copy",
+            "sigungu": "통영시",
+            "address": "경남 통영시 무전동 951-1",
+            "offices": {
+              "community_center": [
+                "무전동행정복지센터(closed)",
+                "북신동행정복지센터(closed)"
+              ]
+            },
+            "kiosks": [
+              "무인민원발급창구 세무서(unknown)",
+              "무인민원발급창구 수협무전점(unknown)",
+              "무인민원발급창구 무전동주민센터(unknown)"
+            ],
+            "now": {
+              "date": "2026-10-04",
+              "time": "23:24",
+              "weekday": "일",
+              "holiday": false,
+              "weekend": true,
+              "workday": false,
+              "next_workday": "2026-10-06(화)"
+            },
+            "summary": "등본과 초본은 지금 정부24에서 둘 다 무료로 받으실 수 있어요. 지금은 일요일 밤이라 행정복지센터는 문을 닫았어요.",
+            "recommendation": "지금은 24시간 운영하는 정부24(온라인)가 가장 좋아요. 무료이고 등본과 초본을 한 번에 이어서 받을 수 있어요. 가까운 무인민원발급기는 지금 운영하는지 알 수 없고, 무전동·북신동 행정복지센터는 10월 6일(화)에 다시 문을 열어요.",
+            "steps": [
+              "서류를 낼 곳에서 등본·초본에 어떤 항목이 나와야 하는지(주민등록번호 뒷자리, 세대 구성 사유, 변동 사항 등) 먼저 확인해 주세요.",
+              "정부24에 공동·금융인증서나 간편인증으로 로그인해 주세요.",
+              "주민등록표 등본을 신청해서 바로 출력하거나 전자문서지갑에 저장해 주세요.",
+              "이어서 주민등록표 초본도 똑같이 신청해서 출력하거나 저장해 주세요.",
+              "온라인으로 받기 어려우시면 무인민원발급기(1통 200원, 지자체에 따라 무료)에서 지문으로 본인 확인 후 받으시거나, 10월 6일(화)에 신분증을 가지고 행정복지센터(1통 400원)를 찾아가 주세요."
+            ],
+            "tips": [
+              "가까운 무인민원발급기는 무인민원발급창구 세무서(약 1.1km), 무인민원발급창구 수협무전점(약 1.2km), 무인민원발급창구 무전동주민센터(약 1.4km)가 있어요. 지금 운영하는지 알 수 없으니 가시기 전에 운영 시간을 꼭 확인해 주세요.",
+              "등본·초본은 주소지와 관계없이 전국 어디서나 받을 수 있어요.",
+              "본인이나 같은 세대원이 아닌 사람이 대신 떼려면 위임장과 위임한 사람의 신분증이 필요해요."
+            ],
+            "text": "등본과 초본은 지금 정부24에서 둘 다 무료로 받으실 수 있어요. 지금은 일요일 밤이라 행정복지센터는 문을 닫았어요. 지금은 24시간 운영하는 정부24(온라인)가 가장 좋아요. 무료이고 등본과 초본을 한 번에 이어서 받을 수 있어요. 가까운 무인민원발급기는 지금 운영하는지 알 수 없고, 무전동·북신동 행정복지센터는 10월 6일(화)에 다시 문을 열어요. 서류를 낼 곳에서 등본·초본에 어떤 항목이 나와야 하는지(주민등록번호 뒷자리, 세대 구성 사유, 변동 사항 등) 먼저 확인해 주세요. 정부24에 공동·금융인증서나 간편인증으로 로그인해 주세요. 주민등록표 등본을 신청해서 바로 출력하거나 전자문서지갑에 저장해 주세요. 이어서 주민등록표 초본도 똑같이 신청해서 출력하거나 저장해 주세요. 온라인으로 받기 어려우시면 무인민원발급기(1통 200원, 지자체에 따라 무료)에서 지문으로 본인 확인 후 받으시거나, 10월 6일(화)에 신분증을 가지고 행정복지센터(1통 400원)를 찾아가 주세요. 가까운 무인민원발급기는 무인민원발급창구 세무서(약 1.1km), 무인민원발급창구 수협무전점(약 1.2km), 무인민원발급창구 무전동주민센터(약 1.4km)가 있어요. 지금 운영하는지 알 수 없으니 가시기 전에 운영 시간을 꼭 확인해 주세요. 등본·초본은 주소지와 관계없이 전국 어디서나 받을 수 있어요. 본인이나 같은 세대원이 아닌 사람이 대신 떼려면 위임장과 위임한 사람의 신분증이 필요해요.",
+            "guarded": false,
+            "questions": [],
+            "answers": [],
+            "fallback_steps": [],
+            "fallback_errors": []
+          },
+          "checks": {
+            "finished": true,
+            "service": true,
+            "sigungu": true,
+            "offices": true,
+            "fee_grounded": true,
+            "no_made_up_contact": true,
+            "language": true,
+            "kiosk": true
+          },
+          "ok": true,
+          "seconds": 21.3
+        },
+        {
+          "id": "G08",
+          "text": "How do I throw away an old sofa? I live in Sangnam-dong, Changwon.",
+          "service": "bulky_waste",
+          "sigungu": "성산구",
+          "language": "en",
+          "got": {
+            "end": "guide",
+            "intent": "service",
+            "service": "bulky_waste",
+            "sigungu": "창원시 성산구",
+            "address": "경남 창원시 성산구 상남동 24",
+            "offices": {
+              "community_center": [
+                "상남동행정복지센터(closed)",
+                "중앙동행정복지센터(closed)"
+              ]
+            },
+            "kiosks": [],
+            "now": {
+              "date": "2026-10-04",
+              "time": "23:24",
+              "weekday": "일",
+              "holiday": false,
+              "weekend": true,
+              "workday": false,
+              "next_workday": "2026-10-06(화)"
+            },
+            "summary": "To throw away an old sofa, you need to report it as bulky waste (대형폐기물) to Changwon-si Seongsan-gu and pay a disposal fee. Then put it out with the report number or sticker attached. The fee depends on the item, its size and the local government.",
+            "recommendation": "It's late Sunday night, so the nearby community service centers are closed. The best option is to report it online now on the Changwon-si Seongsan-gu website (주소지 시·군·구 대형폐기물 신고). If you'd rather go in person, you can visit 상남동행정복지센터 (671 m away) on Tuesday, 2026-10-06, the next working day.",
+            "steps": [
+              "Check the size of your sofa (for example, how many seats it has). You'll need this to choose the right item.",
+              "On the Changwon-si Seongsan-gu website's bulky waste report page (대형폐기물 신고), choose 'sofa' and its size, then pay the fee online.",
+              "Write the report number you receive on a piece of paper and attach it firmly to the sofa.",
+              "Put the sofa out at the place and on the date given in your report.",
+              "If you can't report online, go to 상남동행정복지센터 (671 m away) on Tuesday, 2026-10-06. Report it there and get a fee sticker (납부필증) to attach to the sofa."
+            ],
+            "tips": [
+              "If you put the sofa out without reporting it, you could be fined for illegal dumping (무단투기).",
+              "The free pickup service (폐가전제품 무상 방문수거) only takes large appliances such as refrigerators, washing machines and TVs. It doesn't take furniture like sofas.",
+              "If 상남동행정복지센터 is inconvenient, 중앙동행정복지센터 (843 m away) is also nearby. Both are closed today."
+            ],
+            "text": "To throw away an old sofa, you need to report it as bulky waste (대형폐기물) to Changwon-si Seongsan-gu and pay a disposal fee. Then put it out with the report number or sticker attached. The fee depends on the item, its size and the local government. It's late Sunday night, so the nearby community service centers are closed. The best option is to report it online now on the Changwon-si Seongsan-gu website (주소지 시·군·구 대형폐기물 신고). If you'd rather go in person, you can visit 상남동행정복지센터 (671 m away) on Tuesday, 2026-10-06, the next working day. Check the size of your sofa (for example, how many seats it has). You'll need this to choose the right item. On the Changwon-si Seongsan-gu website's bulky waste report page (대형폐기물 신고), choose 'sofa' and its size, then pay the fee online. Write the report number you receive on a piece of paper and attach it firmly to the sofa. Put the sofa out at the place and on the date given in your report. If you can't report online, go to 상남동행정복지센터 (671 m away) on Tuesday, 2026-10-06. Report it there and get a fee sticker (납부필증) to attach to the sofa. If you put the sofa out without reporting it, you could be fined for illegal dumping (무단투기). The free pickup service (폐가전제품 무상 방문수거) only takes large appliances such as refrigerators, washing machines and TVs. It doesn't take furniture like sofas. If 상남동행정복지센터 is inconvenient, 중앙동행정복지센터 (843 m away) is also nearby. Both are closed today.",
+            "guarded": false,
+            "questions": [],
+            "answers": [],
+            "fallback_steps": [],
+            "fallback_errors": []
+          },
+          "checks": {
+            "finished": true,
+            "service": true,
+            "sigungu": true,
+            "offices": true,
+            "fee_grounded": true,
+            "no_made_up_contact": true,
+            "language": true
+          },
+          "ok": true,
+          "seconds": 21.9
+        },
+        {
+          "id": "G09",
+          "text": "我住在金海市内外洞，旧冰箱要怎么扔？",
+          "service": "bulky_waste",
+          "sigungu": "김해시",
+          "language": "zh",
+          "got": {
+            "end": "guide",
+            "intent": "service",
+            "service": "bulky_waste",
+            "sigungu": "김해시",
+            "address": "경남 김해시 내외중앙로 36",
+            "offices": {
+              "community_center": [
+                "내외동행정복지센터(closed)",
+                "회현동행정복지센터(closed)"
+              ]
+            },
+            "kiosks": [],
+            "now": {
+              "date": "2026-10-04",
+              "time": "23:24",
+              "weekday": "일",
+              "holiday": false,
+              "weekend": true,
+              "workday": false,
+              "next_workday": "2026-10-06(화)"
+            },
+            "summary": "冰箱属于大型家电，可以预约「폐가전제품 무상 방문수거」（废家电免费上门回收），工作人员会免费上门搬走。另外，您也可以向金海市（김해시）申报大型废弃物（대형폐기물），缴费后再放到外面。",
+            "recommendation": "现在是周日深夜，내외동행정복지센터（距离291米）已经关门。建议您先预约「폐가전제품 무상 방문수거」，冰箱可以免费回收，联系方式请看画面上的卡片。如果想付费处理，可以现在就在金海市网站上申报。",
+            "steps": [
+              "先确认冰箱的大概尺寸（大小、容量等）。",
+              "通过画面上的卡片预约「폐가전제품 무상 방문수거」（免费上门回收）。",
+              "按预约的时间，把冰箱交给上门回收的工作人员。",
+              "如果不用免费回收，也可以在金海市（김해시）网站申报大型废弃物：选择物品 → 缴纳手续费 → 把申报编号写好贴在冰箱上，再放到外面。手续费根据物品、尺寸和地区不同而不同。",
+              "如果想去窗口办理，请在2026年10月6日（周二）去내외동행정복지센터（距离291米），申报后领取缴费证明贴纸（납부필증/스티커），贴好后再放到外面。"
+            ],
+            "tips": [
+              "没有申报就把冰箱放到外面，算作非法丢弃，可能会被罚款（과태료）。",
+              "10月5日（周一）行政福利中心不上班，下一个上班日是10月6日（周二）。"
+            ],
+            "text": "冰箱属于大型家电，可以预约「폐가전제품 무상 방문수거」（废家电免费上门回收），工作人员会免费上门搬走。另外，您也可以向金海市（김해시）申报大型废弃物（대형폐기물），缴费后再放到外面。 现在是周日深夜，내외동행정복지센터（距离291米）已经关门。建议您先预约「폐가전제품 무상 방문수거」，冰箱可以免费回收，联系方式请看画面上的卡片。如果想付费处理，可以现在就在金海市网站上申报。 先确认冰箱的大概尺寸（大小、容量等）。 通过画面上的卡片预约「폐가전제품 무상 방문수거」（免费上门回收）。 按预约的时间，把冰箱交给上门回收的工作人员。 如果不用免费回收，也可以在金海市（김해시）网站申报大型废弃物：选择物品 → 缴纳手续费 → 把申报编号写好贴在冰箱上，再放到外面。手续费根据物品、尺寸和地区不同而不同。 如果想去窗口办理，请在2026年10月6日（周二）去내외동행정복지센터（距离291米），申报后领取缴费证明贴纸（납부필증/스티커），贴好后再放到外面。 没有申报就把冰箱放到外面，算作非法丢弃，可能会被罚款（과태료）。 10月5日（周一）行政福利中心不上班，下一个上班日是10月6日（周二）。",
+            "guarded": false,
+            "questions": [],
+            "answers": [],
+            "fallback_steps": [],
+            "fallback_errors": []
+          },
+          "checks": {
+            "finished": true,
+            "service": true,
+            "sigungu": true,
+            "offices": true,
+            "fee_grounded": true,
+            "no_made_up_contact": true,
+            "language": true
+          },
+          "ok": true,
+          "seconds": 22.0
+        },
+        {
+          "id": "G10",
+          "text": "Tôi sống ở Gaja-dong, Jinju. Muốn vứt cái tủ lạnh cũ thì làm thế nào?",
+          "service": "bulky_waste",
+          "sigungu": "진주시",
+          "language": "vi",
+          "got": {
+            "end": "guide",
+            "intent": "service",
+            "service": "bulky_waste",
+            "sigungu": "진주시",
+            "address": "경남 진주시 가좌동 산 182-1",
+            "offices": {
+              "community_center": [
+                "내동면사무소(closed)",
+                "가호동행정복지센터(closed)"
+              ]
+            },
+            "kiosks": [],
+            "now": {
+              "date": "2026-10-04",
+              "time": "23:25",
+              "weekday": "일",
+              "holiday": false,
+              "weekend": true,
+              "workday": false,
+              "next_workday": "2026-10-06(화)"
+            },
+            "summary": "Bạn có thể nhờ dịch vụ thu gom đồ điện gia dụng cũ tại nhà miễn phí (폐가전제품 무상 방문수거) đến lấy tủ lạnh cũ. Ngoài ra, bạn cũng có thể khai báo rác thải cỡ lớn với 진주시 (thành phố Jinju), nộp phí rồi mới mang ra bỏ.",
+            "recommendation": "Bây giờ là 23:25 tối Chủ nhật nên các cơ quan hành chính gần đây đều đóng cửa. Cách tốt nhất là đặt lịch thu gom tủ lạnh miễn phí tại nhà (폐가전제품 무상 방문수거). Thông tin liên hệ của dịch vụ này có trên thẻ hiển thị trên màn hình. Nếu không dùng được dịch vụ này, bạn có thể khai báo rác thải cỡ lớn trên trang web của 진주시 hoặc đến 가호동행정복지센터 (cách khoảng 2,3 km) vào ngày làm việc tiếp theo là thứ Ba, 06/10/2026.",
+            "steps": [
+              "Kiểm tra trước kích thước (cỡ) của tủ lạnh cần bỏ.",
+              "Đặt lịch với dịch vụ thu gom đồ điện gia dụng cũ tại nhà miễn phí (폐가전제품 무상 방문수거) bằng cách xem thông tin liên hệ trên thẻ hiển thị trên màn hình. Dịch vụ này lấy miễn phí các đồ điện lớn như tủ lạnh, máy giặt, TV.",
+              "Nếu không dùng dịch vụ miễn phí: vào trang web của 진주시, chọn món đồ cần bỏ (tủ lạnh) → thanh toán phí → ghi số khai báo (신고번호) ra giấy và dán lên tủ lạnh.",
+              "Hoặc vào thứ Ba, ngày 06/10/2026, đến 가호동행정복지센터 để khai báo và nhận tem đã nộp phí (납부필증), rồi dán tem lên tủ lạnh.",
+              "Mang tủ lạnh ra đúng ngày và địa điểm theo lịch đã đặt hoặc theo hướng dẫn khi khai báo."
+            ],
+            "tips": [
+              "Nếu mang tủ lạnh ra ngoài mà chưa khai báo, bạn có thể bị phạt tiền vì vứt rác trái phép (무단투기).",
+              "Phí khai báo rác thải cỡ lớn khác nhau tùy món đồ, kích thước và địa phương, nên bạn hãy xem số tiền chính xác khi khai báo.",
+              "Bạn đang ở khu vực 가호동, vì vậy nếu muốn đến làm trực tiếp, nên đến 가호동행정복지센터."
+            ],
+            "text": "Bạn có thể nhờ dịch vụ thu gom đồ điện gia dụng cũ tại nhà miễn phí (폐가전제품 무상 방문수거) đến lấy tủ lạnh cũ. Ngoài ra, bạn cũng có thể khai báo rác thải cỡ lớn với 진주시 (thành phố Jinju), nộp phí rồi mới mang ra bỏ. Bây giờ là 23:25 tối Chủ nhật nên các cơ quan hành chính gần đây đều đóng cửa. Cách tốt nhất là đặt lịch thu gom tủ lạnh miễn phí tại nhà (폐가전제품 무상 방문수거). Thông tin liên hệ của dịch vụ này có trên thẻ hiển thị trên màn hình. Nếu không dùng được dịch vụ này, bạn có thể khai báo rác thải cỡ lớn trên trang web của 진주시 hoặc đến 가호동행정복지센터 (cách khoảng 2,3 km) vào ngày làm việc tiếp theo là thứ Ba, 06/10/2026. Kiểm tra trước kích thước (cỡ) của tủ lạnh cần bỏ. Đặt lịch với dịch vụ thu gom đồ điện gia dụng cũ tại nhà miễn phí (폐가전제품 무상 방문수거) bằng cách xem thông tin liên hệ trên thẻ hiển thị trên màn hình. Dịch vụ này lấy miễn phí các đồ điện lớn như tủ lạnh, máy giặt, TV. Nếu không dùng dịch vụ miễn phí: vào trang web của 진주시, chọn món đồ cần bỏ (tủ lạnh) → thanh toán phí → ghi số khai báo (신고번호) ra giấy và dán lên tủ lạnh. Hoặc vào thứ Ba, ngày 06/10/2026, đến 가호동행정복지센터 để khai báo và nhận tem đã nộp phí (납부필증), rồi dán tem lên tủ lạnh. Mang tủ lạnh ra đúng ngày và địa điểm theo lịch đã đặt hoặc theo hướng dẫn khi khai báo. Nếu mang tủ lạnh ra ngoài mà chưa khai báo, bạn có thể bị phạt tiền vì vứt rác trái phép (무단투기). Phí khai báo rác thải cỡ lớn khác nhau tùy món đồ, kích thước và địa phương, nên bạn hãy xem số tiền chính xác khi khai báo. Bạn đang ở khu vực 가호동, vì vậy nếu muốn đến làm trực tiếp, nên đến 가호동행정복지센터.",
+            "guarded": false,
+            "questions": [],
+            "answers": [],
+            "fallback_steps": [],
+            "fallback_errors": []
+          },
+          "checks": {
+            "finished": true,
+            "service": true,
+            "sigungu": true,
+            "offices": true,
+            "fee_grounded": true,
+            "no_made_up_contact": true,
+            "language": true
+          },
+          "ok": true,
+          "seconds": 25.2
+        }
+      ]
+    }
+  }
+}

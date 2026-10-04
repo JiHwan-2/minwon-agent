@@ -175,3 +175,39 @@ def test_geocode_retries_with_area_when_place_is_not_on_map(monkeypatch: pytest.
     assert r["ok"] and r["source"] == "kakao" and "동 단위로 확인" in r["summary"]
     assert r["data"]["sigungu"] == "창원시 성산구" and r["data"]["dong"] == "상남동" and r["data"]["x"] == "128.6900"
     assert r["data"]["approximate"] and r["error"] == "카카오 검색 결과 없음"
+
+
+CHANGSHIN = {"place_name": "창신대학교", "address_name": "경남 창원시 마산회원구 합성동 3", "road_address_name": "경남 창원시 마산회원구 팔용로 262",
+             "x": "128.5867", "y": "35.2477"}
+ELSEWHERE = {"place_name": "노무법인 이산 창원지사", "address_name": "경남 창원시 마산회원구 석전동 1", "road_address_name": "경남 창원시 마산회원구 3.15대로 708",
+             "x": "128.5800", "y": "35.2400"}
+
+
+def _kakao_like(path: str, params: dict, retries: int = 1):
+    """실제 카카오처럼: 장소 이름에 없는 말('버스정류장', 시·구 이름)이 섞이면 0건, 어떤 말은 엉뚱한 가게를 준다."""
+    if path == "search/keyword.json":
+        found = {"창신대학교 정문": [CHANGSHIN], "창신대": [CHANGSHIN], "창신대 버스정류장": [ELSEWHERE]}
+        return {"documents": found.get(params["query"], [])}, 1
+    if path == "search/address.json":
+        return {"documents": []}, 1
+    return fake_kakao.request(path, params, retries)
+
+
+def test_geocode_shortens_the_query_when_kakao_finds_nothing(monkeypatch: pytest.MonkeyPatch):
+    # '창신대 정문 버스정류장 기준 가장 가까운 횡단보도' → 검색어가 길면 0건 → 시·구 이름·설명하는 말을 빼고 다시 찾는다
+    monkeypatch.setattr(kakao, "request", _kakao_like)
+    r = geocode("창원시 마산회원구 창신대학교 정문 버스정류장")
+    assert r["source"] == "kakao" and r["data"]["place_name"] == "창신대학교" and r["data"]["approximate"]
+    assert "'창신대학교 정문'(으)로 찾음" in r["summary"] and r["data"]["sigungu"] == "창원시 마산회원구"
+
+
+def test_geocode_ignores_results_whose_name_is_not_the_place(monkeypatch: pytest.MonkeyPatch):
+    # 카카오가 '창신대 버스정류장'에 노무법인을 주면 쓰지 않고, 검색어를 줄여 창신대학교를 찾는다
+    monkeypatch.setattr(kakao, "request", _kakao_like)
+    r = geocode("창신대 버스정류장")
+    assert r["data"]["place_name"] == "창신대학교"
+
+
+def test_vague_school_still_asks_which_one(fake):
+    r = geocode("창원 초등학교")  # 이름 없이 종류만 말하면 이름 비교로 거르지 않고 후보를 고르게 한다
+    assert r["data"]["ambiguous"] and len(r["data"]["candidates"]) > 1
