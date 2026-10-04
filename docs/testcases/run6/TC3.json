@@ -1,0 +1,234 @@
+{
+ "id": "TC3",
+ "type": "데이터 없음",
+ "session": "9e4198f4723541bb8920d453749480d4",
+ "turns": [
+  {
+   "input": "동네 공터에 누가 몰래 컨테이너를 갖다 놓고 몇 달째 안 치워요.",
+   "seconds": 22.8,
+   "nodes": [
+    {
+     "node": "guard",
+     "title": "입력 안전 점검",
+     "source": "system",
+     "detail": "이상 없음",
+     "error": ""
+    },
+    {
+     "node": "understand",
+     "title": "문제 분석",
+     "source": "llm",
+     "detail": "기타 생활불편 · 긴급도 low",
+     "error": ""
+    },
+    {
+     "node": "plan",
+     "title": "처리 계획 수립",
+     "source": "llm",
+     "detail": "공터 위치 묻기 → 주소·관할 확인 → 담당 부서 찾기 → 비슷한 사례 찾기 → 민원 초안 쓰기 → 초안 점검하기 → PDF로 만들기",
+     "error": ""
+    },
+    {
+     "node": "check",
+     "title": "정보 충분성 판단",
+     "source": "llm",
+     "detail": "질문 2개 필요: 발생 위치, 구체적 상황",
+     "error": ""
+    }
+   ],
+   "tools": [],
+   "end": "ask",
+   "questions": [
+    "컨테이너가 놓인 공터가 정확히 어디인가요? (예: 창원시 성산구 상남동 ○○아파트 옆 공터)",
+    "컨테이너는 어떤 모습인가요? 크기나 색깔, 문이 잠겨 있는지, 안에 물건이 있는지 알려 주세요. (예: 파란색 화물 컨테이너 1개, 문은 잠겨 있음)"
+   ],
+   "options": []
+  },
+  {
+   "input": "모름",
+   "seconds": 37.0,
+   "nodes": [
+    {
+     "node": "ask",
+     "title": "추가 질문·답변",
+     "source": "system",
+     "detail": "답변 받음 (2자)",
+     "error": ""
+    },
+    {
+     "node": "check",
+     "title": "정보 충분성 판단",
+     "source": "llm",
+     "detail": "필수 정보 충분",
+     "error": ""
+    },
+    {
+     "node": "locate",
+     "title": "Tool: 위치 확인",
+     "source": "rule_fallback",
+     "detail": "위치를 특정하지 못함 — 카카오 검색 결과 없음",
+     "error": ""
+    },
+    {
+     "node": "act",
+     "title": "Tool: 담당 부서·절차 조회",
+     "source": "tool",
+     "detail": "관할 시·군·구청 민원 총괄 부서(민원봉사과 등)",
+     "error": ""
+    },
+    {
+     "node": "decide",
+     "title": "담당 기관 판단",
+     "source": "llm",
+     "detail": "관할 시·군·구청 민원 총괄 부서(민원봉사과 등) · 제출 창구 국민신문고 · 관련 없는 사례 3건 제외",
+     "error": ""
+    },
+    {
+     "node": "draft",
+     "title": "민원 초안 작성",
+     "source": "llm",
+     "detail": "[ ] 공터 무단 방치 컨테이너 확인 및 조치 요청 → 347자, 증빙 3개",
+     "error": ""
+    },
+    {
+     "node": "review",
+     "title": "초안 검증",
+     "source": "llm",
+     "detail": "통과 (1회차)",
+     "error": ""
+    },
+    {
+     "node": "deliver",
+     "title": "Tool: 민원 패키지 PDF 만들기",
+     "source": "tool",
+     "detail": "민원 패키지 PDF 2쪽 · 80KB",
+     "error": ""
+    }
+   ],
+   "tools": [
+    {
+     "tool": "geocode",
+     "ok": false,
+     "source": "text_fallback",
+     "summary": "위치를 특정하지 못함",
+     "retries": 0,
+     "error": "카카오 검색 결과 없음"
+    },
+    {
+     "tool": "kb_lookup",
+     "ok": true,
+     "source": "kb",
+     "summary": "관할 시·군·구청 민원 총괄 부서(민원봉사과 등)",
+     "retries": 0,
+     "error": ""
+    },
+    {
+     "tool": "case_search",
+     "ok": true,
+     "source": "data_go_kr",
+     "summary": "'컨테이너' 관련 사례 4건 중 3건 · 예: 컨테이너의 형식승인 대상 및 방법 (해양수산부)",
+     "retries": 0,
+     "error": ""
+    },
+    {
+     "tool": "export_pdf",
+     "ok": true,
+     "source": "generated",
+     "summary": "민원 패키지 PDF 2쪽 · 80KB",
+     "retries": 0,
+     "error": ""
+    }
+   ],
+   "end": "ready",
+   "result": {
+    "status": "ready",
+    "safety": {
+     "pii": [],
+     "emergency": false,
+     "crisis": false,
+     "injection": false
+    },
+    "category": "기타 생활불편",
+    "urgency": "low",
+    "plan": [
+     "공터 위치 묻기",
+     "주소·관할 확인",
+     "담당 부서 찾기",
+     "비슷한 사례 찾기",
+     "민원 초안 쓰기",
+     "초안 점검하기",
+     "PDF로 만들기"
+    ],
+    "plan_fixes": [],
+    "facts": {
+     "detail": "동네 공터에 누군가 몰래 컨테이너를 갖다 놓고 치우지 않음 (컨테이너의 모양·상태는 모름)",
+     "time": "몇 달째 치우지 않고 방치 중",
+     "location": "동네 공터 (정확한 위치는 모름)"
+    },
+    "location": {
+     "address": "",
+     "place_name": "",
+     "dong": "",
+     "sigungu": ""
+    },
+    "location_confirmed": true,
+    "agency": "관할 시·군·구청 민원 총괄 부서(민원봉사과 등)",
+    "channel": "국민신문고",
+    "decision_reason": "정확한 위치를 알 수 없어서 담당 기관 목록에는 관할 시·군·구청 민원 총괄 부서만 있습니다. 국민신문고에 내면 담당 부서(무단 적치·불법 가설물 담당)로 자동 이송되니 이 창구가 가장 알맞습니다. 검색된 비슷한 사례는 항만 컨테이너나 주소 부여에 관한 것이라 이 민원과는 맞지 않습니다.",
+    "cases": [],
+    "review": {
+     "passed": true,
+     "round": 1,
+     "checks": [
+      "✓ 연락처: 확인되지 않은 연락처 없음",
+      "✓ 개인정보: 개인정보 없음",
+      "✓ 위치: 본문에 위치가 들어 있음",
+      "✓ 증빙 근거: 필수 표시는 공식 요건만",
+      "✓ 분량: 347자",
+      "✓ AI 검토: 고칠 점 없음"
+     ]
+    },
+    "package": {
+     "version": 1,
+     "title": "[ ] 공터 무단 방치 컨테이너 확인 및 조치 요청",
+     "body_chars": 347,
+     "body": "안녕하십니까.\n\n동네 공터에 누군가 컨테이너를 가져다 놓고 치우지 않아 확인과 조치를 요청드리고자 민원을 드립니다.\n\n■ 위치\n[시·군·구, 동, 가까운 건물이나 번지 (예: 창원시 성산구 상남동 ○○아파트 옆 공터)]\n\n■ 상황\n위 공터에 누가 가져다 놓았는지 알 수 없는 컨테이너가 놓여 있습니다. 컨테이너는 몇 달째 치워지지 않고 그대로 방치되어 있습니다.\n- 처음 본 시기: [ ]\n- 컨테이너 모습(개수·크기·색깔 등): [ ]\n\n■ 요청 사항\n현장을 확인하시어 컨테이너를 놓은 사람과 무단으로 둔 것인지 확인해 주시고, 담당 부서에서 필요한 조치를 해 주시기 바랍니다.\n\n바쁘신 중에 검토해 주셔서 감사합니다.",
+     "placeholders": [
+      "[ ]",
+      "[ ]"
+     ],
+     "evidence": [
+      "[recommended] 정확한 위치(주소·번지 또는 가까운 건물명)",
+      "[recommended] 컨테이너와 주변 공터가 함께 나온 현장 사진",
+      "[recommended] 컨테이너를 처음 본 시기(대략이라도)"
+     ]
+    },
+    "pii_in_draft": false,
+    "files": {
+     "pdf": {
+      "name": "AI민원길잡이_기타_생활불편_20261004.pdf",
+      "pages": 2,
+      "size": 82082
+     }
+    },
+    "downloads": {
+     "pdf": {
+      "status": 200,
+      "bytes": 82082,
+      "is_pdf": true
+     }
+    }
+   }
+  }
+ ],
+ "run_at": "2026-10-04T21:26:17",
+ "server": {
+  "status": "ok",
+  "llm_provider": "claude_code",
+  "model": "claude-opus-5-5 (Claude Code)",
+  "brain_mode": "llm",
+  "kakao_enabled": true,
+  "data_go_kr_enabled": true
+ },
+ "note": "6차: 제출 전 최종 코드(사진 첨부·민원 서비스 안내·수정 답변·정확도 보완 반영)"
+}

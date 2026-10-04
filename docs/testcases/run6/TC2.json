@@ -1,0 +1,289 @@
+{
+ "id": "TC2",
+ "type": "부정확한 입력",
+ "session": "29b837b3ea3f45fda6634e89d09c92be",
+ "turns": [
+  {
+   "input": "학교 앞 횡단보도가 너무 위험해요.",
+   "seconds": 30.0,
+   "nodes": [
+    {
+     "node": "guard",
+     "title": "입력 안전 점검",
+     "source": "system",
+     "detail": "이상 없음",
+     "error": ""
+    },
+    {
+     "node": "understand",
+     "title": "문제 분석",
+     "source": "llm",
+     "detail": "교통안전시설 · 긴급도 high",
+     "error": ""
+    },
+    {
+     "node": "plan",
+     "title": "처리 계획 수립",
+     "source": "llm",
+     "detail": "위치·상황 여쭙기 → 관할 경찰서 찾기 → 위치 확인 → 담당 부서 확인 → 비슷한 사례 찾기 → 민원 초안 작성 → 초안 점검 → PDF로 만들기 (보정: '위치 확인' 단계 추가)",
+     "error": ""
+    },
+    {
+     "node": "check",
+     "title": "정보 충분성 판단",
+     "source": "llm",
+     "detail": "질문 3개 필요: 발생 위치, 구체적 상황, 발생 시간대",
+     "error": ""
+    }
+   ],
+   "tools": [],
+   "end": "ask",
+   "questions": [
+    "어느 학교 앞 횡단보도인가요? 시·구·동과 학교 이름을 알려주세요. (예: 창원시 성산구 상남동 ○○초등학교 정문 앞 횡단보도)",
+    "어떤 점이 위험한가요? (예: 신호등이 없어요, 차들이 속도를 안 줄여요, 불법 주차 차량 때문에 아이들이 안 보여요)",
+    "주로 언제 위험한가요? 얼마나 자주 그런지도 함께 알려주세요. (예: 평일 아침 등교 시간 8시쯤, 거의 매일)"
+   ],
+   "options": []
+  },
+  {
+   "input": "김해시 삼계동 삼계초등학교 정문 앞이에요. 평일 아침 등교 시간에 차들이 쌩쌩 달려요.",
+   "seconds": 10.8,
+   "nodes": [
+    {
+     "node": "ask",
+     "title": "추가 질문·답변",
+     "source": "system",
+     "detail": "답변 받음 (48자)",
+     "error": ""
+    },
+    {
+     "node": "check",
+     "title": "정보 충분성 판단",
+     "source": "llm",
+     "detail": "질문 1개 필요: 반복 빈도",
+     "error": ""
+    }
+   ],
+   "tools": [],
+   "end": "ask",
+   "questions": [
+    "차들이 빠르게 달리는 일은 얼마나 자주 있나요? (예: 거의 매일, 일주일에 2~3번 정도)"
+   ],
+   "options": []
+  },
+  {
+   "input": "모름",
+   "seconds": 56.6,
+   "nodes": [
+    {
+     "node": "ask",
+     "title": "추가 질문·답변",
+     "source": "system",
+     "detail": "답변 받음 (2자)",
+     "error": ""
+    },
+    {
+     "node": "check",
+     "title": "정보 충분성 판단",
+     "source": "llm",
+     "detail": "필수 정보 충분",
+     "error": ""
+    },
+    {
+     "node": "locate",
+     "title": "Tool: 위치 확인",
+     "source": "tool",
+     "detail": "경남 김해시 가야로38번길 30 (김해시 북부동)",
+     "error": ""
+    },
+    {
+     "node": "act",
+     "title": "Tool: 주변 기관 검색 (관할 경찰서)",
+     "source": "tool",
+     "detail": "김해중부경찰서, 4732m",
+     "error": ""
+    },
+    {
+     "node": "decide",
+     "title": "담당 기관 판단",
+     "source": "llm",
+     "detail": "김해시청 교통 담당 부서(교통행정과 등) · 제출 창구 안전신문고",
+     "error": ""
+    },
+    {
+     "node": "draft",
+     "title": "민원 초안 작성",
+     "source": "llm",
+     "detail": "삼계초 정문 앞 횡단보도 과속 차량 안전시설 요청 → 409자, 증빙 4개",
+     "error": ""
+    },
+    {
+     "node": "review",
+     "title": "초안 검증",
+     "source": "llm",
+     "detail": "문제 1건 → 다시 작성",
+     "error": ""
+    },
+    {
+     "node": "draft",
+     "title": "초안 다시 작성 (검증 의견 반영)",
+     "source": "llm",
+     "detail": "요청 사항의 '신호기'는 경찰서(교통안전시설심의) 소관이라 담당 기관인 김해시청 교통 담당 부서 업무와 맞지 않습니다. 과속방지턱·안전펜스·노면표시 등 시청이 설치·정비하는 시설로 요청을 바꾸거나, 신호기 부분은 빼는 것이 좋습니다. → 385자, 증빙 4개",
+     "error": ""
+    },
+    {
+     "node": "review",
+     "title": "초안 검증",
+     "source": "llm",
+     "detail": "통과 (2회차)",
+     "error": ""
+    },
+    {
+     "node": "deliver",
+     "title": "Tool: 민원 패키지 PDF 만들기",
+     "source": "tool",
+     "detail": "민원 패키지 PDF 2쪽 · 87KB",
+     "error": ""
+    }
+   ],
+   "tools": [
+    {
+     "tool": "geocode",
+     "ok": true,
+     "source": "kakao",
+     "summary": "경남 김해시 가야로38번길 30 (김해시 북부동)",
+     "retries": 0,
+     "error": ""
+    },
+    {
+     "tool": "find_nearby:police",
+     "ok": true,
+     "source": "kakao",
+     "summary": "김해중부경찰서, 4732m",
+     "retries": 0,
+     "error": ""
+    },
+    {
+     "tool": "kb_lookup",
+     "ok": true,
+     "source": "kb+region",
+     "summary": "김해시청 교통 담당 부서(교통행정과 등) / 김해중부경찰서 교통 담당 부서(교통과·교통안전계)",
+     "retries": 0,
+     "error": ""
+    },
+    {
+     "tool": "case_search",
+     "ok": true,
+     "source": "data_go_kr",
+     "summary": "'횡단보도' 관련 사례 5건 중 3건 (김해시 사례 우선) · 예: 횡단보도 신규 설치 민원 안내 (경상남도 김해시)",
+     "retries": 0,
+     "error": ""
+    },
+    {
+     "tool": "export_pdf",
+     "ok": true,
+     "source": "generated",
+     "summary": "민원 패키지 PDF 2쪽 · 87KB",
+     "retries": 0,
+     "error": ""
+    }
+   ],
+   "end": "ready",
+   "result": {
+    "status": "ready",
+    "safety": {
+     "pii": [],
+     "emergency": false,
+     "crisis": false,
+     "injection": false
+    },
+    "category": "교통안전시설",
+    "urgency": "high",
+    "plan": [
+     "위치·상황 여쭙기",
+     "관할 경찰서 찾기",
+     "위치 확인",
+     "담당 부서 확인",
+     "비슷한 사례 찾기",
+     "민원 초안 작성",
+     "초안 점검",
+     "PDF로 만들기"
+    ],
+    "plan_fixes": [
+     "'위치 확인' 단계 추가"
+    ],
+    "facts": {
+     "location": "김해시 삼계동 삼계초등학교 정문 앞 횡단보도",
+     "detail": "차들이 쌩쌩 달려서 횡단보도가 위험함",
+     "time": "평일 아침 등교 시간",
+     "frequency": "모름"
+    },
+    "location": {
+     "address": "경남 김해시 가야로38번길 30",
+     "place_name": "삼계초등학교",
+     "dong": "북부동",
+     "sigungu": "김해시"
+    },
+    "location_confirmed": true,
+    "agency": "김해시청 교통 담당 부서(교통행정과 등)",
+    "channel": "안전신문고",
+    "decision_reason": "이 민원은 학교 앞 횡단보도에서 차량이 빠르게 달려 위험하다는 내용입니다. 과속방지턱·안전펜스 같은 어린이보호구역 교통안전시설을 설치하고 정비하는 곳은 김해시청 교통 담당 부서입니다. 비슷한 횡단보도 민원도 김해시가 처리해 왔습니다. 현장 사진과 위치를 함께 낼 수 있는 안전신문고가 가장 알맞습니다.",
+    "cases": [
+     "횡단보도 신규 설치 민원 안내 (경상남도 김해시)",
+     "횡단보도 신규 설치 관련 사항 (경기도 부천시)",
+     "교통신호등 및 횡단보도 설치 절차를 알려주세요 (경기도 군포시)"
+    ],
+    "review": {
+     "passed": true,
+     "round": 2,
+     "checks": [
+      "✓ 연락처: 확인되지 않은 연락처 없음",
+      "✓ 개인정보: 개인정보 없음",
+      "✓ 위치: 본문에 위치가 들어 있음",
+      "✓ 증빙 근거: 필수 표시는 공식 요건만",
+      "✓ 분량: 385자",
+      "✓ AI 검토: 고칠 점 없음"
+     ]
+    },
+    "package": {
+     "version": 2,
+     "title": "삼계초 정문 앞 횡단보도 과속 차량 안전시설 요청",
+     "body_chars": 385,
+     "body": "안녕하십니까.\n김해시 삼계동 삼계초등학교 정문 앞 횡단보도의 교통안전과 관련하여 민원을 드립니다.\n\n■ 위치\n경남 김해시 가야로38번길 30 삼계초등학교 정문 앞 횡단보도(김해시 삼계동)\n\n■ 상황\n평일 아침 등교 시간에 이 횡단보도 앞을 지나는 차들이 속도를 줄이지 않고 빠르게 달립니다.\n\n■ 문제점\n학교 정문 앞 횡단보도인데도 등교 시간에 차들이 빠르게 지나가고 있어, 이곳을 건너는 학생들이 다칠까 걱정됩니다.\n\n■ 요청 사항\n현장을 확인하시어 과속방지턱, 안전표지, 안전펜스, 어린이보호구역 노면표시 등 보행자 안전시설의 설치나 보강을 검토해 주시기 바랍니다. 가능하시면 평일 아침 등교 시간에 맞춰 현장을 확인해 주시면 감사하겠습니다.\n\n바쁘신 가운데 검토해 주셔서 감사합니다.",
+     "placeholders": [],
+     "evidence": [
+      "[recommended] 위험 지점 사진 (가까이·멀리)",
+      "[recommended] 평일 아침 등교 시간 차량 통행 영상",
+      "[recommended] 위험한 시간대 기록 (평일 아침 등교 시간)",
+      "[recommended] 정확한 위치 (주소·지도 캡처)"
+     ]
+    },
+    "pii_in_draft": false,
+    "files": {
+     "pdf": {
+      "name": "AI민원길잡이_교통안전시설_20261004.pdf",
+      "pages": 2,
+      "size": 89143
+     }
+    },
+    "downloads": {
+     "pdf": {
+      "status": 200,
+      "bytes": 89143,
+      "is_pdf": true
+     }
+    }
+   }
+  }
+ ],
+ "run_at": "2026-10-04T21:24:40",
+ "server": {
+  "status": "ok",
+  "llm_provider": "claude_code",
+  "model": "claude-opus-5-5 (Claude Code)",
+  "brain_mode": "llm",
+  "kakao_enabled": true,
+  "data_go_kr_enabled": true
+ },
+ "note": "6차: 제출 전 최종 코드(사진 첨부·민원 서비스 안내·수정 답변·정확도 보완 반영)"
+}

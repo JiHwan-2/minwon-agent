@@ -1,0 +1,286 @@
+{
+ "id": "TC7",
+ "type": "민원 종류 변경",
+ "session": "d4ed928c808b4c059f0e4d21dcd1a58e",
+ "turns": [
+  {
+   "input": "우리 골목 가로등이 일주일째 꺼져 있어요.",
+   "seconds": 28.0,
+   "nodes": [
+    {
+     "node": "guard",
+     "title": "입력 안전 점검",
+     "source": "system",
+     "detail": "이상 없음",
+     "error": ""
+    },
+    {
+     "node": "understand",
+     "title": "문제 분석",
+     "source": "llm",
+     "detail": "가로등·보안등 고장 · 긴급도 medium",
+     "error": ""
+    },
+    {
+     "node": "plan",
+     "title": "처리 계획 수립",
+     "source": "llm",
+     "detail": "가로등 위치 묻기 → 주소·행정구역 확인 → 주변 기관 검색 → 담당 부서 찾기 → 비슷한 사례 찾기 → 민원 글 작성 → 민원 글 점검 → PDF로 만들기 (보정: '주변 기관 검색' 단계 추가)",
+     "error": ""
+    },
+    {
+     "node": "check",
+     "title": "정보 충분성 판단",
+     "source": "llm",
+     "detail": "질문 2개 필요: 발생 위치, 구체적 상황",
+     "error": ""
+    }
+   ],
+   "tools": [],
+   "end": "ask",
+   "questions": [
+    "가로등이 있는 골목이 정확히 어디인가요? (예: 창원시 성산구 상남동 ○○아파트 옆 골목)",
+    "꺼진 가로등은 몇 개이고, 계속 꺼져 있나요, 아니면 깜빡이나요? (예: 1개가 밤새 완전히 꺼져 있음, 2개가 깜빡거림)"
+   ],
+   "options": []
+  },
+  {
+   "input": "그리고 우리 아파트 앞 놀이터 그네가 부서져서 아이들이 다칠 것 같아요",
+   "seconds": 25.2,
+   "nodes": [
+    {
+     "node": "guard",
+     "title": "입력 안전 점검",
+     "source": "system",
+     "detail": "이상 없음",
+     "error": ""
+    },
+    {
+     "node": "understand",
+     "title": "문제 분석",
+     "source": "llm",
+     "detail": "공원·놀이터 시설 · 긴급도 high",
+     "error": ""
+    },
+    {
+     "node": "plan",
+     "title": "처리 계획 수립",
+     "source": "llm",
+     "detail": "놀이터 위치 확인 → 주소·관할 확인 → 담당 부서 찾기 → 비슷한 사례 찾기 → 민원 초안 작성 → 초안 점검 → PDF로 만들기",
+     "error": ""
+    },
+    {
+     "node": "check",
+     "title": "정보 충분성 판단",
+     "source": "llm",
+     "detail": "질문 2개 필요: 발생 위치, 구체적 상황",
+     "error": ""
+    }
+   ],
+   "tools": [],
+   "end": "ask",
+   "questions": [
+    "말씀하신 '우리 아파트 앞 놀이터 (정확한 주소 미확인)'만으로는 정확한 곳을 찾기 어려워요. 장소 이름(예: ○○초등학교), 동 이름, 또는 도로명 주소를 알려 주세요.",
+    "그네가 어떻게 부서져 있나요? (예: 줄이 끊어짐, 앉는 판이 깨짐, 기둥이 흔들림)"
+   ],
+   "options": [],
+   "topic_changed": {
+    "from": "가로등·보안등 고장",
+    "to": "공원·놀이터 시설",
+    "reason": "가로등 민원을 처리하는 중에 시민이 '그리고'로 시작하며 놀이터 그네가 부서졌다는 다른 종류의 불편을 새로 말했습니다. 가로등 질문에 대한 답이 아니므로 공원·놀이터 시설 유형의 새 민원으로 판단합니다.",
+    "source": "llm"
+   }
+  },
+  {
+   "input": "모름",
+   "seconds": 37.9,
+   "nodes": [
+    {
+     "node": "ask",
+     "title": "추가 질문·답변",
+     "source": "system",
+     "detail": "답변 받음 (2자)",
+     "error": ""
+    },
+    {
+     "node": "check",
+     "title": "정보 충분성 판단",
+     "source": "llm",
+     "detail": "필수 정보 충분",
+     "error": ""
+    },
+    {
+     "node": "locate",
+     "title": "Tool: 위치 확인",
+     "source": "rule_fallback",
+     "detail": "위치를 특정하지 못함 — 카카오 검색 결과 없음",
+     "error": ""
+    },
+    {
+     "node": "act",
+     "title": "Tool: 담당 부서·절차 조회",
+     "source": "tool",
+     "detail": "관할 시·군·구청 공원 관리 부서(공원녹지과 등)",
+     "error": ""
+    },
+    {
+     "node": "decide",
+     "title": "담당 기관 판단",
+     "source": "llm",
+     "detail": "관할 시·군·구청 공원 관리 부서(공원녹지과 등) · 제출 창구 안전신문고 · 관련 없는 사례 2건 제외",
+     "error": ""
+    },
+    {
+     "node": "draft",
+     "title": "민원 초안 작성",
+     "source": "llm",
+     "detail": "[ ] 아파트 앞 놀이터 그네 파손 점검·수리 요청 → 307자, 증빙 4개",
+     "error": ""
+    },
+    {
+     "node": "review",
+     "title": "초안 검증",
+     "source": "llm",
+     "detail": "통과 (1회차)",
+     "error": ""
+    },
+    {
+     "node": "deliver",
+     "title": "Tool: 민원 패키지 PDF 만들기",
+     "source": "tool",
+     "detail": "민원 패키지 PDF 2쪽 · 85KB",
+     "error": ""
+    }
+   ],
+   "tools": [
+    {
+     "tool": "geocode",
+     "ok": false,
+     "source": "text_fallback",
+     "summary": "위치를 특정하지 못함",
+     "retries": 0,
+     "error": "카카오 검색 결과 없음"
+    },
+    {
+     "tool": "kb_lookup",
+     "ok": true,
+     "source": "kb",
+     "summary": "관할 시·군·구청 공원 관리 부서(공원녹지과 등)",
+     "retries": 0,
+     "error": ""
+    },
+    {
+     "tool": "case_search",
+     "ok": true,
+     "source": "data_go_kr",
+     "summary": "'놀이터' 관련 사례 7건 중 3건 · 예: 관내 공원의 물놀이터는 어떻게 운영되나요? (인천광역시 제물포구)",
+     "retries": 0,
+     "error": ""
+    },
+    {
+     "tool": "export_pdf",
+     "ok": true,
+     "source": "generated",
+     "summary": "민원 패키지 PDF 2쪽 · 85KB",
+     "retries": 0,
+     "error": ""
+    }
+   ],
+   "end": "ready",
+   "result": {
+    "status": "ready",
+    "safety": {
+     "pii": [],
+     "emergency": false,
+     "crisis": false,
+     "injection": false
+    },
+    "category": "공원·놀이터 시설",
+    "urgency": "high",
+    "plan": [
+     "놀이터 위치 확인",
+     "주소·관할 확인",
+     "담당 부서 찾기",
+     "비슷한 사례 찾기",
+     "민원 초안 작성",
+     "초안 점검",
+     "PDF로 만들기"
+    ],
+    "plan_fixes": [],
+    "facts": {
+     "location": "우리 아파트 앞 놀이터 (정확한 주소는 모름)",
+     "detail": "그네가 부서져 있음 (어떻게 부서졌는지는 모름)",
+     "harm": "아이들이 다칠 것 같음"
+    },
+    "location": {
+     "address": "",
+     "place_name": "",
+     "dong": "",
+     "sigungu": ""
+    },
+    "location_confirmed": true,
+    "agency": "관할 시·군·구청 공원 관리 부서(공원녹지과 등)",
+    "channel": "안전신문고",
+    "decision_reason": "놀이터 그네 같은 어린이놀이시설은 관할 시·군·구청의 공원 관리 부서가 유지관리를 맡습니다. 사진과 위치를 함께 보낼 수 있는 안전신문고의 '시설물 파손' 신고가 가장 알맞습니다.",
+    "cases": [
+     "어린이 놀이터 잡초 제거 및 환경 정화 (경기도 하남시)"
+    ],
+    "review": {
+     "passed": true,
+     "round": 1,
+     "checks": [
+      "✓ 연락처: 확인되지 않은 연락처 없음",
+      "✓ 개인정보: 개인정보 없음",
+      "✓ 위치: 본문에 위치가 들어 있음",
+      "✓ 증빙 근거: 필수 표시는 공식 요건만",
+      "✓ 분량: 307자",
+      "✓ AI 검토: 고칠 점 없음"
+     ]
+    },
+    "package": {
+     "version": 1,
+     "title": "[ ] 아파트 앞 놀이터 그네 파손 점검·수리 요청",
+     "body_chars": 307,
+     "body": "안녕하십니까.\n아파트 앞 놀이터의 그네가 부서져 있어 점검과 수리를 요청드립니다.\n\n■ 위치\n[시·군·구, 동] [아파트 이름] 앞 놀이터 [놀이터·공원 이름]\n\n■ 발생 시기\n[처음 본 날짜]\n\n■ 상황\n위 놀이터의 그네가 부서져 있습니다. 부서진 상태: [예: 줄이 끊어짐, 앉는 판이 깨짐, 기둥이 흔들림]\n부서진 그네를 아이들이 그대로 이용하면 다칠 수 있어 걱정됩니다.\n\n■ 요청 사항\n파손된 그네를 점검하고 수리해 주시기 바랍니다. 수리 전까지는 이용을 막는 안전조치를 해 주시기 바랍니다.\n\n빠른 확인과 조치를 부탁드립니다. 감사합니다.",
+     "placeholders": [
+      "[시·군·구, 동]",
+      "[아파트 이름]",
+      "[놀이터·공원 이름]",
+      "[예: 줄이 끊어짐, 앉는 판이 깨짐, 기둥이 흔들림]"
+     ],
+     "evidence": [
+      "[recommended] 부서진 그네 근접 사진(여러 각도)",
+      "[recommended] 놀이터 전체 모습 사진",
+      "[recommended] 공원 이름·관리 주체 안내판 사진",
+      "[separate] 다친 사람이 생긴 경우 피해 사진·진료 기록"
+     ]
+    },
+    "pii_in_draft": false,
+    "files": {
+     "pdf": {
+      "name": "AI민원길잡이_공원·놀이터_시설_20261004.pdf",
+      "pages": 2,
+      "size": 87265
+     }
+    },
+    "downloads": {
+     "pdf": {
+      "status": 200,
+      "bytes": 87265,
+      "is_pdf": true
+     }
+    }
+   }
+  }
+ ],
+ "run_at": "2026-10-04T21:28:18",
+ "server": {
+  "status": "ok",
+  "llm_provider": "claude_code",
+  "model": "claude-opus-5-5 (Claude Code)",
+  "brain_mode": "llm",
+  "kakao_enabled": true,
+  "data_go_kr_enabled": true
+ },
+ "note": "6차: 제출 전 최종 코드(사진 첨부·민원 서비스 안내·수정 답변·정확도 보완 반영)"
+}
