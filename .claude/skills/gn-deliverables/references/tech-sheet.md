@@ -5,8 +5,8 @@
 ## 만드는 법
 
 1. 아래 '채울 내용'으로 초안을 `docs/submission/tech-sheet/기술설명서.md`에 쓰고 사용자 확인을 받는다.
-2. `anthropic-skills:docx` 스킬로 `기술설명서.docx`(A4 세로, 여백 15mm, 표 1개) 생성 → 한 페이지인지 확인.
-3. PDF는 Word에서 '다른 이름으로 저장 → PDF' (사용자가 함) 또는 docx 스킬의 변환 기능.
+2. `docs/submission/tech-sheet/make_docx.js`(docx-js)로 `AI민원길잡이_기술설명서.docx`(A4 세로, 여백 15mm, 2열 표 1개) 생성 → Word로 열어 한 페이지인지 확인. 별지 1 항목 15개를 다 넣으면 9pt는 넘쳐서 8.5pt로 맞췄다(2026-10-04).
+3. PDF는 Word에서 '다른 이름으로 저장 → PDF' (또는 Word 자동화 `ExportAsFixedFormat`).
 4. 수치는 만들기 직전 다시 확인(SKILL.md 공통 규칙 2).
 
 ## 채울 내용 (별지 1 항목 순서)
