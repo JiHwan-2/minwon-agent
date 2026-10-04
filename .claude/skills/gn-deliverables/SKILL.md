@@ -60,6 +60,6 @@ description: AI민원길잡이의 경진대회 최종 제출물을 만드는 방
 
 ## 폴더와 도구
 
-- 제출물 원본은 `docs/submission/` 아래 제출물별 폴더에 둔다 (`tech-sheet/`, `video/`, `slides/`, `panel/`, `source-declaration/`). 영상 파일(`.mp4` 등)은 커서 git에 올리지 않는다(.gitignore).
+- 제출물 원본은 `docs/submission/` 아래 제출물별 폴더에 둔다 (`tech-sheet/`, `video/`, `slides/`, `panel/`, `source-declaration/`). **결과 파일(PDF·PNG·Word·PPT·영상·화면 캡처)은 대회 사이트로 따로 제출하므로 git에 올리지 않는다**(.gitignore, 팀장 결정 2026-10-05). 원본(md·html·css)·생성 스크립트·진행 표만 커밋한다.
 - `.pptx`는 `anthropic-skills:pptx` 스킬, `.docx`는 `anthropic-skills:docx` 스킬로 만든다. 판넬은 HTML/CSS 한 장으로 만들어 브라우저에서 PNG·PDF로 뽑는다(panel-report.md).
 - 제출물을 만들거나 고치면 `docs/submission/README.md`의 진행 표를 갱신하고 커밋한다.

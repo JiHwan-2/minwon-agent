@@ -30,3 +30,10 @@ Thumbs.db
 docs/submission/**/*.mp4
 docs/submission/**/*.mov
 docs/submission/**/*.mkv
+
+# 제출 결과물 (대회 사이트에 따로 제출, git에 올리지 않음). 원본(md·html·css)과 생성 스크립트만 둔다
+docs/submission/**/*.pdf
+docs/submission/**/*.docx
+docs/submission/**/*.pptx
+docs/submission/**/*.png
+docs/submission/**/*.jpg
