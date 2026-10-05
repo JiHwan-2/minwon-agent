@@ -6,13 +6,24 @@
 <title>AI민원길잡이 개발완료보고서 판넬 1</title>
 <link rel="stylesheet" href="panel.css">
 <style>
-  .body { grid-template-rows: 524px 1fr; }
+  .body { grid-template-rows: 542px 1fr; }
   .row1 { display: grid; grid-template-columns: 438px 1fr; gap: 14px; min-height: 0; }
   .row2 { display: grid; grid-template-columns: 1000px 1fr; gap: 14px; min-height: 0; }
   .detail { display: grid; grid-template-columns: 1fr 360px; gap: 14px; min-height: 0; flex: 1; }
   .detail .left { display: flex; flex-direction: column; gap: 8px; }
   .result { display: grid; grid-template-columns: 290px 1fr; gap: 12px; flex: 1; min-height: 0; }
   .result .shots { grid-template-columns: 1fr 1.18fr 1fr; }
+  .own { margin-top: 10px; background: #e7f7ef; border: 1.5px solid #b5e3cb; border-radius: 12px; padding: 8px 12px; font-size: 14px; line-height: 1.4; }
+  .own b { color: var(--green); }
+  .tests { margin-top: 8px; background: var(--sky); border-radius: 12px; padding: 8px 10px; }
+  .tests h5 { font-size: 15px; font-weight: 900; color: var(--navy); margin-bottom: 5px; }
+  .tests h5 span { color: var(--ok); }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chips i { font-style: normal; font-size: 12.5px; background: #fff; border: 1px solid var(--line); border-radius: 99px; padding: 1px 8px; }
+  .limit { margin-top: 6px; display: grid; gap: 3px; font-size: 13px; line-height: 1.38; }
+  .limit div { padding-left: 46px; position: relative; }
+  .limit div b { position: absolute; left: 0; color: var(--warn); }
+  .limit div.next b { color: var(--blue); }
 </style>
 </head>
 <body>
@@ -104,6 +115,7 @@
                 <li>대표 테스트케이스 9건 재실행</li>
                 <li>제출물 · 회귀 점검</li></ul></div></div>
             </div>
+            <div class="own"><b>🆕 기존자산 없음.</b> 모든 코드·지식베이스·화면·평가 세트를 대회 기간(9/29~10/6)에 이 저장소에서 새로 작성 (커밋 기록으로 확인)</div>
           </div>
         </div>
       </section>
@@ -115,13 +127,15 @@
         <div class="sec"><span class="no">03</span><h2>구현 결과</h2><span class="sub">주요 기능 / 실제 실행 화면 (2026-10-04)</span></div>
         <div class="result">
           <div style="display:flex; flex-direction:column">
-            <ul class="checks big" style="gap:7px">
-              <li><b>입력 확인·문제 분석·처리 계획</b><br>민원·민원 서비스·다른 창구를 구분</li>
-              <li><b>추가 질문·대화</b><br>상태 저장, 사진은 예/아니요로 확인</li>
-              <li><b>위치·기관 검색</b><br>카카오·공공데이터·지식베이스, 재시도</li>
-              <li><b>담당 기관 + 민원 패키지 PDF</b><br>민원 서비스는 지금 되는 방법 안내</li>
-              <li><b>결과 검증·수정</b><br>규칙 검사 + AI 검토, 수정 요청 반영</li>
+            <ul class="checks big" style="gap:6px">
+              <li><b>입력 확인·문제 분석·처리 계획</b></li>
+              <li><b>추가 질문·대화</b> (사진 확인)</li>
+              <li><b>위치·기관 검색</b> (Tool 3종)</li>
+              <li><b>담당 기관 + 민원 패키지 PDF</b></li>
+              <li><b>결과 검증·수정</b> (수정 요청)</li>
             </ul>
+            <div class="tests"><h5>🧪 대표 테스트케이스 <span>9건 모두 통과</span></h5>
+              <div class="chips"><i>정상 입력</i><i>부정확한 입력</i><i>데이터 없음</i><i>API 오류</i><i>악의적 입력</i><i>수정 요청</i><i>민원 종류 변경</i><i>처리 중단</i><i>민원 서비스</i></div></div>
             <div class="band"><span class="tro">🏆</span>8일 개발기간 · Level 3 MVP</div>
           </div>
           <div class="shots">
@@ -159,12 +173,16 @@
           <div class="metric"><b>20/20</b><span>수정 요청</span></div>
           <div class="metric"><b>9/9</b><span>대표 테스트</span></div>
         </div>
-        <p class="note">평가 세트·대표 테스트케이스, 실제 Claude로 실행(2026-10-04). 한계: 부서명은 지자체마다 다를 수 있어 일반 표현으로 안내 · 사용자 검증과 준비 시간 단축은 아직 측정하지 않음</p>
+        <p class="note" style="margin-top:3px">위 수치: 평가 세트·대표 테스트케이스를 실제 Claude로 실행 (2026-10-04)</p>
+        <div class="limit">
+          <div><b>한계</b>부서명은 지자체마다 달라 일반 표현으로 안내 · AI 판단은 틀릴 수 있어 검증 후 시민이 직접 제출 · 사용자 검증·시간 단축은 아직 측정 전</div>
+          <div class="next"><b>향후</b>지자체 조직도 연동 · 시민·기관 담당자 검증 · 전국 확대</div>
+        </div>
       </section>
     </div>
   </main>
 
-  <footer class="foot"><span><b>AI민원길잡이</b> · 제4회 경남 AI·SW 경진대회 2026 개발완료보고서 (판넬 1/2)</span><span>창신대학교 컴퓨터공학과 김지환 · 서준호</span></footer>
+  <footer class="foot"><span><b>AI민원길잡이</b> · 제4회 경남 AI·SW 경진대회 2026 개발완료보고서 (판넬형)</span><span>창신대학교 컴퓨터공학과 김지환 · 서준호</span></footer>
 </div>
 </body>
 </html>

@@ -17,7 +17,7 @@ description: AI민원길잡이의 경진대회 최종 제출물을 만드는 방
 | 1 | AI Agent 기술설명서 | 1페이지, 별지 1 표 양식 → `.docx` + `.pdf` | [references/tech-sheet.md](references/tech-sheet.md) |
 | 2 | 시연동영상 | 3분 이내 `.mp4`, 실제 동작 | [references/demo-video.md](references/demo-video.md) |
 | 3 | 발표자료 | 10장 이내 `.pptx` (6분 발표 + 질의 2분) | [references/slides.md](references/slides.md) |
-| 4 | 개발완료보고서 | **판넬형**(별지 4 예시) 1~2장, 이미지(`.png`) + `.pdf` | [references/panel-report.md](references/panel-report.md) |
+| 4 | 개발완료보고서 | **판넬형**(별지 4 예시) 1장, 이미지(`.png`) + `.pdf` | [references/panel-report.md](references/panel-report.md) |
 | 5 | 출처·AI 활용 신고서 | 자체 양식(공식 양식 확보 시 그 양식) | [references/source-declaration.md](references/source-declaration.md) |
 | 6 | 소스코드·저장소 + 최종 점검 | Git 링크(접근권한) 또는 ZIP | [references/submission-checklist.md](references/submission-checklist.md) |
 
