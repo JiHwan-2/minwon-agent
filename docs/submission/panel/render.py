@@ -2,7 +2,7 @@
 
 사용 (저장소 폴더에서):
   backend\\.venv\\Scripts\\python docs\\submission\\panel\\render.py
-결과: docs/submission/panel/AI민원길잡이_개발완료보고서.png · .pdf (예시 판넬처럼 한 장)
+결과: docs/submission/panel/AI민원길잡이_개발완료보고서_판넬1.png · _판넬2.png · AI민원길잡이_개발완료보고서.pdf (2쪽)
 """
 
 import base64
@@ -20,7 +20,7 @@ sys.path.insert(0, str(HERE.parent))
 from capture_screens import BROWSERS, Page  # noqa: E402
 
 W, H = 1754, 1240
-PANELS = ["panel1.html"]  # 예시 판넬처럼 한 장 (01 개요 ~ 04 기대 효과)
+PANELS = ["panel1.html", "panel2.html"]  # 판넬 1: 예시처럼 01~04, 판넬 2: 테스트·평가·신규개발분·한계 상세
 NAME = "AI민원길잡이_개발완료보고서"
 
 # 칸 안에서 글자·그림이 넘쳐 잘린 곳 찾기 (카드·표·목록)
